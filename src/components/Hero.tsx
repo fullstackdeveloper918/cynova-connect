@@ -1,7 +1,10 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export const Hero = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="relative min-h-screen flex items-center bg-gradient-to-b from-accent/30 to-background py-20">
       <div className="absolute inset-0 bg-[url('/photo-1488590528505-98d2b5aba04b')] bg-cover bg-center opacity-5" />
@@ -48,12 +51,18 @@ export const Hero = () => {
             transition={{ delay: 0.5 }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            <button className="group px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2">
+            <button 
+              onClick={() => navigate("/signup")}
+              className="group px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2"
+            >
               Get Started Free
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
-            <button className="px-8 py-3 bg-muted hover:bg-muted/80 text-primary rounded-lg font-medium transition-colors">
-              Watch Demo
+            <button 
+              onClick={() => navigate("/login")}
+              className="px-8 py-3 bg-muted hover:bg-muted/80 text-primary rounded-lg font-medium transition-colors"
+            >
+              Sign In
             </button>
           </motion.div>
         </motion.div>
