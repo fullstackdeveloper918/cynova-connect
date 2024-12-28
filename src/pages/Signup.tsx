@@ -13,12 +13,35 @@ const Signup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (password !== confirmPassword) {
       toast.error("Passwords do not match");
       return;
     }
-    // TODO: Implement actual signup logic after Supabase integration
-    toast.info("Sign up will be implemented after Supabase integration");
+
+    // Store user data in localStorage (temporary solution until Supabase integration)
+    const userData = {
+      email,
+      isAuthenticated: true,
+      createdAt: new Date().toISOString()
+    };
+
+    localStorage.setItem("userData", JSON.stringify(userData));
+    
+    toast.success("Account created successfully!");
+    navigate("/dashboard");
+  };
+
+  const createTestAccount = () => {
+    const testUserData = {
+      email: "test@cynova.ai",
+      isAuthenticated: true,
+      createdAt: new Date().toISOString()
+    };
+
+    localStorage.setItem("userData", JSON.stringify(testUserData));
+    toast.success("Test account created! Redirecting to dashboard...");
+    setTimeout(() => navigate("/dashboard"), 1500);
   };
 
   return (
@@ -85,6 +108,24 @@ const Signup = () => {
 
           <Button type="submit" className="w-full">
             Sign up
+          </Button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-muted-foreground">Or</span>
+            </div>
+          </div>
+
+          <Button 
+            type="button" 
+            variant="outline"
+            className="w-full"
+            onClick={createTestAccount}
+          >
+            Use Test Account
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
