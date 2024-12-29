@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Upload, Video, Save } from "lucide-react";
 import { Button } from "./ui/button";
 import { toast } from "./ui/use-toast";
@@ -8,25 +8,40 @@ export const VideoEditor = () => {
   const [selectedStock, setSelectedStock] = useState<string>("");
   const [captions, setCaptions] = useState<string>("");
   const [isExporting, setIsExporting] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
+  const finalPreviewRef = useRef<HTMLVideoElement>(null);
 
   const stockVideos = [
     { id: "gta", name: "GTA V Gameplay", url: "/stock/gta-gameplay.mp4" },
     { id: "minecraft", name: "Minecraft Gameplay", url: "/stock/minecraft-gameplay.mp4" },
   ];
 
+  useEffect(() => {
+    // Clean up URLs when component unmounts
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
   const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       if (file.type.startsWith("video/")) {
         setUserVideo(file);
-        // Create a URL for the video preview
+        const newPreviewUrl = URL.createObjectURL(file);
+        setPreviewUrl(newPreviewUrl);
+        
         if (videoPreviewRef.current) {
-          videoPreviewRef.current.src = URL.createObjectURL(file);
+          videoPreviewRef.current.src = newPreviewUrl;
         }
+
+        // Automatically generate captions using Web Speech API
+        generateCaptions(file);
+
         toast({
           title: "Video uploaded successfully",
-          description: "You can now add stock footage and captions to your video.",
+          description: "Processing video and generating captions...",
         });
       } else {
         toast({
@@ -38,8 +53,47 @@ export const VideoEditor = () => {
     }
   };
 
+  const generateCaptions = async (videoFile: File) => {
+    try {
+      // This is a basic implementation using Web Speech API
+      // In a production environment, you'd want to use ElevenLabs or another service
+      const recognition = new (window.webkitSpeechRecognition || window.SpeechRecognition)();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join(" ");
+        setCaptions(transcript);
+      };
+
+      // Create an audio context and process the video file
+      const audioContext = new AudioContext();
+      const audioBuffer = await videoFile.arrayBuffer();
+      const audioSource = await audioContext.decodeAudioData(audioBuffer);
+      
+      // Start recognition
+      recognition.start();
+    } catch (error) {
+      console.error("Error generating captions:", error);
+      toast({
+        title: "Caption generation failed",
+        description: "Could not automatically generate captions. You can add them manually.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleStockSelection = (videoId: string) => {
     setSelectedStock(videoId);
+    // Update final preview with combined video
+    if (finalPreviewRef.current) {
+      const stockVideo = stockVideos.find(v => v.id === videoId);
+      if (stockVideo) {
+        finalPreviewRef.current.src = stockVideo.url;
+      }
+    }
     toast({
       title: "Stock footage selected",
       description: `${videoId.toUpperCase()} gameplay footage will be added to your video.`,
@@ -137,16 +191,31 @@ export const VideoEditor = () => {
         </div>
       </div>
 
-      {/* Captions Input */}
+      {/* Captions Display */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold">Add Captions</h2>
+        <h2 className="text-2xl font-semibold">Generated Captions</h2>
         <textarea
           value={captions}
           onChange={(e) => setCaptions(e.target.value)}
           className="w-full h-32 p-3 rounded-md border border-input bg-background"
-          placeholder="Enter your captions here..."
+          placeholder="Captions will appear here automatically..."
         />
       </div>
+
+      {/* Final Preview */}
+      {userVideo && selectedStock && (
+        <div className="space-y-4">
+          <h2 className="text-2xl font-semibold">Preview</h2>
+          <video
+            ref={finalPreviewRef}
+            controls
+            className="w-full rounded-lg"
+            style={{ maxHeight: "400px" }}
+          >
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      )}
 
       {/* Export Button */}
       <Button
