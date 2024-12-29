@@ -17,13 +17,15 @@ export const VideoEditor = () => {
       id: "gta", 
       name: "GTA V Gameplay", 
       url: "/stock/gta-gameplay.mp4",
-      previewImage: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=2940&ixlib=rb-4.0.3",
+      previewImage: "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=2940&ixlib=rb-4.0.3",
+      description: "High-octane urban action gameplay"
     },
     { 
       id: "minecraft", 
       name: "Minecraft Gameplay", 
       url: "/stock/minecraft-gameplay.mp4",
-      previewImage: "https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?auto=format&fit=crop&q=80&w=2940&ixlib=rb-4.0.3",
+      previewImage: "https://images.unsplash.com/photo-1627856014754-2907e2355d54?q=80&w=2940&ixlib=rb-4.0.3",
+      description: "Creative building and survival adventures"
     },
   ];
 
@@ -158,14 +160,14 @@ export const VideoEditor = () => {
       <div className="space-y-4">
         <h2 className="text-2xl font-semibold">Upload Your Video</h2>
         <div className="flex flex-col gap-4">
-          <Button variant="outline" className="w-full max-w-xs relative">
+          <Button variant="outline" className="w-full max-w-xs relative group hover:bg-primary/5">
             <input
               type="file"
               accept="video/*"
               onChange={handleVideoUpload}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
-            <Upload className="mr-2 h-4 w-4" />
+            <Upload className="mr-2 h-4 w-4 group-hover:text-primary transition-colors" />
             Choose Video
           </Button>
           {userVideo && (
@@ -176,7 +178,7 @@ export const VideoEditor = () => {
               <video
                 ref={videoPreviewRef}
                 controls
-                className="max-w-full h-auto rounded-lg"
+                className="max-w-full h-auto rounded-lg shadow-lg"
                 style={{ maxHeight: "300px" }}
               >
                 Your browser does not support the video tag.
@@ -189,24 +191,24 @@ export const VideoEditor = () => {
       {/* Stock Footage Selection */}
       <div className="space-y-4">
         <h2 className="text-2xl font-semibold">Select Stock Footage</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {stockVideos.map((video) => (
-            <div key={video.id} className="flex flex-col gap-2">
+            <div key={video.id} className="group">
               <Button
                 variant={selectedStock === video.id ? "default" : "outline"}
-                className="h-auto py-4 relative overflow-hidden group"
+                className="w-full h-48 relative overflow-hidden rounded-lg transition-all duration-300 hover:shadow-xl"
                 onClick={() => handleStockSelection(video.id)}
               >
-                <div className="absolute inset-0">
-                  <img 
-                    src={video.previewImage} 
-                    alt={video.name}
-                    className="w-full h-full object-cover opacity-50 group-hover:opacity-70 transition-opacity"
-                  />
-                </div>
-                <div className="relative z-10 flex items-center justify-center w-full">
-                  <Video className="mr-2 h-4 w-4" />
-                  <span className="font-semibold text-foreground">{video.name}</span>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20 z-10" />
+                <img 
+                  src={video.previewImage} 
+                  alt={video.name}
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="relative z-20 flex flex-col items-center justify-center w-full h-full text-white p-4">
+                  <Video className="mb-2 h-6 w-6 opacity-75" />
+                  <h3 className="font-bold text-lg mb-1">{video.name}</h3>
+                  <p className="text-sm opacity-75">{video.description}</p>
                 </div>
               </Button>
             </div>
