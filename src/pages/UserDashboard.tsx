@@ -15,11 +15,11 @@ import {
 import {
   Video,
   MessageSquare,
-  Split,
-  Blur,
+  Scissors,
+  Eye,
   Mic,
   Edit,
-  BrandReddit,
+  FileVideo,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
@@ -28,11 +28,11 @@ const UserDashboard = () => {
 
   const sidebarItems = [
     { id: "editor", title: "Cynova Editor", icon: Edit },
-    { id: "reddit", title: "Reddit Video", icon: BrandReddit },
+    { id: "reddit", title: "Reddit Video", icon: FileVideo },
     { id: "texts", title: "Fake Texts Video", icon: MessageSquare },
     { id: "chatgpt", title: "ChatGPT Video", icon: MessageSquare },
-    { id: "split", title: "Split Video", icon: Split },
-    { id: "blur", title: "Blur Video", icon: Blur },
+    { id: "split", title: "Split Video", icon: Scissors },
+    { id: "blur", title: "Blur Video", icon: Eye },
     { id: "voiceover", title: "Voiceover Video", icon: Mic },
   ];
 
