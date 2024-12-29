@@ -55,9 +55,12 @@ export const VideoEditor = () => {
 
   const generateCaptions = async (videoFile: File) => {
     try {
-      // This is a basic implementation using Web Speech API
-      // In a production environment, you'd want to use ElevenLabs or another service
-      const recognition = new (window.webkitSpeechRecognition || window.SpeechRecognition)();
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        throw new Error("Speech recognition is not supported in this browser");
+      }
+
+      const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
 
