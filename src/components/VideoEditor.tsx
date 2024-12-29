@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Upload, Video, Save } from "lucide-react";
 import { Button } from "./ui/button";
 import { toast } from "./ui/use-toast";
@@ -7,6 +7,8 @@ export const VideoEditor = () => {
   const [userVideo, setUserVideo] = useState<File | null>(null);
   const [selectedStock, setSelectedStock] = useState<string>("");
   const [captions, setCaptions] = useState<string>("");
+  const [isExporting, setIsExporting] = useState(false);
+  const videoPreviewRef = useRef<HTMLVideoElement>(null);
 
   const stockVideos = [
     { id: "gta", name: "GTA V Gameplay", url: "/stock/gta-gameplay.mp4" },
@@ -18,6 +20,10 @@ export const VideoEditor = () => {
     if (file) {
       if (file.type.startsWith("video/")) {
         setUserVideo(file);
+        // Create a URL for the video preview
+        if (videoPreviewRef.current) {
+          videoPreviewRef.current.src = URL.createObjectURL(file);
+        }
         toast({
           title: "Video uploaded successfully",
           description: "You can now add stock footage and captions to your video.",
@@ -40,12 +46,43 @@ export const VideoEditor = () => {
     });
   };
 
-  const handleExport = () => {
-    // This is a placeholder for the actual export functionality
-    toast({
-      title: "Export started",
-      description: "Your video is being processed. This may take a few minutes.",
-    });
+  const handleExport = async () => {
+    if (!userVideo || !selectedStock) {
+      toast({
+        title: "Missing requirements",
+        description: "Please upload a video and select stock footage before exporting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      // Simulate export process
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      
+      // Create a download link for the processed video
+      const downloadLink = document.createElement("a");
+      downloadLink.href = URL.createObjectURL(userVideo); // In a real implementation, this would be the processed video
+      downloadLink.download = `edited_${userVideo.name}`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+
+      toast({
+        title: "Export successful",
+        description: "Your video has been processed and downloaded.",
+      });
+    } catch (error) {
+      console.error("Export error:", error);
+      toast({
+        title: "Export failed",
+        description: "There was an error processing your video. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -53,7 +90,7 @@ export const VideoEditor = () => {
       {/* Video Upload Section */}
       <div className="space-y-4">
         <h2 className="text-2xl font-semibold">Upload Your Video</h2>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-4">
           <Button variant="outline" className="w-full max-w-xs relative">
             <input
               type="file"
@@ -65,9 +102,19 @@ export const VideoEditor = () => {
             Choose Video
           </Button>
           {userVideo && (
-            <span className="text-sm text-muted-foreground">
-              {userVideo.name}
-            </span>
+            <div className="space-y-2">
+              <span className="text-sm text-muted-foreground block">
+                {userVideo.name}
+              </span>
+              <video
+                ref={videoPreviewRef}
+                controls
+                className="max-w-full h-auto rounded-lg"
+                style={{ maxHeight: "300px" }}
+              >
+                Your browser does not support the video tag.
+              </video>
+            </div>
           )}
         </div>
       </div>
@@ -105,10 +152,19 @@ export const VideoEditor = () => {
       <Button
         onClick={handleExport}
         className="w-full max-w-xs"
-        disabled={!userVideo || !selectedStock}
+        disabled={!userVideo || !selectedStock || isExporting}
       >
-        <Save className="mr-2 h-4 w-4" />
-        Export Video
+        {isExporting ? (
+          <span className="flex items-center">
+            <Save className="mr-2 h-4 w-4 animate-spin" />
+            Exporting...
+          </span>
+        ) : (
+          <span className="flex items-center">
+            <Save className="mr-2 h-4 w-4" />
+            Export Video
+          </span>
+        )}
       </Button>
     </div>
   );
