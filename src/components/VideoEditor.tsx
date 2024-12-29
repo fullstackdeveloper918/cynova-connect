@@ -13,8 +13,18 @@ export const VideoEditor = () => {
   const finalPreviewRef = useRef<HTMLVideoElement>(null);
 
   const stockVideos = [
-    { id: "gta", name: "GTA V Gameplay", url: "/stock/gta-gameplay.mp4" },
-    { id: "minecraft", name: "Minecraft Gameplay", url: "/stock/minecraft-gameplay.mp4" },
+    { 
+      id: "gta", 
+      name: "GTA V Gameplay", 
+      url: "/stock/gta-gameplay.mp4",
+      previewImage: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=2940&ixlib=rb-4.0.3",
+    },
+    { 
+      id: "minecraft", 
+      name: "Minecraft Gameplay", 
+      url: "/stock/minecraft-gameplay.mp4",
+      previewImage: "https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?auto=format&fit=crop&q=80&w=2940&ixlib=rb-4.0.3",
+    },
   ];
 
   useEffect(() => {
@@ -181,15 +191,25 @@ export const VideoEditor = () => {
         <h2 className="text-2xl font-semibold">Select Stock Footage</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {stockVideos.map((video) => (
-            <Button
-              key={video.id}
-              variant={selectedStock === video.id ? "default" : "outline"}
-              className="h-auto py-4"
-              onClick={() => handleStockSelection(video.id)}
-            >
-              <Video className="mr-2 h-4 w-4" />
-              {video.name}
-            </Button>
+            <div key={video.id} className="flex flex-col gap-2">
+              <Button
+                variant={selectedStock === video.id ? "default" : "outline"}
+                className="h-auto py-4 relative overflow-hidden group"
+                onClick={() => handleStockSelection(video.id)}
+              >
+                <div className="absolute inset-0">
+                  <img 
+                    src={video.previewImage} 
+                    alt={video.name}
+                    className="w-full h-full object-cover opacity-50 group-hover:opacity-70 transition-opacity"
+                  />
+                </div>
+                <div className="relative z-10 flex items-center justify-center w-full">
+                  <Video className="mr-2 h-4 w-4" />
+                  <span className="font-semibold text-foreground">{video.name}</span>
+                </div>
+              </Button>
+            </div>
           ))}
         </div>
       </div>
