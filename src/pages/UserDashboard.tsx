@@ -28,10 +28,126 @@ import {
   Headphones,
   ChevronDown,
   Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { ProjectsGrid } from "@/components/ProjectsGrid";
-import { ExportsGrid } from "@/components/ExportsGrid";
+
+const DashboardContent = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const createSections = [
+    {
+      id: "chatgpt",
+      title: "ChatGPT Videos",
+      description: "Create engaging videos with AI-generated content and narration",
+      icon: MessageSquare,
+      path: "/dashboard/chatgpt",
+      image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
+    },
+    {
+      id: "faketext",
+      title: "Fake Text Videos",
+      description: "Generate realistic text-based content for your videos",
+      icon: MessageSquare,
+      path: "/dashboard/faketext",
+      image: "https://images.unsplash.com/photo-1518005020951-eccb494ad742",
+    },
+    {
+      id: "reddit",
+      title: "Reddit Videos",
+      description: "Transform Reddit content into engaging video stories",
+      icon: FileVideo,
+      path: "/dashboard/reddit",
+      image: "https://images.unsplash.com/photo-1483058712412-4245e9b90334",
+    },
+    {
+      id: "split",
+      title: "Split Videos",
+      description: "Easily split and trim your videos with precision",
+      icon: Scissors,
+      path: "/dashboard/split",
+      image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085",
+    },
+    {
+      id: "voiceover",
+      title: "Voiceover Videos",
+      description: "Add professional AI voiceovers to your content",
+      icon: Mic,
+      path: "/dashboard/voiceover",
+      image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
+    },
+  ];
+
+  return (
+    <div className="space-y-8">
+      {/* Hero Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-br from-primary/10 via-accent to-secondary/10 rounded-xl p-8 relative overflow-hidden"
+      >
+        <div className="relative z-10">
+          <h2 className="text-3xl font-bold mb-4">Create Shorts with AI</h2>
+          <p className="text-lg text-muted-foreground mb-6 max-w-2xl">
+            Your ultimate tool for generating AI voiceovers, captivating subtitles, enhanced gameplay, and much more.
+          </p>
+          <Button
+            onClick={() => navigate("/dashboard/editor")}
+            className="bg-primary hover:bg-primary/90"
+          >
+            Get Started
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      </motion.div>
+
+      {/* Feature Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {createSections.map((section, index) => (
+          <motion.div
+            key={section.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="group relative overflow-hidden rounded-xl border border-accent bg-card"
+          >
+            <div className="aspect-video w-full overflow-hidden">
+              <img
+                src={section.image}
+                alt={section.title}
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+            <div className="p-6">
+              <div className="mb-4 flex items-center gap-2">
+                <div className="rounded-lg bg-primary/10 p-2">
+                  <section.icon className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold">{section.title}</h3>
+              </div>
+              <p className="mb-4 text-muted-foreground">{section.description}</p>
+              <Button
+                onClick={() => navigate(section.path)}
+                variant="outline"
+                className="w-full"
+              >
+                Start Creating
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const UserDashboard = () => {
+  const [selectedTool, setSelectedTool] = useState("editor");
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const userName = "John";
 
   const sidebarSections = [
     {
@@ -70,79 +186,6 @@ import { ExportsGrid } from "@/components/ExportsGrid";
       ],
     },
   ];
-
-const features = [
-  {
-    icon: MessageSquare,
-    title: "AI Video Creation",
-    description: "Create engaging videos using ChatGPT and other AI tools",
-    image: "https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7",
-  },
-  {
-    icon: FileVideo,
-    title: "Content Automation",
-    description: "Automate your content creation with Reddit and text-to-video",
-    image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1",
-  },
-  {
-    icon: Scissors,
-    title: "Video Processing",
-    description: "Split, edit, and enhance your videos with professional tools",
-    image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
-  },
-  {
-    icon: Mic,
-    title: "Voice Features",
-    description: "Add professional voiceovers to your videos",
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475",
-  },
-];
-
-const UserDashboard = () => {
-  const navigate = useNavigate();
-  const [selectedTool, setSelectedTool] = useState("editor");
-  const { toast } = useToast();
-  const userName = "John";
-
-  const renderContent = () => {
-    switch (selectedTool) {
-      case "editor":
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="p-6 rounded-xl bg-white shadow-lg hover:shadow-xl transition-shadow border border-accent group overflow-hidden"
-              >
-                <div className="aspect-video w-full mb-4 overflow-hidden rounded-lg">
-                  <img
-                    src={feature.image}
-                    alt={feature.title}
-                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                  />
-                </div>
-                <div className="w-12 h-12 rounded-lg bg-accent flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <feature.icon className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2 text-primary">
-                  {feature.title}
-                </h3>
-                <p className="text-muted-foreground">{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        );
-      case "projects":
-        return <ProjectsGrid />;
-      case "exports":
-        return <ExportsGrid />;
-      default:
-        return null;
-    }
-  };
 
   return (
     <SidebarProvider>
@@ -191,9 +234,9 @@ const UserDashboard = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="max-w-7xl mx-auto space-y-8"
+            className="max-w-7xl mx-auto"
           >
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-8">
               <h1 className="text-3xl font-bold text-primary">
                 Welcome back, {userName}! 👋
               </h1>
@@ -210,7 +253,7 @@ const UserDashboard = () => {
                 Upgrade to Premium
               </Button>
             </div>
-            {renderContent()}
+            <DashboardContent />
           </motion.div>
         </main>
       </div>

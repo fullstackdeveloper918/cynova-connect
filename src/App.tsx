@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import UserDashboard from "./pages/UserDashboard";
+import Editor from "./pages/Editor";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/dashboard" element={<UserDashboard />} />
+          <Route path="/dashboard/editor" element={<Editor />} />
           <Route path="/dashboard/*" element={<UserDashboard />} />
         </Routes>
       </BrowserRouter>
