@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { VideoEditor } from "@/components/VideoEditor";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -31,13 +30,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-const UserDashboard = () => {
-  const navigate = useNavigate();
-  const [selectedTool, setSelectedTool] = useState("editor");
-  const { toast } = useToast();
-  // Temporary user data - In a real app, this would come from your auth system
-  const userName = "John";
+import { ProjectsGrid } from "@/components/ProjectsGrid";
+import { ExportsGrid } from "@/components/ExportsGrid";
 
   const sidebarSections = [
     {
@@ -77,33 +71,43 @@ const UserDashboard = () => {
     },
   ];
 
-  const features = [
-    {
-      icon: MessageSquare,
-      title: "AI Video Creation",
-      description: "Create engaging videos using ChatGPT and other AI tools",
-    },
-    {
-      icon: FileVideo,
-      title: "Content Automation",
-      description: "Automate your content creation with Reddit and text-to-video",
-    },
-    {
-      icon: Scissors,
-      title: "Video Processing",
-      description: "Split, edit, and enhance your videos with professional tools",
-    },
-    {
-      icon: Mic,
-      title: "Voice Features",
-      description: "Add professional voiceovers to your videos",
-    },
-  ];
+const features = [
+  {
+    icon: MessageSquare,
+    title: "AI Video Creation",
+    description: "Create engaging videos using ChatGPT and other AI tools",
+    image: "https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7",
+  },
+  {
+    icon: FileVideo,
+    title: "Content Automation",
+    description: "Automate your content creation with Reddit and text-to-video",
+    image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1",
+  },
+  {
+    icon: Scissors,
+    title: "Video Processing",
+    description: "Split, edit, and enhance your videos with professional tools",
+    image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
+  },
+  {
+    icon: Mic,
+    title: "Voice Features",
+    description: "Add professional voiceovers to your videos",
+    image: "https://images.unsplash.com/photo-1518770660439-4636190af475",
+  },
+];
+
+const UserDashboard = () => {
+  const navigate = useNavigate();
+  const [selectedTool, setSelectedTool] = useState("editor");
+  const { toast } = useToast();
+  const userName = "John";
 
   const renderContent = () => {
-    if (selectedTool === "editor") {
-      return (
-        <>
+    switch (selectedTool) {
+      case "editor":
+        return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
             {features.map((feature, index) => (
               <motion.div
@@ -111,8 +115,15 @@ const UserDashboard = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="p-6 rounded-xl bg-white shadow-lg hover:shadow-xl transition-shadow border border-accent group"
+                className="p-6 rounded-xl bg-white shadow-lg hover:shadow-xl transition-shadow border border-accent group overflow-hidden"
               >
+                <div className="aspect-video w-full mb-4 overflow-hidden rounded-lg">
+                  <img
+                    src={feature.image}
+                    alt={feature.title}
+                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                  />
+                </div>
                 <div className="w-12 h-12 rounded-lg bg-accent flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <feature.icon className="w-6 h-6 text-primary" />
                 </div>
@@ -123,11 +134,14 @@ const UserDashboard = () => {
               </motion.div>
             ))}
           </div>
-          <VideoEditor />
-        </>
-      );
+        );
+      case "projects":
+        return <ProjectsGrid />;
+      case "exports":
+        return <ExportsGrid />;
+      default:
+        return null;
     }
-    return null;
   };
 
   return (
