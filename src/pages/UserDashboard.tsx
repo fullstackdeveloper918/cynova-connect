@@ -100,6 +100,36 @@ const UserDashboard = () => {
     },
   ];
 
+  const renderContent = () => {
+    if (selectedTool === "editor") {
+      return (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+            {features.map((feature, index) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="p-6 rounded-xl bg-white shadow-lg hover:shadow-xl transition-shadow border border-accent group"
+              >
+                <div className="w-12 h-12 rounded-lg bg-accent flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <feature.icon className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2 text-primary">
+                  {feature.title}
+                </h3>
+                <p className="text-muted-foreground">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
+          <VideoEditor />
+        </>
+      );
+    }
+    return null;
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -166,32 +196,7 @@ const UserDashboard = () => {
                 Upgrade to Premium
               </Button>
             </div>
-
-            {selectedTool === "editor" ? (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-                  {features.map((feature, index) => (
-                    <motion.div
-                      key={feature.title}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="p-6 rounded-xl bg-white shadow-lg hover:shadow-xl transition-shadow border border-accent group"
-                    >
-                      <div className="w-12 h-12 rounded-lg bg-accent flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                        <feature.icon className="w-6 h-6 text-primary" />
-                      </div>
-                      <h3 className="text-xl font-semibold mb-2 text-primary">
-                        {feature.title}
-                      </h3>
-                      <p className="text-muted-foreground">{feature.description}</p>
-                    </motion.div>
-                  ))}
-                </div>
-                <VideoEditor />
-              </>
-            )}
-            {/* Other tool components will be added here */}
+            {renderContent()}
           </motion.div>
         </main>
       </div>
