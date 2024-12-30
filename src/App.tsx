@@ -23,7 +23,6 @@ const App = () => (
           <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<UserDashboard />} />
           <Route path="/dashboard/editor" element={<Editor />} />
-          <Route path="/dashboard/*" element={<UserDashboard />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
