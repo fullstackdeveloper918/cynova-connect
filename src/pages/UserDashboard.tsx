@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { VideoEditor } from "@/components/VideoEditor";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 import {
   SidebarProvider,
   Sidebar,
@@ -26,12 +28,16 @@ import {
   Youtube,
   Headphones,
   ChevronDown,
+  Sparkles,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const UserDashboard = () => {
   const navigate = useNavigate();
   const [selectedTool, setSelectedTool] = useState("editor");
+  const { toast } = useToast();
+  // Temporary user data - In a real app, this would come from your auth system
+  const userName = "John";
 
   const sidebarSections = [
     {
@@ -68,6 +74,29 @@ const UserDashboard = () => {
       items: [
         { id: "support", title: "Support", icon: Headphones, path: "/dashboard/support" },
       ],
+    },
+  ];
+
+  const features = [
+    {
+      icon: MessageSquare,
+      title: "AI Video Creation",
+      description: "Create engaging videos using ChatGPT and other AI tools",
+    },
+    {
+      icon: FileVideo,
+      title: "Content Automation",
+      description: "Automate your content creation with Reddit and text-to-video",
+    },
+    {
+      icon: Scissors,
+      title: "Video Processing",
+      description: "Split, edit, and enhance your videos with professional tools",
+    },
+    {
+      icon: Mic,
+      title: "Voice Features",
+      description: "Add professional voiceovers to your videos",
     },
   ];
 
@@ -120,7 +149,48 @@ const UserDashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             className="max-w-7xl mx-auto space-y-8"
           >
-            {selectedTool === "editor" && <VideoEditor />}
+            <div className="flex justify-between items-center">
+              <h1 className="text-3xl font-bold text-primary">
+                Welcome back, {userName}! 👋
+              </h1>
+              <Button
+                onClick={() => {
+                  toast({
+                    title: "Upgrade Coming Soon",
+                    description: "Premium features will be available soon!",
+                  });
+                }}
+                className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                Upgrade to Premium
+              </Button>
+            </div>
+
+            {selectedTool === "editor" ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+                  {features.map((feature, index) => (
+                    <motion.div
+                      key={feature.title}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="p-6 rounded-xl bg-white shadow-lg hover:shadow-xl transition-shadow border border-accent group"
+                    >
+                      <div className="w-12 h-12 rounded-lg bg-accent flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <feature.icon className="w-6 h-6 text-primary" />
+                      </div>
+                      <h3 className="text-xl font-semibold mb-2 text-primary">
+                        {feature.title}
+                      </h3>
+                      <p className="text-muted-foreground">{feature.description}</p>
+                    </motion.div>
+                  ))}
+                </div>
+                <VideoEditor />
+              </>
+            )}
             {/* Other tool components will be added here */}
           </motion.div>
         </main>
