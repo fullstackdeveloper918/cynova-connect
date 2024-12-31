@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Check, Star } from "lucide-react";
+import { Check, Star, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   Accordion,
   AccordionContent,
@@ -85,10 +86,22 @@ const faqs = [
 
 const Plans = () => {
   const [isYearly, setIsYearly] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/dashboard")}
+            className="flex items-center gap-2 hover:bg-accent"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Button>
+        </div>
+        
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-primary mb-4">Choose Your Plan</h1>
           <p className="text-lg text-muted-foreground mb-8">
@@ -131,11 +144,16 @@ const Plans = () => {
               <div className="text-center mb-6">
                 <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
                 <div className="text-4xl font-bold mb-2">
-                  ${isYearly ? plan.price.yearly : plan.price.monthly}
+                  ${isYearly ? plan.price.monthly : plan.price.monthly}
                   <span className="text-lg text-muted-foreground">
-                    /{isYearly ? "year" : "month"}
+                    /month
                   </span>
                 </div>
+                {isYearly && (
+                  <div className="text-sm text-muted-foreground">
+                    ${plan.price.yearly} billed yearly
+                  </div>
+                )}
               </div>
               <ul className="space-y-4 mb-6">
                 {plan.features.map((feature) => (
