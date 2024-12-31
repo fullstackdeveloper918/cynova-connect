@@ -31,6 +31,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { UpdatesSection } from "@/components/UpdatesSection";
 
 const DashboardContent = () => {
   const navigate = useNavigate();
@@ -81,6 +82,8 @@ const DashboardContent = () => {
 
   return (
     <div className="space-y-8">
+      <UpdatesSection />
+      
       {/* Hero Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -144,7 +147,7 @@ const DashboardContent = () => {
 };
 
 const UserDashboard = () => {
-  const [selectedTool, setSelectedTool] = useState("editor");
+  const [selectedTool, setSelectedTool] = useState("dashboard");
   const navigate = useNavigate();
   const { toast } = useToast();
   const userName = "John";
@@ -168,6 +171,8 @@ const UserDashboard = () => {
         { id: "reddit", title: "Reddit Videos", icon: FileVideo, path: "/dashboard/reddit" },
         { id: "split", title: "Split Videos", icon: Scissors, path: "/dashboard/split" },
         { id: "voiceover", title: "Voiceover Videos", icon: Mic, path: "/dashboard/voiceover" },
+        { id: "would-you-rather", title: "Would You Rather Videos", icon: MessageSquare, path: "/dashboard/would-you-rather" },
+        { id: "quiz", title: "Quiz Videos", icon: FileVideo, path: "/dashboard/quiz" },
       ],
     },
     {
