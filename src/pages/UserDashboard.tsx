@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { Sparkles } from "lucide-react";
+import { DashboardContent } from "@/components/DashboardContent";
 import {
   SidebarProvider,
   Sidebar,
@@ -27,129 +28,11 @@ import {
   Youtube,
   Headphones,
   ChevronDown,
-  Sparkles,
-  ArrowRight,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { UpdatesSection } from "@/components/UpdatesSection";
-
-const DashboardContent = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  const createSections = [
-    {
-      id: "chatgpt",
-      title: "ChatGPT Videos",
-      description: "Create engaging videos with AI-generated content and narration",
-      icon: MessageSquare,
-      path: "/dashboard/chatgpt",
-      image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
-    },
-    {
-      id: "faketext",
-      title: "Fake Text Videos",
-      description: "Generate realistic text-based content for your videos",
-      icon: MessageSquare,
-      path: "/dashboard/faketext",
-      image: "https://images.unsplash.com/photo-1518005020951-eccb494ad742",
-    },
-    {
-      id: "reddit",
-      title: "Reddit Videos",
-      description: "Transform Reddit content into engaging video stories",
-      icon: FileVideo,
-      path: "/dashboard/reddit",
-      image: "https://images.unsplash.com/photo-1483058712412-4245e9b90334",
-    },
-    {
-      id: "split",
-      title: "Split Videos",
-      description: "Easily split and trim your videos with precision",
-      icon: Scissors,
-      path: "/dashboard/split",
-      image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085",
-    },
-    {
-      id: "voiceover",
-      title: "Voiceover Videos",
-      description: "Add professional AI voiceovers to your content",
-      icon: Mic,
-      path: "/dashboard/voiceover",
-      image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
-    },
-  ];
-
-  return (
-    <div className="space-y-8">
-      <UpdatesSection />
-      
-      {/* Hero Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-primary/10 via-accent to-secondary/10 rounded-xl p-8 relative overflow-hidden"
-      >
-        <div className="relative z-10">
-          <h2 className="text-3xl font-bold mb-4">Create Shorts with AI</h2>
-          <p className="text-lg text-muted-foreground mb-6 max-w-2xl">
-            Your ultimate tool for generating AI voiceovers, captivating subtitles, enhanced gameplay, and much more.
-          </p>
-          <Button
-            onClick={() => navigate("/dashboard/editor")}
-            className="bg-primary hover:bg-primary/90"
-          >
-            Get Started
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
-      </motion.div>
-
-      {/* Feature Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {createSections.map((section, index) => (
-          <motion.div
-            key={section.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="group relative overflow-hidden rounded-xl border border-accent bg-card"
-          >
-            <div className="aspect-video w-full overflow-hidden">
-              <img
-                src={section.image}
-                alt={section.title}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-            </div>
-            <div className="p-6">
-              <div className="mb-4 flex items-center gap-2">
-                <div className="rounded-lg bg-primary/10 p-2">
-                  <section.icon className="h-5 w-5 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold">{section.title}</h3>
-              </div>
-              <p className="mb-4 text-muted-foreground">{section.description}</p>
-              <Button
-                onClick={() => navigate(section.path)}
-                variant="outline"
-                className="w-full"
-              >
-                Start Creating
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 const UserDashboard = () => {
   const [selectedTool, setSelectedTool] = useState("dashboard");
   const navigate = useNavigate();
-  const { toast } = useToast();
   const userName = "John";
 
   const sidebarSections = [
@@ -236,30 +119,21 @@ const UserDashboard = () => {
         </Sidebar>
 
         <main className="flex-1 p-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-7xl mx-auto"
-          >
+          <div className="max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-8">
               <h1 className="text-3xl font-bold text-primary">
                 Welcome back, {userName}! 👋
               </h1>
               <Button
-                onClick={() => {
-                  toast({
-                    title: "Upgrade Coming Soon",
-                    description: "Premium features will be available soon!",
-                  });
-                }}
+                onClick={() => navigate("/plans")}
                 className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"
               >
                 <Sparkles className="mr-2 h-4 w-4" />
-                Upgrade to Premium
+                Plans
               </Button>
             </div>
             <DashboardContent />
-          </motion.div>
+          </div>
         </main>
       </div>
     </SidebarProvider>

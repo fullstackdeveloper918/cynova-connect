@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import UserDashboard from "./pages/UserDashboard";
 import Editor from "./pages/Editor";
+import Plans from "./pages/Plans";
 import PlaceholderPage from "./components/PlaceholderPage";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<UserDashboard />} />
           <Route path="/dashboard/editor" element={<Editor />} />
+          <Route path="/plans" element={<Plans />} />
           <Route 
             path="/dashboard/projects" 
             element={<PlaceholderPage 
