@@ -80,19 +80,34 @@ export const DashboardContent = () => {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-end items-center space-x-4">
-        <Button
-          onClick={() => navigate("/dashboard/profile")}
-          variant="outline"
-          className="gap-2"
-        >
-          <User className="h-4 w-4" />
-          Profile
-        </Button>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-primary">
+          Welcome back, {user?.name}! 👋
+        </h1>
+        <div className="flex items-center gap-4">
+          <Button
+            onClick={() => navigate("/dashboard/profile")}
+            variant="outline"
+            className="gap-2"
+          >
+            <User className="h-4 w-4" />
+            Profile
+          </Button>
+          <Button
+            onClick={() => navigate("/plans")}
+            variant="outline"
+            className="gap-2"
+          >
+            Upgrade Plan
+          </Button>
+        </div>
       </div>
 
+      <p className="text-muted-foreground">
+        Create and manage your video content with ease.
+      </p>
+
       <UpdatesSection />
-      <DashboardHero userName={user?.name} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {createSections.map((section, index) => (
