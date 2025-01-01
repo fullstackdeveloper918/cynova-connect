@@ -4,20 +4,25 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import { User, Lock, CreditCard, Gauge } from "lucide-react";
+import { useUser, useUpdateUser } from "@/hooks/useUser";
 
 export const ProfileContent = () => {
-  const [name, setName] = useState("John Doe");
-  const [email, setEmail] = useState("john@example.com");
+  const { data: user } = useUser();
+  const updateUser = useUpdateUser();
+  const [name, setName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically make an API call to update the profile
-    // For now, we'll just show a success toast
-    toast({
-      title: "Profile Updated",
-      description: `Name updated to: ${name}`,
+    updateUser.mutate({ name, email }, {
+      onSuccess: () => {
+        toast({
+          title: "Profile Updated",
+          description: `Name updated to: ${name}`,
+        });
+      }
     });
   };
 

@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { UpdatesSection } from "./UpdatesSection";
 import { DashboardHero } from "./DashboardHero";
 import { FeatureCard } from "./FeatureCard";
+import { useUser } from "@/hooks/useUser";
 import {
   MessageSquare,
   FileVideo,
@@ -75,10 +76,11 @@ const createSections = [
 export const DashboardContent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { data: user } = useUser();
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-end gap-4">
+      <div className="flex justify-end items-center space-x-4">
         <Button
           onClick={() => navigate("/dashboard/profile")}
           variant="outline"
@@ -88,8 +90,9 @@ export const DashboardContent = () => {
           Profile
         </Button>
       </div>
+
       <UpdatesSection />
-      <DashboardHero />
+      <DashboardHero userName={user?.name} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {createSections.map((section, index) => (
