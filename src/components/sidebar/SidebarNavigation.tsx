@@ -20,7 +20,10 @@ export const SidebarNavigation = () => {
     <SidebarContent>
       {sidebarSections.map((section) => (
         <SidebarGroup key={section.label}>
-          <SidebarGroupLabel>
+          <SidebarGroupLabel 
+            className={section.label === "Cynova Dashboard" ? "cursor-pointer hover:text-primary" : ""}
+            onClick={() => section.label === "Cynova Dashboard" && navigate("/dashboard")}
+          >
             <section.icon className="mr-2 h-4 w-4" />
             {section.label}
             <ChevronDown className="ml-auto h-4 w-4" />

@@ -13,18 +13,31 @@ export const ProfileContent = () => {
 
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
+    // Here you would typically make an API call to update the profile
+    // For now, we'll just show a success toast
     toast({
       title: "Profile Updated",
-      description: "Your profile has been successfully updated.",
+      description: `Name updated to: ${name}`,
     });
   };
 
   const handleUpdatePassword = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentPassword || !newPassword) {
+      toast({
+        title: "Error",
+        description: "Please fill in all password fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    // Here you would typically make an API call to update the password
     toast({
       title: "Password Updated",
       description: "Your password has been successfully updated.",
     });
+    setCurrentPassword("");
+    setNewPassword("");
   };
 
   return (

@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Sparkles, User } from "lucide-react";
+import { User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { UpdatesSection } from "./UpdatesSection";
@@ -54,6 +54,22 @@ const createSections = [
     path: "/dashboard/voiceover",
     image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
   },
+  {
+    id: "would-you-rather",
+    title: "Would You Rather Videos",
+    description: "Create engaging decision-based content videos.",
+    icon: MessageSquare,
+    path: "/dashboard/would-you-rather",
+    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
+  },
+  {
+    id: "quiz",
+    title: "Quiz Videos",
+    description: "Generate interactive quiz videos to engage your audience.",
+    icon: FileVideo,
+    path: "/dashboard/quiz",
+    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
+  },
 ];
 
 export const DashboardContent = () => {
@@ -70,13 +86,6 @@ export const DashboardContent = () => {
         >
           <User className="h-4 w-4" />
           Profile
-        </Button>
-        <Button
-          onClick={() => navigate("/plans")}
-          className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"
-        >
-          <Sparkles className="mr-2 h-4 w-4" />
-          Plans
         </Button>
       </div>
       <UpdatesSection />
