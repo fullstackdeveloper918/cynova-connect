@@ -5,15 +5,20 @@ interface User {
   email: string;
 }
 
-const defaultUser: User = {
-  name: "John Doe",
-  email: "john@example.com"
+const USER_STORAGE_KEY = 'user_data';
+
+const getStoredUser = (): User => {
+  const storedData = localStorage.getItem(USER_STORAGE_KEY);
+  return storedData ? JSON.parse(storedData) : {
+    name: "John Doe",
+    email: "john@example.com"
+  };
 };
 
 export const useUser = () => {
   return useQuery({
     queryKey: ['user'],
-    queryFn: () => defaultUser,
+    queryFn: getStoredUser,
   });
 };
 
@@ -22,13 +27,13 @@ export const useUpdateUser = () => {
   
   return useMutation({
     mutationFn: async (newUser: Partial<User>) => {
-      // Here you would typically make an API call
-      // For now, we'll just simulate an update
-      const currentUser = queryClient.getQueryData<User>(['user']) || defaultUser;
-      return { ...currentUser, ...newUser };
+      const currentUser = queryClient.getQueryData<User>(['user']) || getStoredUser();
+      const updatedUser = { ...currentUser, ...newUser };
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+      return updatedUser;
     },
-    onSuccess: (updatedUser) => {
-      queryClient.setQueryData(['user'], updatedUser);
+    onSuccess: (data) => {
+      queryClient.setQueryData(['user'], data);
     },
   });
 };
