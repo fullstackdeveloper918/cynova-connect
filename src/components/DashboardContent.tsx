@@ -1,81 +1,81 @@
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 import { UpdatesSection } from "./UpdatesSection";
-import { ProjectsGrid } from "./ProjectsGrid";
-import { ExportsGrid } from "./ExportsGrid";
+import { DashboardHero } from "./DashboardHero";
+import { FeatureCard } from "./FeatureCard";
 import { useUser } from "@/hooks/useUser";
+import {
+  MessageSquare,
+  FileVideo,
+  Scissors,
+  Mic,
+} from "lucide-react";
 
 const createSections = [
   {
-    title: "Create Video",
-    description: "Start creating your video content.",
-    action: "/dashboard/editor",
-  },
-  {
-    title: "Manage Projects",
-    description: "View and manage your existing projects.",
-    action: "/dashboard/projects",
-  },
-  {
-    title: "Export Videos",
-    description: "Export your videos for sharing.",
-    action: "/dashboard/exports",
-  },
-  {
+    id: "chatgpt",
     title: "ChatGPT Videos",
-    description: "Create engaging videos using AI-generated content.",
-    action: "/dashboard/chatgpt",
+    description: "Create engaging videos with AI-generated content and narration",
+    icon: MessageSquare,
+    path: "/dashboard/chatgpt",
+    image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
   },
   {
+    id: "faketext",
     title: "Fake Text Videos",
-    description: "Generate realistic text-based content for your videos.",
-    action: "/dashboard/faketext",
+    description: "Generate realistic text-based content for your videos",
+    icon: MessageSquare,
+    path: "/dashboard/faketext",
+    image: "https://images.unsplash.com/photo-1518005020951-eccb494ad742",
   },
   {
+    id: "reddit",
     title: "Reddit Videos",
-    description: "Transform Reddit content into engaging video stories.",
-    action: "/dashboard/reddit",
+    description: "Transform Reddit content into engaging video stories",
+    icon: FileVideo,
+    path: "/dashboard/reddit",
+    image: "https://images.unsplash.com/photo-1483058712412-4245e9b90334",
   },
   {
+    id: "split",
     title: "Split Videos",
-    description: "Easily split and trim your videos with precision.",
-    action: "/dashboard/split",
+    description: "Easily split and trim your videos with precision",
+    icon: Scissors,
+    path: "/dashboard/split",
+    image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085",
   },
   {
+    id: "voiceover",
     title: "Voiceover Videos",
-    description: "Add professional AI voiceovers to your content.",
-    action: "/dashboard/voiceover",
+    description: "Add professional AI voiceovers to your content",
+    icon: Mic,
+    path: "/dashboard/voiceover",
+    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
   },
   {
+    id: "would-you-rather",
     title: "Would You Rather Videos",
     description: "Create engaging decision-based content videos.",
-    action: "/dashboard/would-you-rather",
+    icon: MessageSquare,
+    path: "/dashboard/would-you-rather",
+    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
   },
   {
+    id: "quiz",
     title: "Quiz Videos",
     description: "Generate interactive quiz videos to engage your audience.",
-    action: "/dashboard/quiz",
-  },
-  {
-    title: "TikTok Downloader",
-    description: "Download and manage TikTok videos for your content.",
-    action: "/dashboard/tiktok",
-  },
-  {
-    title: "YouTube Downloader",
-    description: "Download and manage YouTube videos for your content.",
-    action: "/dashboard/youtube",
-  },
-  {
-    title: "Support",
-    description: "Get help and support for all Cynova features and services.",
-    action: "/dashboard/support",
+    icon: FileVideo,
+    path: "/dashboard/quiz",
+    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
   },
 ];
 
 export const DashboardContent = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { data: user } = useUser();
 
   return (
@@ -95,9 +95,10 @@ export const DashboardContent = () => {
           </Button>
           <Button
             onClick={() => navigate("/plans")}
+            variant="outline"
             className="gap-2"
           >
-            Plans
+            Upgrade Plan
           </Button>
         </div>
       </div>
@@ -110,22 +111,8 @@ export const DashboardContent = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {createSections.map((section, index) => (
-          <div key={index} className="p-4 border rounded-md">
-            <h2 className="text-lg font-semibold">{section.title}</h2>
-            <p className="text-muted-foreground">{section.description}</p>
-            <Button
-              onClick={() => navigate(section.action)}
-              className="mt-2"
-            >
-              Go
-            </Button>
-          </div>
+          <FeatureCard key={section.id} {...section} index={index} />
         ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <ProjectsGrid />
-        <ExportsGrid />
       </div>
     </div>
   );
