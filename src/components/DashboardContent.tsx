@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
+import { Sparkles, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { UpdatesSection } from "./UpdatesSection";
@@ -62,10 +62,26 @@ export const DashboardContent = () => {
 
   return (
     <div className="space-y-8">
+      <div className="flex justify-end gap-4">
+        <Button
+          onClick={() => navigate("/dashboard/profile")}
+          variant="outline"
+          className="gap-2"
+        >
+          <User className="h-4 w-4" />
+          Profile
+        </Button>
+        <Button
+          onClick={() => navigate("/plans")}
+          className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+        >
+          <Sparkles className="mr-2 h-4 w-4" />
+          Plans
+        </Button>
+      </div>
       <UpdatesSection />
       <DashboardHero />
 
-      {/* Feature Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {createSections.map((section, index) => (
           <FeatureCard key={section.id} {...section} index={index} />
