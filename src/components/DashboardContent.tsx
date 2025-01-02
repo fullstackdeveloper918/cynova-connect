@@ -98,7 +98,7 @@ export const DashboardContent = () => {
             variant="outline"
             className="gap-2"
           >
-            Upgrade Plan
+            Plans
           </Button>
         </div>
       </div>

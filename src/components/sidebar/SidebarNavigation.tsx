@@ -17,11 +17,15 @@ export const SidebarNavigation = () => {
   const [selectedTool, setSelectedTool] = useState("");
 
   return (
-    <SidebarContent>
+    <SidebarContent className="md:bg-background bg-white dark:md:bg-background dark:bg-white">
       {sidebarSections.map((section) => (
         <SidebarGroup key={section.label}>
           <SidebarGroupLabel 
-            className={section.label === "Cynova Dashboard" ? "cursor-pointer hover:text-primary" : ""}
+            className={`${
+              section.label === "Cynova Dashboard" 
+                ? "cursor-pointer hover:text-primary" 
+                : ""
+            } text-gray-800 dark:text-gray-800 md:text-inherit md:dark:text-inherit`}
             onClick={() => section.label === "Cynova Dashboard" && navigate("/dashboard")}
           >
             <section.icon className="mr-2 h-4 w-4" />
@@ -39,6 +43,7 @@ export const SidebarNavigation = () => {
                     }}
                     tooltip={item.title}
                     isActive={selectedTool === item.id}
+                    className="text-gray-800 dark:text-gray-800 md:text-inherit md:dark:text-inherit"
                   >
                     <item.icon className="w-4 h-4" />
                     <span>{item.title}</span>
