@@ -95,8 +95,8 @@ export const DashboardContent = () => {
           </Button>
           <Button
             onClick={() => navigate("/plans")}
-            variant="outline"
-            className="gap-2"
+            variant="default"
+            className="gap-2 bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all"
           >
             Plans
           </Button>

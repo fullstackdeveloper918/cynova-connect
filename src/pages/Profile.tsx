@@ -2,6 +2,7 @@ import {
   SidebarProvider,
   Sidebar,
   SidebarHeader,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { SidebarNavigation } from "@/components/sidebar/SidebarNavigation";
 import { ProfileContent } from "@/components/ProfileContent";
@@ -10,7 +11,7 @@ const Profile = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        <Sidebar>
+        <Sidebar className="hidden md:block">
           <SidebarHeader className="p-4">
             <img
               src="/logo.png"
@@ -21,9 +22,14 @@ const Profile = () => {
           <SidebarNavigation />
         </Sidebar>
 
-        <main className="flex-1 p-6">
-          <div className="max-w-7xl mx-auto">
-            <ProfileContent />
+        <main className="flex-1">
+          <div className="p-4 md:hidden">
+            <SidebarTrigger />
+          </div>
+          <div className="p-6">
+            <div className="max-w-7xl mx-auto">
+              <ProfileContent />
+            </div>
           </div>
         </main>
       </div>
