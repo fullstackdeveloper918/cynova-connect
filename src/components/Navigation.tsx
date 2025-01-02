@@ -70,12 +70,12 @@ export function Navigation() {
             </span>
           </Link>
 
-          <NavigationMenu>
+          <NavigationMenu className="hidden md:flex">
             <NavigationMenuList>
               <NavigationMenuItem>
                 <NavigationMenuTrigger>Features</NavigationMenuTrigger>
                 <NavigationMenuContent>
-                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                  <ul className="grid w-[400px] gap-3 p-4 bg-white md:w-[500px] md:grid-cols-2 lg:w-[600px]">
                     {features.map((feature) => (
                       <li key={feature.title}>
                         <NavigationMenuLink asChild>
@@ -113,6 +113,65 @@ export function Navigation() {
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
+
+          {/* Mobile Menu */}
+          <div className="md:hidden">
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-2 text-gray-600 hover:text-gray-900"
+            >
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                {isOpen ? (
+                  <path d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+
+            {isOpen && (
+              <div className="absolute top-16 left-0 right-0 bg-white border-b border-gray-200 p-4">
+                <nav className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="font-medium">Features</div>
+                    {features.map((feature) => (
+                      <Link
+                        key={feature.title}
+                        to={feature.href}
+                        className="block px-2 py-1 text-sm text-gray-600 hover:text-gray-900"
+                      >
+                        {feature.title}
+                      </Link>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => {
+                      scrollToPricing();
+                      setIsOpen(false);
+                    }}
+                    className="block w-full text-left px-2 py-1 text-gray-600 hover:text-gray-900"
+                  >
+                    Pricing
+                  </button>
+                  <Link
+                    to="/affiliate"
+                    className="block px-2 py-1 text-gray-600 hover:text-gray-900"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Affiliate
+                  </Link>
+                </nav>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
