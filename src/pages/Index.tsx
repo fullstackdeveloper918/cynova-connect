@@ -4,14 +4,51 @@ import { ArrowRight, MessageSquare, FileVideo, Scissors, Mic, Sparkles } from "l
 import { useNavigate } from "react-router-dom";
 import { Features } from "@/components/Features";
 import { HowItWorks } from "@/components/HowItWorks";
+import { Navigation } from "@/components/Navigation";
+
+const plans = [
+  {
+    name: "Starter",
+    price: 19,
+    features: [
+      "50 AI videos per month",
+      "40 minutes of exporting",
+      "30 minutes of voiceover",
+      "100 AI Images",
+    ],
+  },
+  {
+    name: "Pro",
+    price: 29,
+    popular: true,
+    features: [
+      "100 AI videos per month",
+      "2 hours of export",
+      "150 voiceover minutes",
+      "300 AI Images",
+    ],
+  },
+  {
+    name: "Premium",
+    price: 49,
+    features: [
+      "200 AI videos per month",
+      "3 hours of export",
+      "200 voiceover minutes",
+      "500 AI Images",
+    ],
+  },
+];
 
 const Index = () => {
   const navigate = useNavigate();
 
   return (
     <div className="relative">
+      <Navigation />
+      
       {/* Hero Section */}
-      <div className="bg-gradient-to-b from-accent to-background min-h-screen">
+      <div className="bg-gradient-to-b from-accent to-background min-h-screen pt-20">
         <div className="container mx-auto px-4 pt-32 pb-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -91,12 +128,6 @@ const Index = () => {
             ))}
           </motion.div>
         </div>
-
-        {/* Gradient Orbs */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl" />
-        </div>
       </div>
 
       {/* Features Section */}
@@ -104,6 +135,70 @@ const Index = () => {
 
       {/* How It Works Section */}
       <HowItWorks />
+
+      {/* Plans Section */}
+      <section id="pricing-section" className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <span className="text-primary font-medium mb-4 block">Pricing</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Choose Your Plan</h2>
+            <p className="text-muted-foreground text-lg">
+              Select the perfect plan for your content creation needs
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {plans.map((plan, index) => (
+              <motion.div
+                key={plan.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className={`relative rounded-xl border ${
+                  plan.popular ? "border-primary shadow-lg" : "border-accent"
+                } bg-card p-8`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium">
+                    Most Popular
+                  </div>
+                )}
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                  <div className="text-4xl font-bold mb-2">
+                    ${plan.price}
+                    <span className="text-lg text-muted-foreground">/month</span>
+                  </div>
+                </div>
+                <ul className="space-y-4 mb-8">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-center gap-2">
+                      <ArrowRight className="h-4 w-4 text-primary" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className={`w-full ${
+                    plan.popular
+                      ? "bg-primary hover:bg-primary/90"
+                      : "bg-accent hover:bg-accent/90"
+                  }`}
+                  onClick={() => navigate("/signup")}
+                >
+                  Get Started
+                </Button>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-b from-background to-accent">
