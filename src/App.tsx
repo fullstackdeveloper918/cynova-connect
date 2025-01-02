@@ -11,6 +11,8 @@ import Editor from "./pages/Editor";
 import Plans from "./pages/Plans";
 import Profile from "./pages/Profile";
 import PlaceholderPage from "./components/PlaceholderPage";
+import TikTokDownloader from "./pages/TikTokDownloader";
+import YouTubeDownloader from "./pages/YouTubeDownloader";
 
 const queryClient = new QueryClient();
 
@@ -91,20 +93,8 @@ const App = () => (
               description="Generate interactive quiz videos to engage your audience." 
             />} 
           />
-          <Route 
-            path="/dashboard/tiktok" 
-            element={<PlaceholderPage 
-              title="TikTok Downloader" 
-              description="Download and manage TikTok videos for your content." 
-            />} 
-          />
-          <Route 
-            path="/dashboard/youtube" 
-            element={<PlaceholderPage 
-              title="YouTube Downloader" 
-              description="Download and manage YouTube videos for your content." 
-            />} 
-          />
+          <Route path="/dashboard/tiktok" element={<TikTokDownloader />} />
+          <Route path="/dashboard/youtube" element={<YouTubeDownloader />} />
           <Route 
             path="/dashboard/support" 
             element={<PlaceholderPage 
