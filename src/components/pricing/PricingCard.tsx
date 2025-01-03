@@ -21,9 +21,10 @@ interface PricingCardProps {
   isYearly: boolean;
   isLoading: boolean;
   onSubscribe: () => void;
+  isCurrentPlan?: boolean;
 }
 
-export const PricingCard = ({ plan, isYearly, isLoading, onSubscribe }: PricingCardProps) => {
+export const PricingCard = ({ plan, isYearly, isLoading, onSubscribe, isCurrentPlan }: PricingCardProps) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -66,9 +67,9 @@ export const PricingCard = ({ plan, isYearly, isLoading, onSubscribe }: PricingC
         className="w-full" 
         variant={plan.popular ? "default" : "outline"}
         onClick={onSubscribe}
-        disabled={isLoading}
+        disabled={isLoading || isCurrentPlan}
       >
-        {isLoading ? "Loading..." : "Get Started"}
+        {isLoading ? "Loading..." : isCurrentPlan ? "Current Plan" : "Get Started"}
       </Button>
     </motion.div>
   );

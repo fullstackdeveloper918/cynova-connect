@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PricingCard } from "@/components/pricing/PricingCard";
 import { PricingFAQ } from "@/components/pricing/PricingFAQ";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const plans = [
   {
@@ -97,14 +98,25 @@ const Plans = () => {
   const [isYearly, setIsYearly] = useState(false);
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  const { data: subscription } = useSubscription();
 
   const handleSubscribe = async (plan: typeof plans[0]) => {
     try {
+      // Check if user is already subscribed to this plan
+      if (subscription?.plan_name === plan.name && subscription?.status === 'active') {
+        toast.error("You are already subscribed to this plan");
+        return;
+      }
+
       setIsLoading(plan.name);
       const priceId = isYearly ? plan.priceId.yearly : plan.priceId.monthly;
       
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { priceId, mode: 'subscription' }
+        body: { 
+          priceId, 
+          mode: 'subscription',
+          currentPlan: subscription?.plan_name
+        }
       });
 
       if (error) throw error;
@@ -135,6 +147,11 @@ const Plans = () => {
         
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-primary mb-4">Choose Your Plan</h1>
+          {subscription?.status === 'active' && (
+            <p className="text-lg text-muted-foreground mb-4">
+              Current plan: {subscription.plan_name}
+            </p>
+          )}
           <p className="text-lg text-muted-foreground mb-8">
             Select the perfect plan for your content creation needs
           </p>
@@ -162,6 +179,7 @@ const Plans = () => {
               isYearly={isYearly}
               isLoading={isLoading === plan.name}
               onSubscribe={() => handleSubscribe(plan)}
+              isCurrentPlan={subscription?.plan_name === plan.name && subscription?.status === 'active'}
             />
           ))}
         </div>
