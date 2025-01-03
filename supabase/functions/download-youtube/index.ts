@@ -1,25 +1,23 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 function extractVideoId(url: string) {
   try {
-    // First, try to validate if it's a valid URL
     new URL(url);
     
     let videoId = '';
     
     if (url.includes('youtu.be/')) {
-      // Handle youtu.be format
       videoId = url.split('youtu.be/')[1];
       if (videoId) {
         videoId = videoId.split('?')[0];
       }
     } else if (url.includes('youtube.com/watch')) {
-      // Handle youtube.com format
       const urlObj = new URL(url);
       videoId = urlObj.searchParams.get('v') || '';
     }
@@ -38,7 +36,6 @@ function extractVideoId(url: string) {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -63,11 +60,10 @@ serve(async (req) => {
     const videoId = extractVideoId(url);
     console.log('Successfully extracted video ID:', videoId);
 
-    // Using YouTube v3 API endpoint
-    const rapidApiUrl = 'https://youtube-v31.p.rapidapi.com/videos';
+    // Using a different YouTube API endpoint
+    const rapidApiUrl = 'https://youtube-media-downloader.p.rapidapi.com/v2/video/details';
     const searchParams = new URLSearchParams({
-      part: 'contentDetails,snippet,statistics',
-      id: videoId
+      videoId: videoId
     });
     
     console.log('Fetching video details from:', `${rapidApiUrl}?${searchParams}`);
@@ -76,7 +72,7 @@ serve(async (req) => {
       method: 'GET',
       headers: {
         'X-RapidAPI-Key': rapidApiKey,
-        'X-RapidAPI-Host': 'youtube-v31.p.rapidapi.com'
+        'X-RapidAPI-Host': 'youtube-media-downloader.p.rapidapi.com'
       }
     });
 
@@ -89,19 +85,19 @@ serve(async (req) => {
     const data = await rapidApiResponse.json();
     console.log('Video details response:', data);
 
-    if (!data.items || data.items.length === 0) {
+    if (!data.title) {
       throw new Error('Video not found');
     }
 
-    const videoDetails = data.items[0];
-    const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    // Get the highest quality format available
+    const format = data.formats.find(f => f.qualityLabel === '720p') || data.formats[0];
 
     return new Response(
       JSON.stringify({
-        videoUrl: videoUrl,
-        title: videoDetails.snippet.title,
-        description: videoDetails.snippet.description,
-        thumbnail: videoDetails.snippet.thumbnails.high.url
+        videoUrl: format.url,
+        title: data.title,
+        description: data.description,
+        thumbnail: data.thumbnail[0].url
       }),
       {
         headers: {
@@ -126,4 +122,4 @@ serve(async (req) => {
       }
     );
   }
-})
+});
