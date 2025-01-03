@@ -100,11 +100,7 @@ const Index = () => {
                   ))}
                 </ul>
                 <Button
-                  className={`w-full ${
-                    plan.popular
-                      ? "bg-primary hover:bg-primary/90"
-                      : "bg-accent hover:bg-accent/90"
-                  }`}
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                   onClick={() => navigate("/signup")}
                 >
                   Get Started
