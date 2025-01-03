@@ -60,7 +60,6 @@ serve(async (req) => {
     const videoId = extractVideoId(url);
     console.log('Successfully extracted video ID:', videoId);
 
-    // Using a different YouTube API endpoint
     const rapidApiUrl = 'https://youtube-media-downloader.p.rapidapi.com/v2/video/details';
     const searchParams = new URLSearchParams({
       videoId: videoId
@@ -85,19 +84,28 @@ serve(async (req) => {
     const data = await rapidApiResponse.json();
     console.log('Video details response:', data);
 
-    if (!data.title) {
-      throw new Error('Video not found');
+    if (!data || !data.title) {
+      throw new Error('Invalid response: Missing video data');
+    }
+
+    // Ensure formats exists and is an array before trying to use find
+    if (!data.formats || !Array.isArray(data.formats)) {
+      console.error('Invalid formats data:', data.formats);
+      throw new Error('Video format information not available');
     }
 
     // Get the highest quality format available
     const format = data.formats.find(f => f.qualityLabel === '720p') || data.formats[0];
+    if (!format || !format.url) {
+      throw new Error('No valid video format found');
+    }
 
     return new Response(
       JSON.stringify({
         videoUrl: format.url,
         title: data.title,
-        description: data.description,
-        thumbnail: data.thumbnail[0].url
+        description: data.description || '',
+        thumbnail: data.thumbnail && data.thumbnail[0] ? data.thumbnail[0].url : `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
       }),
       {
         headers: {
