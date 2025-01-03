@@ -12,6 +12,7 @@ import {
   CardFooter 
 } from "./ui/card";
 import { Alert, AlertDescription } from "./ui/alert";
+import { supabase } from "@/integrations/supabase/client";
 
 export const TikTokDownloader = () => {
   const [url, setUrl] = useState("");
@@ -29,20 +30,28 @@ export const TikTokDownloader = () => {
 
     setIsDownloading(true);
     try {
-      // In a real implementation, this would call your backend API
-      // For demo purposes, we'll show a success message
+      const { data, error } = await supabase.functions.invoke('download-tiktok', {
+        body: { url }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        throw new Error(data.message || data.error);
+      }
+
+      // Here we would typically start the download using the returned URL
       toast({
-        title: "Download started",
-        description: "Your video will be downloaded shortly.",
+        title: "Service Not Available",
+        description: "The download service is currently being integrated. Please try again later.",
+        variant: "destructive",
       });
       
-      // Simulate download delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
     } catch (error) {
+      console.error('Download error:', error);
       toast({
         title: "Download failed",
-        description: "There was an error downloading your video. Please try again.",
+        description: error.message || "There was an error downloading your video. Please try again.",
         variant: "destructive",
       });
     } finally {
