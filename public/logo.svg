@@ -1,6 +1,27 @@
 <svg width="800" height="200" viewBox="0 0 800 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M250 150 L350 50 L450 150 L550 50" stroke="#9b87f5" stroke-width="20"/>
-  <rect x="50" y="50" width="100" height="100" transform="rotate(45 100 100)" fill="black"/>
-  <rect x="45" y="45" width="20" height="20" transform="rotate(45 55 55)" fill="#9b87f5"/>
-  <text x="200" y="120" font-family="Arial" font-size="80" font-weight="bold">CYNOVA</text>
+  <!-- Main hexagon shape -->
+  <path d="M100 50 L150 25 L200 50 L200 100 L150 125 L100 100 Z" 
+        fill="#9b87f5" 
+        stroke="#7E69AB" 
+        stroke-width="4"/>
+  
+  <!-- Inner decorative lines -->
+  <path d="M125 62.5 L175 87.5 M125 87.5 L175 62.5" 
+        stroke="#E5DEFF" 
+        stroke-width="3" 
+        stroke-linecap="round"/>
+  
+  <!-- Company name with modern font -->
+  <text x="240" y="100" 
+        font-family="Arial, sans-serif" 
+        font-size="72" 
+        font-weight="bold" 
+        fill="#1A1F2C">
+    CYNOVA
+  </text>
+  
+  <!-- Decorative dots -->
+  <circle cx="450" cy="85" r="4" fill="#9b87f5"/>
+  <circle cx="470" cy="85" r="4" fill="#7E69AB"/>
+  <circle cx="490" cy="85" r="4" fill="#6E59A5"/>
 </svg>
