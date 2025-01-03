@@ -32,6 +32,8 @@ serve(async (req) => {
     }
 
     const rapidApiUrl = 'https://tiktok-download-without-watermark.p.rapidapi.com/analysis'
+    console.log('Calling RapidAPI endpoint:', rapidApiUrl)
+    
     const rapidApiResponse = await fetch(`${rapidApiUrl}?url=${encodeURIComponent(url)}`, {
       method: 'GET',
       headers: {
@@ -41,22 +43,54 @@ serve(async (req) => {
     })
 
     if (!rapidApiResponse.ok) {
-      console.error('RapidAPI error:', await rapidApiResponse.text())
-      throw new Error('Failed to fetch video information')
+      const errorText = await rapidApiResponse.text()
+      console.error('RapidAPI error response:', errorText)
+      throw new Error(`Failed to fetch video information: ${errorText}`)
     }
 
     const data = await rapidApiResponse.json()
-    console.log('RapidAPI response:', data)
+    console.log('RapidAPI response data:', JSON.stringify(data, null, 2))
 
-    if (!data.video || !data.video.url_list || data.video.url_list.length === 0) {
-      throw new Error('No video URL found in response')
+    // Check for different possible response structures
+    let videoUrl = null
+    let title = 'TikTok Video'
+
+    if (data.data) {
+      // Handle response format where video URL is in data.data
+      videoUrl = data.data.play || data.data.wmplay || data.data.hdplay
+      title = data.data.title || title
+    } else if (data.video && data.video.url_list) {
+      // Handle response format with url_list
+      videoUrl = data.video.url_list[0]
+      title = data.title || title
+    } else if (typeof data === 'object') {
+      // Try to find any URL-like string in the response
+      const findVideoUrl = (obj: any): string | null => {
+        for (const key in obj) {
+          if (typeof obj[key] === 'string' && obj[key].startsWith('http') && obj[key].includes('.mp4')) {
+            return obj[key]
+          } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+            const found = findVideoUrl(obj[key])
+            if (found) return found
+          }
+        }
+        return null
+      }
+      videoUrl = findVideoUrl(data)
     }
+
+    if (!videoUrl) {
+      console.error('No video URL found in response. Full response:', JSON.stringify(data, null, 2))
+      throw new Error('Could not extract video URL from the response')
+    }
+
+    console.log('Successfully extracted video URL:', videoUrl)
 
     return new Response(
       JSON.stringify({
         success: true,
-        videoUrl: data.video.url_list[0],
-        title: data.title || 'TikTok Video'
+        videoUrl,
+        title
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
