@@ -49,12 +49,12 @@ serve(async (req) => {
     const videoId = extractVideoId(url);
     console.log('Extracted video ID:', videoId);
 
-    // Using y2mate API endpoint which is more reliable
-    const detailsResponse = await fetch(`https://youtube-mp36.p.rapidapi.com/dl?id=${videoId}`, {
+    // Using a different RapidAPI endpoint for better reliability
+    const detailsResponse = await fetch(`https://youtube-video-download-info.p.rapidapi.com/dl?id=${videoId}`, {
       method: 'GET',
       headers: {
         'X-RapidAPI-Key': rapidApiKey,
-        'X-RapidAPI-Host': 'youtube-mp36.p.rapidapi.com'
+        'X-RapidAPI-Host': 'youtube-video-download-info.p.rapidapi.com'
       }
     });
 
@@ -66,14 +66,22 @@ serve(async (req) => {
     const data = await detailsResponse.json();
     console.log('API Response:', JSON.stringify(data, null, 2));
 
-    if (!data || data.status === 'fail') {
-      throw new Error('Failed to process video');
+    if (!data || !data.formats) {
+      throw new Error('Invalid API response format');
     }
 
-    // Return the processed video information
+    // Find the best quality MP4 format
+    const format = data.formats.find((f: any) => 
+      f.qualityLabel === '720p' && f.container === 'mp4'
+    ) || data.formats.find((f: any) => f.container === 'mp4');
+
+    if (!format || !format.url) {
+      throw new Error('No suitable video format found');
+    }
+
     return new Response(
       JSON.stringify({
-        videoUrl: data.link,
+        videoUrl: format.url,
         title: data.title || 'YouTube Video',
         thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
       }),
