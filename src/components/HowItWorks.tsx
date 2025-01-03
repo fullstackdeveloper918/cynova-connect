@@ -3,18 +3,18 @@ import { motion } from "framer-motion";
 const steps = [
   {
     number: "01",
-    title: "Sign Up",
-    description: "Create your account in seconds with just your email",
+    title: "Create Your Script",
+    description: "Draft your content or use our ready-made templates",
   },
   {
     number: "02",
-    title: "Configure",
-    description: "Set up your preferences and requirements easily",
+    title: "Customize Your Video",
+    description: "Add voiceovers, subtitles, and visuals to match your style",
   },
   {
     number: "03",
-    title: "Launch",
-    description: "Start using Cynova's powerful AI features instantly",
+    title: "Generate and Share",
+    description: "Produce your video in minutes and share it anywhere",
   },
 ];
 
