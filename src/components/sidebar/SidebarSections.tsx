@@ -10,6 +10,7 @@ import {
   Video,
   Youtube,
   Headphones,
+  Users,
 } from "lucide-react";
 
 export const sidebarSections = [
@@ -48,6 +49,7 @@ export const sidebarSections = [
     icon: Headphones,
     items: [
       { id: "support", title: "Support", icon: Headphones, path: "/dashboard/support" },
+      { id: "affiliate", title: "Affiliate Program", icon: Users, path: "/dashboard/affiliate" },
     ],
   },
 ];

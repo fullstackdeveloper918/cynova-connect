@@ -13,6 +13,7 @@ import Profile from "./pages/Profile";
 import PlaceholderPage from "./components/PlaceholderPage";
 import TikTokDownloader from "./pages/TikTokDownloader";
 import YouTubeDownloader from "./pages/YouTubeDownloader";
+import Affiliate from "./pages/Affiliate";
 
 const queryClient = new QueryClient();
 
@@ -95,13 +96,11 @@ const App = () => (
           />
           <Route path="/dashboard/tiktok" element={<TikTokDownloader />} />
           <Route path="/dashboard/youtube" element={<YouTubeDownloader />} />
-          <Route 
-            path="/dashboard/support" 
-            element={<PlaceholderPage 
-              title="Support" 
-              description="Get help and support for all Cynova features and services." 
-            />} 
-          />
+          <Route path="/dashboard/support" element={<PlaceholderPage 
+            title="Support" 
+            description="Get help and support for all Cynova features and services." 
+          />} />
+          <Route path="/dashboard/affiliate" element={<Affiliate />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
