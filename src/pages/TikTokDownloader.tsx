@@ -4,6 +4,7 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import { SidebarNavigation } from "@/components/sidebar/SidebarNavigation";
+import { TikTokDownloader as TikTokDownloaderComponent } from "@/components/TikTokDownloader";
 
 const TikTokDownloader = () => {
   return (
@@ -26,20 +27,7 @@ const TikTokDownloader = () => {
             <p className="text-muted-foreground mb-8">
               Download TikTok videos easily with our downloader.
             </p>
-            {/* TikTok downloader implementation */}
-            <form>
-              <input
-                type="text"
-                placeholder="Enter TikTok video URL"
-                className="border p-2 rounded w-full"
-              />
-              <button
-                type="submit"
-                className="mt-4 bg-blue-500 text-white p-2 rounded"
-              >
-                Download
-              </button>
-            </form>
+            <TikTokDownloaderComponent />
           </div>
         </main>
       </div>

@@ -2,8 +2,16 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "./ui/use-toast";
-import { Download, Link } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { Download, Link, AlertCircle } from "lucide-react";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle,
+  CardFooter 
+} from "./ui/card";
+import { Alert, AlertDescription } from "./ui/alert";
 
 export const TikTokDownloader = () => {
   const [url, setUrl] = useState("");
@@ -46,12 +54,18 @@ export const TikTokDownloader = () => {
     <div className="container mx-auto p-4 max-w-3xl">
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>TikTok Video Downloader</CardTitle>
+          <CardTitle className="text-2xl">TikTok Video Downloader</CardTitle>
           <CardDescription>
-            Download TikTok videos by pasting the video URL below
+            Download TikTok videos without watermark by pasting the video URL below
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Make sure to copy the video URL from the TikTok app or website
+            </AlertDescription>
+          </Alert>
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Input
@@ -81,6 +95,9 @@ export const TikTokDownloader = () => {
             </Button>
           </div>
         </CardContent>
+        <CardFooter className="text-sm text-muted-foreground">
+          Note: This tool is for personal use only. Please respect TikTok's terms of service.
+        </CardFooter>
       </Card>
     </div>
   );
