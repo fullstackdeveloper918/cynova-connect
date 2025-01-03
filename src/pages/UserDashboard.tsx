@@ -14,7 +14,7 @@ const UserDashboard = () => {
         <Sidebar className="hidden md:block">
           <SidebarHeader className="p-4">
             <img
-              src="/logo.png"
+              src="/lovable-uploads/ccea9cb0-6878-4c15-9768-dffd9b382752.png"
               alt="Cynova Logo"
               className="h-8 w-auto mx-auto"
             />
