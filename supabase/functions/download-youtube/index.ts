@@ -12,8 +12,6 @@ function extractVideoId(url: string) {
       ? url.split('youtu.be/')[1]?.split('?')[0]
       : url.split('v=')[1]?.split('&')[0];
 
-    console.log('Extracted video ID:', videoId);
-    
     if (!videoId || videoId.length !== 11) {
       throw new Error(`Invalid video ID: ${videoId}`);
     }
@@ -38,7 +36,7 @@ serve(async (req) => {
     }
 
     const { url } = await req.json();
-    console.log('Received request with URL:', url);
+    console.log('Processing YouTube URL:', url);
 
     if (!url) {
       throw new Error('URL is required');
@@ -49,13 +47,14 @@ serve(async (req) => {
     }
 
     const videoId = extractVideoId(url);
-    
-    // Using a different RapidAPI endpoint for better reliability
-    const detailsResponse = await fetch(`https://youtube-video-and-shorts-downloader.p.rapidapi.com/get_video?url=${encodeURIComponent(url)}`, {
+    console.log('Extracted video ID:', videoId);
+
+    // Using y2mate API endpoint which is more reliable
+    const detailsResponse = await fetch(`https://youtube-mp36.p.rapidapi.com/dl?id=${videoId}`, {
       method: 'GET',
       headers: {
         'X-RapidAPI-Key': rapidApiKey,
-        'X-RapidAPI-Host': 'youtube-video-and-shorts-downloader.p.rapidapi.com'
+        'X-RapidAPI-Host': 'youtube-mp36.p.rapidapi.com'
       }
     });
 
@@ -67,30 +66,15 @@ serve(async (req) => {
     const data = await detailsResponse.json();
     console.log('API Response:', JSON.stringify(data, null, 2));
 
-    if (!data || !data.video) {
-      throw new Error('Invalid API response format');
+    if (!data || data.status === 'fail') {
+      throw new Error('Failed to process video');
     }
 
-    // Extract the video formats
-    const formats = data.video.formats || [];
-    if (!formats.length) {
-      throw new Error('No video formats available');
-    }
-
-    // Find the best quality format (preferably 720p)
-    const format = formats.find((f: any) => 
-      f.quality === '720p' && f.extension === 'mp4'
-    ) || formats.find((f: any) => f.extension === 'mp4') || formats[0];
-
-    if (!format || !format.url) {
-      throw new Error('Could not find a suitable video format');
-    }
-
+    // Return the processed video information
     return new Response(
       JSON.stringify({
-        videoUrl: format.url,
-        title: data.video.title || 'YouTube Video',
-        description: data.video.description || '',
+        videoUrl: data.link,
+        title: data.title || 'YouTube Video',
         thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
       }),
       {
