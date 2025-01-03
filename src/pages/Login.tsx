@@ -31,10 +31,7 @@ const Login = () => {
       console.log("Attempting login with email:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password,
-        options: {
-          redirectTo: `${window.location.origin}/dashboard/projects`
-        }
+        password
       });
 
       if (error) {
