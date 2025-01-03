@@ -6,9 +6,29 @@ const corsHeaders = {
 }
 
 function extractVideoId(url: string) {
-  const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-  const match = url.match(regExp);
-  return (match && match[7].length === 11) ? match[7] : null;
+  try {
+    // Handle various YouTube URL formats
+    let videoId = '';
+    
+    // Handle youtu.be format
+    if (url.includes('youtu.be')) {
+      videoId = url.split('youtu.be/')[1]?.split(/[?#]/)[0];
+    }
+    // Handle youtube.com format
+    else if (url.includes('youtube.com')) {
+      const urlParams = new URL(url).searchParams;
+      videoId = urlParams.get('v') || '';
+    }
+
+    if (!videoId || videoId.length !== 11) {
+      throw new Error('Could not extract valid video ID');
+    }
+
+    return videoId;
+  } catch (error) {
+    console.error('Error extracting video ID:', error);
+    return null;
+  }
 }
 
 serve(async (req) => {
@@ -28,6 +48,7 @@ serve(async (req) => {
       throw new Error('URL is required');
     }
 
+    console.log('Processing URL:', url);
     const videoId = extractVideoId(url);
     if (!videoId) {
       throw new Error('Invalid YouTube URL. Please provide a valid YouTube video URL');
