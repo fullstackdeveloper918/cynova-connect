@@ -118,9 +118,11 @@ export function Navigation() {
 
           {/* Get Started Button */}
           <div className="hidden md:block">
-            <Button className="bg-primary hover:bg-primary/90">
-              Get Started
-            </Button>
+            <Link to="/signup">
+              <Button className="bg-primary hover:bg-primary/90">
+                Get Started
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile Menu */}
@@ -177,9 +179,11 @@ export function Navigation() {
                   >
                     Affiliate
                   </Link>
-                  <Button className="w-full bg-primary hover:bg-primary/90">
-                    Get Started
-                  </Button>
+                  <Link to="/signup" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full bg-primary hover:bg-primary/90">
+                      Get Started
+                    </Button>
+                  </Link>
                 </nav>
               </div>
             )}
