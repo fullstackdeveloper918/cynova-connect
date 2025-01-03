@@ -6,7 +6,6 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
@@ -74,7 +73,7 @@ export function Navigation() {
             <NavigationMenu>
               <NavigationMenuList>
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger>Features</NavigationMenuTrigger>
+                  <NavigationMenuTrigger className="bg-transparent hover:bg-transparent">Features</NavigationMenuTrigger>
                   <NavigationMenuContent>
                     <ul className="grid w-[400px] gap-3 p-4 bg-white md:w-[500px] md:grid-cols-2 lg:w-[600px]">
                       {features.map((feature) => (
@@ -102,13 +101,16 @@ export function Navigation() {
                 <NavigationMenuItem>
                   <button
                     onClick={scrollToPricing}
-                    className={navigationMenuTriggerStyle()}
+                    className="inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:text-accent-foreground focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
                   >
                     Pricing
                   </button>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <Link to="/affiliate" className={navigationMenuTriggerStyle()}>
+                  <Link 
+                    to="/affiliate" 
+                    className="inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:text-accent-foreground focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
+                  >
                     Affiliate
                   </Link>
                 </NavigationMenuItem>
