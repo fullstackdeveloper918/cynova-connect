@@ -1,41 +1,45 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+function extractVideoId(url: string) {
+  const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[7].length === 11) ? match[7] : null;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { url } = await req.json()
-    console.log('Received request to download YouTube video:', url)
-
-    if (!url) {
-      return new Response(
-        JSON.stringify({ error: 'URL is required' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      )
+    const rapidApiKey = Deno.env.get('RAPID_API_KEY');
+    if (!rapidApiKey) {
+      throw new Error('RAPID_API_KEY is not set');
     }
 
-    const rapidApiKey = Deno.env.get('RAPID_API_KEY')
-    if (!rapidApiKey) {
-      console.error('RAPID_API_KEY not found in environment variables')
-      return new Response(
-        JSON.stringify({ error: 'API configuration error' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      )
+    const { url } = await req.json();
+    if (!url) {
+      throw new Error('URL is required');
+    }
+
+    const videoId = extractVideoId(url);
+    if (!videoId) {
+      throw new Error(
+        'Invalid YouTube URL. Please provide a valid YouTube video URL'
+      );
     }
 
     // Using a different RapidAPI endpoint for YouTube downloads
     const rapidApiUrl = 'https://youtube-mp36.p.rapidapi.com/dl';
-    console.log('Calling RapidAPI endpoint:', rapidApiUrl)
+    console.log('Calling RapidAPI endpoint:', rapidApiUrl);
     
-    const rapidApiResponse = await fetch(`${rapidApiUrl}?id=${extractVideoId(url)}`, {
+    const rapidApiResponse = await fetch(`${rapidApiUrl}?id=${videoId}`, {
       method: 'GET',
       headers: {
         'X-RapidAPI-Key': rapidApiKey,
@@ -44,39 +48,39 @@ serve(async (req) => {
     });
 
     if (!rapidApiResponse.ok) {
-      const errorText = await rapidApiResponse.text()
-      console.error('RapidAPI error response:', errorText)
-      throw new Error(`Failed to fetch video information: ${errorText}`)
+      const error = await rapidApiResponse.text();
+      console.error('RapidAPI error:', error);
+      throw new Error(`Failed to fetch video information: ${error}`);
     }
 
-    const data = await rapidApiResponse.json()
-    console.log('RapidAPI response:', JSON.stringify(data, null, 2))
-
-    if (!data.link || !data.title) {
-      throw new Error('Invalid response format from API')
-    }
+    const data = await rapidApiResponse.json();
+    console.log('RapidAPI response:', data);
 
     return new Response(
       JSON.stringify({
-        success: true,
         videoUrl: data.link,
         title: data.title
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
   } catch (error) {
-    console.error('Error in download-youtube function:', error)
+    console.error('Error:', error.message);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    )
+      JSON.stringify({
+        error: error.message
+      }),
+      {
+        status: 500,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
   }
 })
-
-// Helper function to extract video ID from YouTube URL
-function extractVideoId(url: string): string {
-  const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-  const match = url.match(regExp);
-  return (match && match[7].length === 11) ? match[7] : url;
-}
