@@ -18,7 +18,7 @@ import { Quality } from "./youtube/types";
 
 export const YouTubeDownloader = () => {
   const [url, setUrl] = useState("");
-  const [isDownloading, setIsDownloading] = useState("");
+  const [isDownloading, setIsDownloading] = useState(false);
   const [selectedQuality, setSelectedQuality] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
   const [thumbnail, setThumbnail] = useState("");
