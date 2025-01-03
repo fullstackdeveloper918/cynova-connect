@@ -8,19 +8,9 @@ const corsHeaders = {
 
 function extractVideoId(url: string) {
   try {
-    new URL(url);
-    
-    let videoId = '';
-    
-    if (url.includes('youtu.be/')) {
-      videoId = url.split('youtu.be/')[1];
-      if (videoId) {
-        videoId = videoId.split('?')[0];
-      }
-    } else if (url.includes('youtube.com/watch')) {
-      const urlObj = new URL(url);
-      videoId = urlObj.searchParams.get('v') || '';
-    }
+    const videoId = url.includes('youtu.be/') 
+      ? url.split('youtu.be/')[1]?.split('?')[0]
+      : url.split('v=')[1]?.split('&')[0];
 
     console.log('Extracted video ID:', videoId);
     
@@ -36,6 +26,7 @@ function extractVideoId(url: string) {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -58,46 +49,39 @@ serve(async (req) => {
     }
 
     const videoId = extractVideoId(url);
-    console.log('Successfully extracted video ID:', videoId);
-
-    const rapidApiUrl = 'https://youtube-media-downloader.p.rapidapi.com/v2/video/details';
-    const searchParams = new URLSearchParams({
-      videoId: videoId
-    });
     
-    console.log('Fetching video details from:', `${rapidApiUrl}?${searchParams}`);
-    
-    const rapidApiResponse = await fetch(`${rapidApiUrl}?${searchParams}`, {
+    // First API call to get video details
+    const detailsResponse = await fetch(`https://youtube-video-download-info.p.rapidapi.com/dl?id=${videoId}`, {
       method: 'GET',
       headers: {
         'X-RapidAPI-Key': rapidApiKey,
-        'X-RapidAPI-Host': 'youtube-media-downloader.p.rapidapi.com'
+        'X-RapidAPI-Host': 'youtube-video-download-info.p.rapidapi.com'
       }
     });
 
-    if (!rapidApiResponse.ok) {
-      const error = await rapidApiResponse.text();
-      console.error('RapidAPI error:', error);
-      throw new Error(`Failed to fetch video information: ${error}`);
+    if (!detailsResponse.ok) {
+      console.error('API Error:', await detailsResponse.text());
+      throw new Error('Failed to fetch video details');
     }
 
-    const data = await rapidApiResponse.json();
-    console.log('Video details response:', data);
+    const data = await detailsResponse.json();
+    console.log('Video details response:', JSON.stringify(data, null, 2));
 
     if (!data || !data.title) {
       throw new Error('Invalid response: Missing video data');
     }
 
-    // Ensure formats exists and is an array before trying to use find
-    if (!data.formats || !Array.isArray(data.formats)) {
-      console.error('Invalid formats data:', data.formats);
-      throw new Error('Video format information not available');
+    // Find the best quality format available
+    const formats = data.formats || [];
+    if (!formats.length) {
+      throw new Error('No video formats available');
     }
 
-    // Get the highest quality format available
-    const format = data.formats.find(f => f.qualityLabel === '720p') || data.formats[0];
+    // Try to find the requested quality or fallback to the best available
+    const format = formats.find((f: any) => f.qualityLabel === '720p') || formats[0];
+    
     if (!format || !format.url) {
-      throw new Error('No valid video format found');
+      throw new Error('Could not find a suitable video format');
     }
 
     return new Response(
@@ -105,7 +89,7 @@ serve(async (req) => {
         videoUrl: format.url,
         title: data.title,
         description: data.description || '',
-        thumbnail: data.thumbnail && data.thumbnail[0] ? data.thumbnail[0].url : `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+        thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
       }),
       {
         headers: {
@@ -119,7 +103,7 @@ serve(async (req) => {
     console.error('Function error:', error);
     return new Response(
       JSON.stringify({
-        error: error.message
+        error: error.message || 'An unexpected error occurred'
       }),
       {
         status: 400,
