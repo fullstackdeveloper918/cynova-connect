@@ -1,27 +1,27 @@
-<svg width="800" height="200" viewBox="0 0 800 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Main hexagon shape -->
-  <path d="M100 50 L150 25 L200 50 L200 100 L150 125 L100 100 Z" 
+<svg width="1200" height="300" viewBox="0 0 1200 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Main hexagon shape - made larger -->
+  <path d="M150 75 L225 37.5 L300 75 L300 150 L225 187.5 L150 150 Z" 
         fill="#9b87f5" 
         stroke="#7E69AB" 
-        stroke-width="4"/>
+        stroke-width="6"/>
   
-  <!-- Inner decorative lines -->
-  <path d="M125 62.5 L175 87.5 M125 87.5 L175 62.5" 
+  <!-- Inner decorative lines - adjusted for new size -->
+  <path d="M187.5 93.75 L262.5 131.25 M187.5 131.25 L262.5 93.75" 
         stroke="#E5DEFF" 
-        stroke-width="3" 
+        stroke-width="4.5" 
         stroke-linecap="round"/>
   
-  <!-- Company name with modern font -->
-  <text x="240" y="100" 
+  <!-- Company name with modern font - made larger -->
+  <text x="360" y="150" 
         font-family="Arial, sans-serif" 
-        font-size="72" 
+        font-size="108" 
         font-weight="bold" 
         fill="#1A1F2C">
     CYNOVA
   </text>
   
-  <!-- Decorative dots -->
-  <circle cx="450" cy="85" r="4" fill="#9b87f5"/>
-  <circle cx="470" cy="85" r="4" fill="#7E69AB"/>
-  <circle cx="490" cy="85" r="4" fill="#6E59A5"/>
+  <!-- Decorative dots - adjusted position -->
+  <circle cx="675" cy="127.5" r="6" fill="#9b87f5"/>
+  <circle cx="705" cy="127.5" r="6" fill="#7E69AB"/>
+  <circle cx="735" cy="127.5" r="6" fill="#6E59A5"/>
 </svg>

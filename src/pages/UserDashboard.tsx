@@ -12,11 +12,11 @@ const UserDashboard = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <Sidebar className="hidden md:block">
-          <SidebarHeader className="p-4">
+          <SidebarHeader className="p-6">
             <img
-              src="/lovable-uploads/ccea9cb0-6878-4c15-9768-dffd9b382752.png"
+              src="/logo.svg"
               alt="Cynova Logo"
-              className="h-8 w-auto mx-auto"
+              className="w-48 h-auto mx-auto"
             />
           </SidebarHeader>
           <SidebarNavigation />
