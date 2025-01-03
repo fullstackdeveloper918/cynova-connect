@@ -1,21 +1,21 @@
 import { motion } from "framer-motion";
-import { Sparkles, Palette, Coins } from "lucide-react";
+import { Sparkles, Palette, Clock } from "lucide-react";
 
 const features = [
   {
     icon: Sparkles,
-    title: "Effortless Creativity",
-    description: "Cynova simplifies content creation with powerful AI tools, allowing users to produce high-quality videos and voiceovers in minutes - no technical skills required.",
+    title: "Effortless Creation",
+    description: "Generate professional videos with AI voiceovers and dynamic subtitles—no experience needed.",
   },
   {
     icon: Palette,
-    title: "Versatility and Customization",
-    description: "From dynamic subtitles to faceless video creation and text-to-image features, Cynova offers everything you need to craft engaging, unique content tailored to your audience.",
+    title: "Customizable Tools",
+    description: "Choose from versatile templates for social media, marketing, or presentations.",
   },
   {
-    icon: Coins,
-    title: "Cost-Effective and Time-Saving",
-    description: "By streamlining the entire content creation process, Cynova saves you time and resources, making it the perfect solution for creators, marketers, and businesses looking to scale their video/image output efficiently.",
+    icon: Clock,
+    title: "Save Time & Money",
+    description: "Streamline video creation with Cynova's all-in-one, cost-effective platform.",
   },
 ];
 
