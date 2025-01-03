@@ -4,6 +4,7 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import { SidebarNavigation } from "@/components/sidebar/SidebarNavigation";
+import { YouTubeDownloader as YouTubeDownloaderComponent } from "@/components/YouTubeDownloader";
 
 const YouTubeDownloader = () => {
   return (
@@ -22,24 +23,11 @@ const YouTubeDownloader = () => {
 
         <main className="flex-1 p-6">
           <div className="max-w-7xl mx-auto">
-            <h1 className="text-3xl font-bold mb-4">YouTube Downloader</h1>
+            <h1 className="text-3xl font-bold mb-4 text-gray-800">YouTube Downloader</h1>
             <p className="text-muted-foreground mb-8">
               Download YouTube videos in your preferred quality.
             </p>
-            {/* YouTube downloader implementation */}
-            <form>
-              <input
-                type="text"
-                placeholder="Enter YouTube video URL"
-                className="border p-2 rounded w-full"
-              />
-              <button
-                type="submit"
-                className="mt-4 bg-blue-500 text-white p-2 rounded"
-              >
-                Download
-              </button>
-            </form>
+            <YouTubeDownloaderComponent />
           </div>
         </main>
       </div>
