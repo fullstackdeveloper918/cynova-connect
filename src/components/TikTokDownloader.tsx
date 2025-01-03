@@ -44,13 +44,23 @@ export const TikTokDownloader = () => {
         throw new Error('No video URL returned from the server');
       }
 
+      // Download the video
+      const response = await fetch(data.videoUrl);
+      if (!response.ok) throw new Error('Failed to download video');
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      
       // Create a temporary anchor element to trigger the download
       const a = document.createElement('a');
-      a.href = data.videoUrl;
+      a.href = downloadUrl;
       a.download = `${data.title || 'tiktok-video'}.mp4`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(downloadUrl);
 
       toast({
         title: "Download started",
