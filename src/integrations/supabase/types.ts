@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      projects: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          status: string | null
+          thumbnail_url: string | null
+          title: string
+          type: Database["public"]["Enums"]["project_type"]
+          updated_at: string | null
+          user_id: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          status?: string | null
+          thumbnail_url?: string | null
+          title: string
+          type: Database["public"]["Enums"]["project_type"]
+          updated_at?: string | null
+          user_id: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          status?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["project_type"]
+          updated_at?: string | null
+          user_id?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           created_at: string | null
@@ -56,6 +95,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      project_type:
+        | "chatgpt_video"
+        | "fake_text"
+        | "reddit_video"
+        | "split_video"
+        | "voiceover_video"
+        | "would_you_rather"
+        | "quiz_video"
       subscription_status: "active" | "canceled" | "past_due"
     }
     CompositeTypes: {

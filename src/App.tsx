@@ -14,6 +14,7 @@ import PlaceholderPage from "./components/PlaceholderPage";
 import TikTokDownloader from "./pages/TikTokDownloader";
 import YouTubeDownloader from "./pages/YouTubeDownloader";
 import Affiliate from "./pages/Affiliate";
+import Projects from "./pages/Projects";
 
 const queryClient = new QueryClient();
 
@@ -31,13 +32,7 @@ const App = () => (
           <Route path="/dashboard/editor" element={<Editor />} />
           <Route path="/plans" element={<Plans />} />
           <Route path="/dashboard/profile" element={<Profile />} />
-          <Route 
-            path="/dashboard/projects" 
-            element={<PlaceholderPage 
-              title="My Projects" 
-              description="View and manage all your Cynova video projects in one place." 
-            />} 
-          />
+          <Route path="/dashboard/projects" element={<Projects />} />
           <Route 
             path="/dashboard/exports" 
             element={<PlaceholderPage 
