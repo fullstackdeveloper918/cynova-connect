@@ -35,14 +35,14 @@ export const VideoPreview = ({
         )}
       </div>
       
-      <div className="font-medium text-lg">{videoTitle}</div>
+      <div className="font-medium text-lg text-gray-800">{videoTitle}</div>
 
       <div className="flex gap-2">
         <Select
           value={selectedQuality}
           onValueChange={setSelectedQuality}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] border-primary/20">
             <SelectValue placeholder="Select quality" />
           </SelectTrigger>
           <SelectContent>

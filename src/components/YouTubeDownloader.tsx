@@ -120,16 +120,16 @@ export const YouTubeDownloader = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-3xl">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="text-2xl">YouTube Video Downloader</CardTitle>
-          <CardDescription>
+    <div className="container mx-auto p-4 max-w-3xl animate-fade-up">
+      <Card className="w-full bg-white shadow-lg">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-gray-800">YouTube Video Downloader</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Download YouTube videos in your preferred quality
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Alert>
+          <Alert className="bg-accent text-accent-foreground">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               Make sure to copy the video URL from YouTube
@@ -142,7 +142,7 @@ export const YouTubeDownloader = () => {
                 placeholder="Paste YouTube video URL here..."
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                className="pr-10"
+                className="pr-10 border-primary/20 focus:border-primary"
               />
               <Link className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
             </div>
@@ -150,7 +150,7 @@ export const YouTubeDownloader = () => {
               onClick={handlePreview}
               disabled={!url || isDownloading}
               variant="secondary"
-              className="min-w-[120px]"
+              className="min-w-[120px] bg-secondary hover:bg-secondary/90"
             >
               <Video className="mr-2 h-4 w-4" />
               Preview
@@ -169,7 +169,7 @@ export const YouTubeDownloader = () => {
             <Button
               onClick={handleDownload}
               disabled={!selectedQuality || isDownloading}
-              className="w-full"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {isDownloading ? (
                 <>
@@ -185,7 +185,7 @@ export const YouTubeDownloader = () => {
             </Button>
           )}
         </CardContent>
-        <CardFooter className="text-sm text-muted-foreground">
+        <CardFooter className="text-sm text-muted-foreground border-t pt-4">
           Note: This tool is for personal use only. Please respect YouTube's terms of service.
         </CardFooter>
       </Card>
