@@ -1,16 +1,11 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Check, Star, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { PricingCard } from "@/components/pricing/PricingCard";
+import { PricingFAQ } from "@/components/pricing/PricingFAQ";
 
 const plans = [
   {
@@ -20,8 +15,8 @@ const plans = [
       yearly: 159,
     },
     priceId: {
-      monthly: "YOUR_STARTER_MONTHLY_PRICE_ID",
-      yearly: "YOUR_STARTER_YEARLY_PRICE_ID",
+      monthly: "price_1QdIQ0G8TTdTbu7dSw6PTIQG",
+      yearly: "price_1QdIRgG8TTdTbu7d32x1RBaY",
     },
     features: [
       "50 AI videos per month",
@@ -37,8 +32,8 @@ const plans = [
       yearly: 243,
     },
     priceId: {
-      monthly: "YOUR_PRO_MONTHLY_PRICE_ID",
-      yearly: "YOUR_PRO_YEARLY_PRICE_ID",
+      monthly: "price_1QdIQWG8TTdTbu7dpGfYO8qR",
+      yearly: "price_1QdIS8G8TTdTbu7dTh5tOLpH",
     },
     popular: true,
     features: [
@@ -55,8 +50,8 @@ const plans = [
       yearly: 411,
     },
     priceId: {
-      monthly: "YOUR_PREMIUM_MONTHLY_PRICE_ID",
-      yearly: "YOUR_PREMIUM_YEARLY_PRICE_ID",
+      monthly: "price_1QdIR3G8TTdTbu7d797PglPe",
+      yearly: "price_1QdIScG8TTdTbu7duXhWR8Px",
     },
     features: [
       "200 AI videos per month",
@@ -161,69 +156,17 @@ const Plans = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           {plans.map((plan) => (
-            <motion.div
+            <PricingCard
               key={plan.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`relative rounded-xl border ${
-                plan.popular
-                  ? "border-primary shadow-lg"
-                  : "border-accent"
-              } bg-card p-6`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-                  <Star className="w-4 h-4" />
-                  Most Popular
-                </div>
-              )}
-              <div className="text-center mb-6">
-                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                <div className="text-4xl font-bold mb-2">
-                  ${isYearly ? Math.round(plan.price.yearly / 12) : plan.price.monthly}
-                  <span className="text-lg text-muted-foreground">
-                    /month
-                  </span>
-                </div>
-                {isYearly && (
-                  <div className="text-sm text-muted-foreground">
-                    ${plan.price.yearly} billed yearly
-                  </div>
-                )}
-              </div>
-              <ul className="space-y-4 mb-6">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-primary" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button 
-                className="w-full" 
-                variant={plan.popular ? "default" : "outline"}
-                onClick={() => handleSubscribe(plan)}
-                disabled={isLoading === plan.name}
-              >
-                {isLoading === plan.name ? "Loading..." : "Get Started"}
-              </Button>
-            </motion.div>
+              plan={plan}
+              isYearly={isYearly}
+              isLoading={isLoading === plan.name}
+              onSubscribe={() => handleSubscribe(plan)}
+            />
           ))}
         </div>
 
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-8">
-            Frequently Asked Questions
-          </h2>
-          <Accordion type="single" collapsible className="w-full">
-            {faqs.map((faq, index) => (
-              <AccordionItem key={index} value={`item-${index}`}>
-                <AccordionTrigger>{faq.question}</AccordionTrigger>
-                <AccordionContent>{faq.answer}</AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
+        <PricingFAQ faqs={faqs} />
       </div>
     </div>
   );
