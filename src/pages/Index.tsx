@@ -2,6 +2,7 @@ import { Navigation } from "@/components/Navigation";
 import { Features } from "@/components/Features";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Hero } from "@/components/Hero";
+import { Footer } from "@/components/Footer";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MessageSquare, FileVideo, Scissors, Mic, Sparkles } from "lucide-react";
@@ -137,6 +138,8 @@ const Index = () => {
           </motion.div>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 };
