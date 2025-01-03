@@ -7,8 +7,6 @@ export const Hero = () => {
 
   return (
     <section className="relative min-h-screen flex items-center bg-gradient-to-b from-accent/30 to-background py-20">
-      <div className="absolute inset-0 bg-[url('/photo-1488590528505-98d2b5aba04b')] bg-cover bg-center opacity-5" />
-      
       <div className="container mx-auto px-4 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
