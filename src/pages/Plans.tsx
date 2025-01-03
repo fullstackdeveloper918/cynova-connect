@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Check, Star, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Accordion,
   AccordionContent,
@@ -17,6 +19,10 @@ const plans = [
       monthly: 19,
       yearly: 159,
     },
+    priceId: {
+      monthly: "YOUR_STARTER_MONTHLY_PRICE_ID",
+      yearly: "YOUR_STARTER_YEARLY_PRICE_ID",
+    },
     features: [
       "50 AI videos per month",
       "40 minutes of exporting",
@@ -29,6 +35,10 @@ const plans = [
     price: {
       monthly: 29,
       yearly: 243,
+    },
+    priceId: {
+      monthly: "YOUR_PRO_MONTHLY_PRICE_ID",
+      yearly: "YOUR_PRO_YEARLY_PRICE_ID",
     },
     popular: true,
     features: [
@@ -43,6 +53,10 @@ const plans = [
     price: {
       monthly: 49,
       yearly: 411,
+    },
+    priceId: {
+      monthly: "YOUR_PREMIUM_MONTHLY_PRICE_ID",
+      yearly: "YOUR_PREMIUM_YEARLY_PRICE_ID",
     },
     features: [
       "200 AI videos per month",
@@ -87,6 +101,28 @@ const faqs = [
 const Plans = () => {
   const [isYearly, setIsYearly] = useState(false);
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState<string | null>(null);
+
+  const handleSubscribe = async (plan: typeof plans[0]) => {
+    try {
+      setIsLoading(plan.name);
+      const priceId = isYearly ? plan.priceId.yearly : plan.priceId.monthly;
+      
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId, mode: 'subscription' }
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Failed to start checkout process. Please try again.");
+    } finally {
+      setIsLoading(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
@@ -163,8 +199,13 @@ const Plans = () => {
                   </li>
                 ))}
               </ul>
-              <Button className="w-full" variant={plan.popular ? "default" : "outline"}>
-                Get Started
+              <Button 
+                className="w-full" 
+                variant={plan.popular ? "default" : "outline"}
+                onClick={() => handleSubscribe(plan)}
+                disabled={isLoading === plan.name}
+              >
+                {isLoading === plan.name ? "Loading..." : "Get Started"}
               </Button>
             </motion.div>
           ))}
