@@ -28,26 +28,33 @@ const Login = () => {
     setIsLoading(true);
     
     try {
+      console.log("Attempting login with email:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
+        options: {
+          redirectTo: `${window.location.origin}/dashboard/projects`
+        }
       });
 
       if (error) {
+        console.error("Login error:", error);
         if (error.message === "Invalid login credentials") {
-          toast.error("Invalid email or password. Please try again or sign up if you don't have an account.");
+          toast.error("Account not found. Please sign up first or check your credentials.");
         } else {
-          toast.error(error.message);
+          toast.error(`Login failed: ${error.message}`);
         }
         return;
       }
 
       if (data.session) {
+        console.log("Login successful, redirecting...");
         toast.success("Successfully logged in!");
         navigate("/dashboard/projects");
       }
     } catch (error) {
-      toast.error("An error occurred during login");
+      console.error("Unexpected error during login:", error);
+      toast.error("An unexpected error occurred during login");
     } finally {
       setIsLoading(false);
     }
@@ -63,9 +70,11 @@ const Login = () => {
       });
 
       if (error) {
+        console.error("Google login error:", error);
         toast.error(error.message);
       }
     } catch (error) {
+      console.error("Unexpected error during Google login:", error);
       toast.error("An error occurred during Google login");
     }
   };
