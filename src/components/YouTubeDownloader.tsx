@@ -5,6 +5,7 @@ import { toast } from "./ui/use-toast";
 import { Download, Link, Video } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Quality {
   label: string;
@@ -37,10 +38,9 @@ export const YouTubeDownloader = () => {
     }
 
     try {
-      // In a real implementation, this would fetch video metadata
-      // For demo purposes, we'll simulate it
-      setVideoTitle("Sample YouTube Video Title");
-      setThumbnail("https://images.unsplash.com/photo-1611162616475-46b635cb6868?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3");
+      const videoId = url.split("v=")[1]?.split("&")[0] || url.split("youtu.be/")[1];
+      setVideoTitle("Loading YouTube video...");
+      setThumbnail(`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`);
       
       toast({
         title: "Video found",
@@ -67,20 +67,48 @@ export const YouTubeDownloader = () => {
 
     setIsDownloading(true);
     try {
-      // In a real implementation, this would call your backend API
-      // For demo purposes, we'll show a success message
+      const { data, error } = await supabase.functions.invoke('download-youtube', {
+        body: { url }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        throw new Error(data.message || data.error);
+      }
+
+      if (!data.videoUrl) {
+        throw new Error('No video URL returned from the server');
+      }
+
+      // Download the video
+      const response = await fetch(data.videoUrl);
+      if (!response.ok) throw new Error('Failed to download video');
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      
+      // Create a temporary anchor element to trigger the download
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `${data.title || 'youtube-video'}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(downloadUrl);
+
       toast({
         title: "Download started",
-        description: `Downloading ${videoTitle} in ${selectedQuality}p...`,
+        description: "Your video download should begin shortly.",
       });
       
-      // Simulate download delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
     } catch (error) {
+      console.error('Download error:', error);
       toast({
         title: "Download failed",
-        description: "There was an error downloading your video. Please try again.",
+        description: error.message || "There was an error downloading your video. Please try again.",
         variant: "destructive",
       });
     } finally {
