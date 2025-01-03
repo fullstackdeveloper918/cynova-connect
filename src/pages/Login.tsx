@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   // Check if user is already logged in
@@ -24,6 +25,8 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -31,7 +34,11 @@ const Login = () => {
       });
 
       if (error) {
-        toast.error(error.message);
+        if (error.message === "Invalid login credentials") {
+          toast.error("Invalid email or password. Please try again or sign up if you don't have an account.");
+        } else {
+          toast.error(error.message);
+        }
         return;
       }
 
@@ -41,6 +48,8 @@ const Login = () => {
       }
     } catch (error) {
       toast.error("An error occurred during login");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -89,6 +98,7 @@ const Login = () => {
                 required
                 className="mt-1"
                 placeholder="Enter your email"
+                disabled={isLoading}
               />
             </div>
 
@@ -104,12 +114,23 @@ const Login = () => {
                 required
                 className="mt-1"
                 placeholder="Enter your password"
+                disabled={isLoading}
               />
             </div>
           </div>
 
-          <Button type="submit" className="w-full">
-            Sign in
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Signing in...
+              </span>
+            ) : (
+              "Sign in"
+            )}
           </Button>
 
           <div className="relative">
@@ -126,6 +147,7 @@ const Login = () => {
             variant="outline"
             className="w-full"
             onClick={handleGoogleLogin}
+            disabled={isLoading}
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
               <path
@@ -148,16 +170,21 @@ const Login = () => {
             Continue with Google
           </Button>
 
-          <p className="text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <button
-              type="button"
-              onClick={() => navigate("/signup")}
-              className="text-primary hover:underline"
-            >
-              Sign up
-            </button>
-          </p>
+          <div className="text-center space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <button
+                type="button"
+                onClick={() => navigate("/signup")}
+                className="text-primary hover:underline font-medium"
+              >
+                Sign up
+              </button>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              By signing in, you agree to our Terms of Service and Privacy Policy
+            </p>
+          </div>
         </form>
       </motion.div>
     </div>
