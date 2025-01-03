@@ -29,9 +29,9 @@ export const Hero = () => {
             transition={{ delay: 0.3 }}
             className="text-5xl md:text-7xl font-bold mb-6 tracking-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
           >
-            The Future of AI
+            Create Engaging
             <br />
-            Is Here Today
+            AI-Driven Videos in Seconds
           </motion.h1>
           
           <motion.p
@@ -40,7 +40,7 @@ export const Hero = () => {
             transition={{ delay: 0.4 }}
             className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto"
           >
-            Experience the next generation of artificial intelligence. Cynova brings revolutionary AI capabilities to your fingertips.
+            Experience the next generation of content creation with Cynova.
           </motion.p>
           
           <motion.div
