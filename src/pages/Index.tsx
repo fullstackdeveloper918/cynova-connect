@@ -46,7 +46,7 @@ const Index = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="relative max-w-[1920px] mx-auto">
+    <div className="relative max-w-[1920px] mx-auto scale-[0.8] origin-top">
       <Navigation />
       <Hero />
       <Features />
