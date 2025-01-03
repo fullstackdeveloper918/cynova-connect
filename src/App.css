@@ -1,7 +1,7 @@
 #root {
-  max-width: 1536px;  /* Increased from 1280px */
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 1.6rem;    /* Reduced from 2rem to maintain proportions */
+  padding: 2rem;
   text-align: center;
 }
 
