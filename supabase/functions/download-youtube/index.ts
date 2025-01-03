@@ -31,14 +31,15 @@ serve(async (req) => {
       )
     }
 
-    const rapidApiUrl = 'https://youtube-video-download-info.p.rapidapi.com/dl';
+    // Using a different RapidAPI endpoint for YouTube downloads
+    const rapidApiUrl = 'https://youtube-mp36.p.rapidapi.com/dl';
     console.log('Calling RapidAPI endpoint:', rapidApiUrl)
     
     const rapidApiResponse = await fetch(`${rapidApiUrl}?id=${extractVideoId(url)}`, {
       method: 'GET',
       headers: {
         'X-RapidAPI-Key': rapidApiKey,
-        'X-RapidAPI-Host': 'youtube-video-download-info.p.rapidapi.com'
+        'X-RapidAPI-Host': 'youtube-mp36.p.rapidapi.com'
       }
     });
 
