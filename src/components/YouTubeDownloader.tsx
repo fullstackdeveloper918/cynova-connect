@@ -2,20 +2,23 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "./ui/use-toast";
-import { Download, Link, Video } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Download, Link, AlertCircle, Video } from "lucide-react";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle,
+  CardFooter 
+} from "./ui/card";
+import { Alert, AlertDescription } from "./ui/alert";
 import { supabase } from "@/integrations/supabase/client";
-
-interface Quality {
-  label: string;
-  value: string;
-  size: string;
-}
+import { VideoPreview } from "./youtube/VideoPreview";
+import { Quality } from "./youtube/types";
 
 export const YouTubeDownloader = () => {
   const [url, setUrl] = useState("");
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState("");
   const [selectedQuality, setSelectedQuality] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
   const [thumbnail, setThumbnail] = useState("");
@@ -120,12 +123,19 @@ export const YouTubeDownloader = () => {
     <div className="container mx-auto p-4 max-w-3xl">
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>YouTube Video Downloader</CardTitle>
+          <CardTitle className="text-2xl">YouTube Video Downloader</CardTitle>
           <CardDescription>
             Download YouTube videos in your preferred quality
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Make sure to copy the video URL from YouTube
+            </AlertDescription>
+          </Alert>
+          
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Input
@@ -140,62 +150,44 @@ export const YouTubeDownloader = () => {
               onClick={handlePreview}
               disabled={!url || isDownloading}
               variant="secondary"
+              className="min-w-[120px]"
             >
               <Video className="mr-2 h-4 w-4" />
               Preview
             </Button>
           </div>
 
+          <VideoPreview
+            videoTitle={videoTitle}
+            thumbnail={thumbnail}
+            selectedQuality={selectedQuality}
+            setSelectedQuality={setSelectedQuality}
+            qualities={qualities}
+          />
+
           {videoTitle && (
-            <div className="space-y-4">
-              <div className="rounded-lg overflow-hidden">
-                <img
-                  src={thumbnail}
-                  alt={videoTitle}
-                  className="w-full h-48 object-cover"
-                />
-              </div>
-              
-              <div className="font-medium text-lg">{videoTitle}</div>
-
-              <div className="flex gap-2">
-                <Select
-                  value={selectedQuality}
-                  onValueChange={setSelectedQuality}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select quality" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {qualities.map((quality) => (
-                      <SelectItem key={quality.value} value={quality.value}>
-                        {quality.label} (~{quality.size})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Button
-                  onClick={handleDownload}
-                  disabled={!selectedQuality || isDownloading}
-                  className="flex-1"
-                >
-                  {isDownloading ? (
-                    <>
-                      <Download className="mr-2 h-4 w-4 animate-bounce" />
-                      Downloading...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="mr-2 h-4 w-4" />
-                      Download
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
+            <Button
+              onClick={handleDownload}
+              disabled={!selectedQuality || isDownloading}
+              className="w-full"
+            >
+              {isDownloading ? (
+                <>
+                  <Download className="mr-2 h-4 w-4 animate-bounce" />
+                  Downloading...
+                </>
+              ) : (
+                <>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                </>
+              )}
+            </Button>
           )}
         </CardContent>
+        <CardFooter className="text-sm text-muted-foreground">
+          Note: This tool is for personal use only. Please respect YouTube's terms of service.
+        </CardFooter>
       </Card>
     </div>
   );
