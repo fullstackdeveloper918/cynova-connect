@@ -40,11 +40,21 @@ export const TikTokDownloader = () => {
         throw new Error(data.message || data.error);
       }
 
-      // Here we would typically start the download using the returned URL
+      if (!data.videoUrl) {
+        throw new Error('No video URL returned from the server');
+      }
+
+      // Create a temporary anchor element to trigger the download
+      const a = document.createElement('a');
+      a.href = data.videoUrl;
+      a.download = `${data.title || 'tiktok-video'}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
       toast({
-        title: "Service Not Available",
-        description: "The download service is currently being integrated. Please try again later.",
-        variant: "destructive",
+        title: "Download started",
+        description: "Your video download should begin shortly.",
       });
       
     } catch (error) {
