@@ -7,27 +7,33 @@ const corsHeaders = {
 
 function extractVideoId(url: string) {
   try {
-    // Handle various YouTube URL formats
+    // First, try to validate if it's a valid URL
+    new URL(url);
+    
     let videoId = '';
     
-    // Handle youtu.be format
-    if (url.includes('youtu.be')) {
-      videoId = url.split('youtu.be/')[1]?.split(/[?#]/)[0];
-    }
-    // Handle youtube.com format
-    else if (url.includes('youtube.com')) {
-      const urlParams = new URL(url).searchParams;
-      videoId = urlParams.get('v') || '';
+    if (url.includes('youtu.be/')) {
+      // Handle youtu.be format
+      videoId = url.split('youtu.be/')[1];
+      if (videoId) {
+        videoId = videoId.split('?')[0];
+      }
+    } else if (url.includes('youtube.com/watch')) {
+      // Handle youtube.com format
+      const urlObj = new URL(url);
+      videoId = urlObj.searchParams.get('v') || '';
     }
 
+    console.log('Extracted video ID:', videoId);
+    
     if (!videoId || videoId.length !== 11) {
-      throw new Error('Could not extract valid video ID');
+      throw new Error(`Invalid video ID: ${videoId}`);
     }
 
     return videoId;
   } catch (error) {
     console.error('Error extracting video ID:', error);
-    return null;
+    throw new Error(`Failed to extract video ID: ${error.message}`);
   }
 }
 
@@ -44,17 +50,18 @@ serve(async (req) => {
     }
 
     const { url } = await req.json();
+    console.log('Received request with URL:', url);
+
     if (!url) {
       throw new Error('URL is required');
     }
 
-    console.log('Processing URL:', url);
-    const videoId = extractVideoId(url);
-    if (!videoId) {
-      throw new Error('Invalid YouTube URL. Please provide a valid YouTube video URL');
+    if (!url.includes('youtube.com') && !url.includes('youtu.be')) {
+      throw new Error('Invalid URL: Not a YouTube URL');
     }
 
-    console.log('Processing video ID:', videoId);
+    const videoId = extractVideoId(url);
+    console.log('Successfully extracted video ID:', videoId);
 
     // Using YouTube v3 API endpoint
     const rapidApiUrl = 'https://youtube-v31.p.rapidapi.com/videos';
@@ -105,13 +112,13 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error('Function error:', error);
     return new Response(
       JSON.stringify({
         error: error.message
       }),
       {
-        status: 500,
+        status: 400,
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/json',
