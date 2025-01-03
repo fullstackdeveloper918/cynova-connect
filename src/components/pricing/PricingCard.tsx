@@ -64,7 +64,8 @@ export const PricingCard = ({ plan, isYearly, isLoading, onSubscribe, isCurrentP
         ))}
       </ul>
       <Button 
-        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" 
+        className="w-full" 
+        variant={plan.popular ? "default" : "outline"}
         onClick={onSubscribe}
         disabled={isLoading || isCurrentPlan}
       >
