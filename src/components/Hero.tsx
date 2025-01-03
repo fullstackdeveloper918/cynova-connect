@@ -53,7 +53,7 @@ export const Hero = () => {
               onClick={() => navigate("/signup")}
               className="group px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2"
             >
-              Get Started Free
+              Get Started
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
             <button 
