@@ -16,7 +16,16 @@ serve(async (req) => {
   try {
     const { priceId, mode } = await req.json();
     
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
+    if (!stripeSecretKey) {
+      throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
+    }
+    
+    if (!stripeSecretKey.startsWith('sk_')) {
+      throw new Error('Invalid STRIPE_SECRET_KEY format. Must use secret key starting with sk_');
+    }
+
+    const stripe = new Stripe(stripeSecretKey, {
       apiVersion: '2023-10-16',
     });
 
