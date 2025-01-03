@@ -50,36 +50,38 @@ serve(async (req) => {
 
     const videoId = extractVideoId(url);
     
-    // First API call to get video details
-    const detailsResponse = await fetch(`https://youtube-video-download-info.p.rapidapi.com/dl?id=${videoId}`, {
+    // Using a different RapidAPI endpoint for better reliability
+    const detailsResponse = await fetch(`https://youtube-video-and-shorts-downloader.p.rapidapi.com/get_video?url=${encodeURIComponent(url)}`, {
       method: 'GET',
       headers: {
         'X-RapidAPI-Key': rapidApiKey,
-        'X-RapidAPI-Host': 'youtube-video-download-info.p.rapidapi.com'
+        'X-RapidAPI-Host': 'youtube-video-and-shorts-downloader.p.rapidapi.com'
       }
     });
 
     if (!detailsResponse.ok) {
-      console.error('API Error:', await detailsResponse.text());
-      throw new Error('Failed to fetch video details');
+      console.error('API Error Response:', await detailsResponse.text());
+      throw new Error('Failed to fetch video details from API');
     }
 
     const data = await detailsResponse.json();
-    console.log('Video details response:', JSON.stringify(data, null, 2));
+    console.log('API Response:', JSON.stringify(data, null, 2));
 
-    if (!data || !data.title) {
-      throw new Error('Invalid response: Missing video data');
+    if (!data || !data.video) {
+      throw new Error('Invalid API response format');
     }
 
-    // Find the best quality format available
-    const formats = data.formats || [];
+    // Extract the video formats
+    const formats = data.video.formats || [];
     if (!formats.length) {
       throw new Error('No video formats available');
     }
 
-    // Try to find the requested quality or fallback to the best available
-    const format = formats.find((f: any) => f.qualityLabel === '720p') || formats[0];
-    
+    // Find the best quality format (preferably 720p)
+    const format = formats.find((f: any) => 
+      f.quality === '720p' && f.extension === 'mp4'
+    ) || formats.find((f: any) => f.extension === 'mp4') || formats[0];
+
     if (!format || !format.url) {
       throw new Error('Could not find a suitable video format');
     }
@@ -87,8 +89,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         videoUrl: format.url,
-        title: data.title,
-        description: data.description || '',
+        title: data.video.title || 'YouTube Video',
+        description: data.video.description || '',
         thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
       }),
       {
