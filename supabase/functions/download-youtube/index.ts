@@ -30,20 +30,25 @@ serve(async (req) => {
 
     const videoId = extractVideoId(url);
     if (!videoId) {
-      throw new Error(
-        'Invalid YouTube URL. Please provide a valid YouTube video URL'
-      );
+      throw new Error('Invalid YouTube URL. Please provide a valid YouTube video URL');
     }
 
-    // Using a different RapidAPI endpoint for YouTube downloads
-    const rapidApiUrl = 'https://youtube-mp36.p.rapidapi.com/dl';
-    console.log('Calling RapidAPI endpoint:', rapidApiUrl);
+    console.log('Processing video ID:', videoId);
+
+    // Using YouTube v3 API endpoint
+    const rapidApiUrl = 'https://youtube-v31.p.rapidapi.com/videos';
+    const searchParams = new URLSearchParams({
+      part: 'contentDetails,snippet,statistics',
+      id: videoId
+    });
     
-    const rapidApiResponse = await fetch(`${rapidApiUrl}?id=${videoId}`, {
+    console.log('Fetching video details from:', `${rapidApiUrl}?${searchParams}`);
+    
+    const rapidApiResponse = await fetch(`${rapidApiUrl}?${searchParams}`, {
       method: 'GET',
       headers: {
         'X-RapidAPI-Key': rapidApiKey,
-        'X-RapidAPI-Host': 'youtube-mp36.p.rapidapi.com'
+        'X-RapidAPI-Host': 'youtube-v31.p.rapidapi.com'
       }
     });
 
@@ -54,12 +59,21 @@ serve(async (req) => {
     }
 
     const data = await rapidApiResponse.json();
-    console.log('RapidAPI response:', data);
+    console.log('Video details response:', data);
+
+    if (!data.items || data.items.length === 0) {
+      throw new Error('Video not found');
+    }
+
+    const videoDetails = data.items[0];
+    const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
 
     return new Response(
       JSON.stringify({
-        videoUrl: data.link,
-        title: data.title
+        videoUrl: videoUrl,
+        title: videoDetails.snippet.title,
+        description: videoDetails.snippet.description,
+        thumbnail: videoDetails.snippet.thumbnails.high.url
       }),
       {
         headers: {
@@ -68,6 +82,7 @@ serve(async (req) => {
         },
       }
     );
+
   } catch (error) {
     console.error('Error:', error.message);
     return new Response(
