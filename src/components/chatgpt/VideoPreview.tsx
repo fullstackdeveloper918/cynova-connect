@@ -28,7 +28,8 @@ export const VideoPreview = ({
         <video
           src={previewUrl}
           controls
-          className="w-full aspect-video rounded-lg"
+          className="w-full aspect-video rounded-lg bg-gray-50"
+          key={previewUrl}
         />
       ) : (
         <div className="aspect-video rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50">

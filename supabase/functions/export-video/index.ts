@@ -14,37 +14,41 @@ serve(async (req) => {
   }
 
   try {
-    const { script, voice, previewUrl } = await req.json();
+    const { script, voice, previewUrl, userId, title, description } = await req.json();
     
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    // For now, we'll use the preview URL as the export URL
-    // In a real implementation, this would generate a high-quality video
-    const exportUrl = previewUrl;
+    console.log('Creating export record for user:', userId);
     
     // Create an export record
     const { data: exportData, error: exportError } = await supabase
       .from('exports')
       .insert({
-        title: 'ChatGPT Generated Video',
-        description: script.substring(0, 100) + '...',
-        file_url: exportUrl,
+        user_id: userId,
+        title: title,
+        description: description,
+        file_url: previewUrl,
         file_type: 'video/mp4',
-        status: 'completed'
+        status: 'completed',
+        file_size: 0, // You might want to calculate this
+        thumbnail_url: null // You might want to generate this
       })
       .select()
       .single();
 
-    if (exportError) throw exportError;
+    if (exportError) {
+      console.error('Error creating export record:', exportError);
+      throw exportError;
+    }
 
     console.log('Created export record:', exportData);
 
     return new Response(
       JSON.stringify({ 
-        exportUrl,
+        exportUrl: previewUrl,
         exportData,
         message: "Video exported successfully" 
       }),

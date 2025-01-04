@@ -10,6 +10,8 @@ import { VideoPreview } from "@/components/chatgpt/VideoPreview";
 import { ScriptEditor } from "@/components/chatgpt/ScriptEditor";
 import { VoiceSelector } from "@/components/chatgpt/VoiceSelector";
 import { useNavigate } from "react-router-dom";
+import { SidebarProvider, Sidebar, SidebarHeader } from "@/components/ui/sidebar";
+import { SidebarNavigation } from "@/components/sidebar/SidebarNavigation";
 
 const ChatGPTVideo = () => {
   const [prompt, setPrompt] = useState("");
@@ -66,15 +68,7 @@ const ChatGPTVideo = () => {
         body: { prompt, style: "engaging and professional" }
       });
 
-      if (error) {
-        console.error("Error generating content:", error);
-        toast({
-          title: "Generation failed",
-          description: error.message || "There was an error generating your video content.",
-          variant: "destructive",
-        });
-        return;
-      }
+      if (error) throw error;
 
       setScript(data.script);
       setProgress(100);
@@ -124,9 +118,7 @@ const ChatGPTVideo = () => {
         }
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       setPreviewUrl(data.previewUrl);
       toast({
@@ -171,7 +163,10 @@ const ChatGPTVideo = () => {
         body: { 
           script,
           voice: selectedVoice,
-          previewUrl
+          previewUrl,
+          userId: session.user.id,
+          title: "ChatGPT Generated Video",
+          description: script.substring(0, 100) + "..."
         }
       });
 
@@ -182,7 +177,6 @@ const ChatGPTVideo = () => {
         description: "Your video has been exported and saved to your account.",
       });
 
-      // Redirect to exports page
       navigate("/dashboard/exports");
     } catch (error) {
       console.error("Export error:", error);
@@ -195,103 +189,122 @@ const ChatGPTVideo = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-8"
-      >
-        <div className="space-y-4">
-          <h1 className="text-4xl font-bold">ChatGPT Video Creator</h1>
-          <p className="text-muted-foreground">
-            Create engaging videos with AI-generated scripts and narration.
-          </p>
-        </div>
-
-        <div className="grid gap-8 md:grid-cols-2">
-          <div className="space-y-6">
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <Sidebar className="lg:block">
+          <SidebarHeader className="p-4">
+            <img
+              src="/logo.png"
+              alt="Cynova Logo"
+              className="h-8 w-auto mx-auto"
+            />
+          </SidebarHeader>
+          <SidebarNavigation />
+        </Sidebar>
+        <main className="flex-1 p-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-8"
+          >
             <div className="space-y-4">
-              <h2 className="text-2xl font-semibold">1. Describe Your Video</h2>
-              <Textarea
-                placeholder="Describe the video you want to create..."
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                className="h-32"
-              />
-              <Button
-                onClick={generateContent}
-                disabled={isGenerating || !prompt}
-                className="w-full"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="mr-2 h-4 w-4" />
-                    Generate Script
-                  </>
-                )}
-              </Button>
-              {isGenerating && <Progress value={progress} />}
+              <h1 className="text-4xl font-bold">ChatGPT Video Creator</h1>
+              <p className="text-muted-foreground">
+                Create engaging videos with AI-generated scripts and narration.
+              </p>
             </div>
 
-            {script && (
-              <div className="space-y-4">
-                <h2 className="text-2xl font-semibold">2. Edit Script</h2>
-                <ScriptEditor script={script} onScriptChange={setScript} />
-              </div>
-            )}
+            <div className="grid gap-8 md:grid-cols-2">
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <h2 className="text-2xl font-semibold">1. Describe Your Video</h2>
+                  <Textarea
+                    placeholder="Describe the video you want to create..."
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    className="h-32"
+                  />
+                  <Button
+                    onClick={generateContent}
+                    disabled={isGenerating || !prompt}
+                    className="w-full"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="mr-2 h-4 w-4" />
+                        Generate Script
+                      </>
+                    )}
+                  </Button>
+                  {isGenerating && <Progress value={progress} />}
+                </div>
 
-            {script && (
-              <div className="space-y-4">
-                <h2 className="text-2xl font-semibold">3. Choose Voice</h2>
-                <VoiceSelector
+                {script && (
+                  <div className="space-y-4">
+                    <h2 className="text-2xl font-semibold">2. Edit Script</h2>
+                    <ScriptEditor script={script} onScriptChange={setScript} />
+                  </div>
+                )}
+
+                {script && (
+                  <div className="space-y-4">
+                    <h2 className="text-2xl font-semibold">3. Choose Voice</h2>
+                    <VoiceSelector
+                      selectedVoice={selectedVoice}
+                      onVoiceSelect={setSelectedVoice}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-6">
+                <h2 className="text-2xl font-semibold">Preview</h2>
+                <VideoPreview
+                  script={script}
+                  previewUrl={previewUrl}
                   selectedVoice={selectedVoice}
-                  onVoiceSelect={setSelectedVoice}
                 />
+                {script && (
+                  <div className="flex gap-4">
+                    <Button 
+                      className="flex-1" 
+                      onClick={handlePreview}
+                      disabled={isPreviewLoading}
+                    >
+                      {isPreviewLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Play className="mr-2 h-4 w-4" />
+                          Preview
+                        </>
+                      )}
+                    </Button>
+                    <Button 
+                      variant="secondary" 
+                      className="flex-1" 
+                      onClick={handleExport}
+                      disabled={!previewUrl}
+                    >
+                      <Save className="mr-2 h-4 w-4" />
+                      Export
+                    </Button>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold">Preview</h2>
-            <VideoPreview
-              script={script}
-              previewUrl={previewUrl}
-              selectedVoice={selectedVoice}
-            />
-            {script && (
-              <div className="flex gap-4">
-                <Button 
-                  className="flex-1" 
-                  onClick={handlePreview}
-                  disabled={isPreviewLoading}
-                >
-                  {isPreviewLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Play className="mr-2 h-4 w-4" />
-                      Preview
-                    </>
-                  )}
-                </Button>
-                <Button variant="secondary" className="flex-1" onClick={handleExport}>
-                  <Save className="mr-2 h-4 w-4" />
-                  Export
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      </motion.div>
-    </div>
+            </div>
+          </motion.div>
+        </main>
+      </div>
+    </SidebarProvider>
   );
 };
 
