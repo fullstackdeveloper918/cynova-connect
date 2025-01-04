@@ -39,22 +39,26 @@ serve(async (req) => {
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
-        max_tokens: 1000,
+        max_tokens: 500, // Reduced token limit for cost efficiency
       }),
     });
 
     console.log('OpenAI API Response Status:', response.status);
     
     const data = await response.json();
-    console.log('OpenAI API Response Headers:', Object.fromEntries(response.headers));
-
+    
     if (!response.ok) {
-      console.error('OpenAI API Error Response:', data);
+      console.error('OpenAI API Error:', {
+        status: response.status,
+        data: data
+      });
+
+      // Handle rate limit specifically
       if (response.status === 429) {
         return new Response(
           JSON.stringify({
-            error: 'OpenAI API rate limit reached. Please try again in a few moments.',
-            details: data.error?.message
+            error: 'OpenAI API rate limit reached',
+            details: 'Please wait a moment before trying again. If this persists, check your OpenAI account quota.'
           }),
           {
             status: 429,
@@ -62,7 +66,8 @@ serve(async (req) => {
           }
         );
       }
-      throw new Error(`OpenAI API error: ${data.error?.message || 'Unknown error'}`);
+
+      throw new Error(data.error?.message || 'Unknown OpenAI API error');
     }
 
     if (!data.choices?.[0]?.message?.content) {
@@ -82,11 +87,11 @@ serve(async (req) => {
     
     return new Response(
       JSON.stringify({ 
-        error: 'An error occurred while generating content',
-        details: error.toString()
+        error: 'Failed to generate content',
+        details: error.message
       }),
       { 
-        status: 500,
+        status: error.status || 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
