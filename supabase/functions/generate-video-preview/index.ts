@@ -45,7 +45,7 @@ serve(async (req) => {
           num_inference_steps: 25,
           guidance_scale: 12.5,
           negative_prompt: "bad quality, worse quality, low quality, blurry, low resolution",
-          input_image: "https://replicate.delivery/pbxt/IJE4o4OoQhbF1VhUxGYQYJEFvXPVQwzuUcGQjvEtGwneLXE/rocket.png" // Default input image
+          input_image: "https://raw.githubusercontent.com/CompVis/stable-diffusion/main/assets/stable-samples/img2img/sketch-mountains-input.jpg"
         },
       }),
     });
