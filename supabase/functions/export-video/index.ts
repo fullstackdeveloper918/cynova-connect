@@ -68,114 +68,42 @@ serve(async (req) => {
     }
 
     const audioBlob = await audioResponse.blob();
+    const audioFileName = `audio-${Date.now()}.mp3`;
 
-    // Generate video frames for the messages
-    const frames = messages.map((msg, index) => {
-      const canvas = new OffscreenCanvas(1280, 720);
-      const ctx = canvas.getContext('2d');
-      
-      // Set background
-      ctx.fillStyle = '#1a1a1a';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      // Add message bubble
-      ctx.fillStyle = msg.isUser ? '#4a9eff' : '#2a2a2a';
-      ctx.roundRect(100, 260, canvas.width - 200, 200, 20);
-      ctx.fill();
-      
-      // Add text
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '24px Arial';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      
-      // Word wrap text
-      const words = msg.content.split(' ');
-      let line = '';
-      let y = 320;
-      words.forEach(word => {
-        const testLine = line + word + ' ';
-        const metrics = ctx.measureText(testLine);
-        if (metrics.width > canvas.width - 300) {
-          ctx.fillText(line, 130, y);
-          line = word + ' ';
-          y += 40;
-        } else {
-          line = testLine;
-        }
-      });
-      ctx.fillText(line, 130, y);
-      
-      return canvas.convertToBlob();
-    });
-
-    // Create video from frames using WebCodecs API
-    const videoEncoder = new VideoEncoder({
-      output: chunk => {
-        // Handle encoded video chunks
-      },
-      error: e => {
-        console.error(e);
-      }
-    });
-
-    const videoConfig = {
-      codec: 'vp8',
-      width: 1280,
-      height: 720,
-      bitrate: 1_000_000,
-      framerate: 30,
-    };
-
-    videoEncoder.configure(videoConfig);
-
-    // Encode frames
-    for (let i = 0; i < frames.length; i++) {
-      const frame = await createVideoFrame(frames[i], i * (1000 / videoConfig.framerate));
-      videoEncoder.encode(frame);
-      frame.close();
-    }
-
-    await videoEncoder.flush();
-    videoEncoder.close();
-
-    // Combine audio and video
-    const finalVideoBlob = new Blob([videoEncoder.output, audioBlob], { type: 'video/webm' });
-    
-    // Upload to Supabase Storage
-    const videoFileName = `video-${Date.now()}.webm`;
-    const { data: videoUpload, error: videoUploadError } = await supabaseAdmin
+    // Upload audio to Supabase Storage
+    console.log('Uploading audio to Storage...');
+    const { data: audioUpload, error: audioUploadError } = await supabaseAdmin
       .storage
       .from('exports')
-      .upload(videoFileName, finalVideoBlob, {
-        contentType: 'video/webm',
+      .upload(audioFileName, audioBlob, {
+        contentType: 'audio/mpeg',
         upsert: true
       });
 
-    if (videoUploadError) {
-      console.error('Video upload error:', videoUploadError);
-      throw videoUploadError;
+    if (audioUploadError) {
+      console.error('Audio upload error:', audioUploadError);
+      throw audioUploadError;
     }
 
-    // Get public URL for the video
-    const { data: { publicUrl: videoUrl } } = supabaseAdmin
+    // Get public URL for the audio
+    const { data: { publicUrl: audioUrl } } = supabaseAdmin
       .storage
       .from('exports')
-      .getPublicUrl(videoFileName);
+      .getPublicUrl(audioFileName);
 
-    // Create an export record with user_id
+    // Create an export record
     console.log('Creating export record...');
     const { data: exportData, error: exportError } = await supabaseAdmin
       .from('exports')
       .insert({
         title,
         description,
-        file_url: videoFileName,
-        file_type: 'video/webm',
-        file_size: finalVideoBlob.size,
+        file_url: audioFileName,
+        file_type: 'audio/mpeg',
+        file_size: audioBlob.size,
         status: 'completed',
         user_id: user.id,
-        thumbnail_url: videoUrl, // We can generate thumbnails in the future
+        thumbnail_url: 'https://placehold.co/600x400/png', // Default thumbnail
       })
       .select()
       .single();
@@ -189,7 +117,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true,
         export: exportData,
-        message: "Video exported successfully" 
+        message: "Audio exported successfully" 
       }),
       { 
         headers: { 
@@ -214,13 +142,3 @@ serve(async (req) => {
     );
   }
 });
-
-// Helper function to create video frames
-async function createVideoFrame(imageBlob: Blob, timestamp: number) {
-  const imageBitmap = await createImageBitmap(imageBlob);
-  const frame = new VideoFrame(imageBitmap, {
-    timestamp: timestamp * 1000, // microseconds
-  });
-  imageBitmap.close();
-  return frame;
-}
