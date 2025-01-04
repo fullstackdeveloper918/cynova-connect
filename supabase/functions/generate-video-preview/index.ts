@@ -36,7 +36,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
@@ -61,7 +61,7 @@ serve(async (req) => {
     const videoDescription = openAiData.choices[0].message.content;
     console.log('Generated video description:', videoDescription);
 
-    // Then, use Replicate to generate the video using Zeroscope XL model
+    // Then, use Replicate to generate the video
     const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
     if (!replicateApiKey) {
       throw new Error('REPLICATE_API_KEY is not set');
@@ -75,16 +75,18 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "cd76ef3c79c568f25d0eb36e3faa44df6433f5b7e2b3d4e2d55f6e3d5b5f51c4",
+        // Using Stable Video Diffusion model - a reliable and public model
+        version: "9c86e3a808d1142cb698be88bc772a3d3fd7c1e26f534a679d5ddc96a3b0f7eb",
         input: {
           prompt: videoDescription,
-          num_frames: parseInt(duration),
-          fps: 24,
+          video_length: "14_frames_with_svd",
+          fps: 6,
           width: 1024,
           height: 576,
-          guidance_scale: 17.5,
-          num_inference_steps: 50,
-          negative_prompt: "blurry, low quality, low resolution, bad quality"
+          num_inference_steps: 25,
+          min_guidance_scale: 1,
+          max_guidance_scale: 20,
+          negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames"
         },
       }),
     });
