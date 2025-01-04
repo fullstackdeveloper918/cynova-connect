@@ -33,16 +33,16 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "3f0457e4619daac51203dedb472816fd4af51f3149fa7a9e0b5ffcf1b8172438",
+        version: "b96a2f34632c4e586f632b9d3d4545516962b924518e6c3ba6212d74c0826aa9",
         input: {
           prompt: script,
-          num_frames: 14,
+          num_frames: 24,
           width: 576,
           height: 320,
-          fps: 6,
-          motion_bucket_id: 127,
-          cond_aug: 0.02,
-          decoding_t: 7,
+          fps: 8,
+          scheduler: "DPMSolverMultistep",
+          num_inference_steps: 25,
+          guidance_scale: 7.5,
           seed: Math.floor(Math.random() * 100000)
         },
       }),
