@@ -28,22 +28,24 @@ export const useVideoPreview = () => {
 
     setIsPreviewLoading(true);
     try {
-      console.log("Calling generate-video-preview with:", { script, voice: selectedVoice, duration: selectedDuration });
-      const { data, error } = await supabase.functions.invoke("generate-video-preview", {
-        body: { 
-          script,
-          voice: selectedVoice,
-          duration: selectedDuration
-        }
+      console.log("Calling generate-video-frames with script");
+      const { data, error } = await supabase.functions.invoke("generate-video-frames", {
+        body: { script }
       });
 
       if (error) {
-        console.error("Error from generate-video-preview:", error);
+        console.error("Error from generate-video-frames:", error);
         throw error;
       }
 
-      console.log("Preview generation response:", data);
-      setPreviewUrl(data.previewUrl);
+      console.log("Frame generation response:", data);
+      
+      // For now, we'll just use the first frame as a preview
+      // In a full implementation, we'd stitch these frames together into a video
+      setPreviewUrl({
+        videoUrl: data.frameUrls[0],
+        audioUrl: "" // We'll implement audio separately
+      });
       
       toast({
         title: "Preview generated",
