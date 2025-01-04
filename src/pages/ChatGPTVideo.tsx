@@ -13,6 +13,7 @@ import { DurationSelector } from "@/components/chatgpt/DurationSelector";
 import { useNavigate } from "react-router-dom";
 import { SidebarProvider, Sidebar, SidebarHeader } from "@/components/ui/sidebar";
 import { SidebarNavigation } from "@/components/sidebar/SidebarNavigation";
+import { SimpleVideoGenerator } from "@/components/chatgpt/SimpleVideoGenerator";
 
 const ChatGPTVideo = () => {
   const [prompt, setPrompt] = useState("");
@@ -206,7 +207,7 @@ const ChatGPTVideo = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-8"
+            className="space-y-12"
           >
             <div className="space-y-4">
               <h1 className="text-4xl font-bold">ChatGPT Video Creator</h1>
@@ -308,6 +309,10 @@ const ChatGPTVideo = () => {
                 )}
               </div>
             </div>
+
+            <div className="border-t border-border" />
+
+            <SimpleVideoGenerator />
           </motion.div>
         </main>
       </div>
