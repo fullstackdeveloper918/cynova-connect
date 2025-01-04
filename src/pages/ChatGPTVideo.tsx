@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { VideoPreview } from "@/components/chatgpt/VideoPreview";
 import { ScriptEditor } from "@/components/chatgpt/ScriptEditor";
 import { VoiceSelector } from "@/components/chatgpt/VoiceSelector";
+import { DurationSelector } from "@/components/chatgpt/DurationSelector";
 import { useNavigate } from "react-router-dom";
 import { SidebarProvider, Sidebar, SidebarHeader } from "@/components/ui/sidebar";
 import { SidebarNavigation } from "@/components/sidebar/SidebarNavigation";
@@ -20,6 +21,7 @@ const ChatGPTVideo = () => {
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState("");
   const [selectedVoice, setSelectedVoice] = useState("Sarah");
+  const [selectedDuration, setSelectedDuration] = useState("48");
   const [progress, setProgress] = useState(0);
   const navigate = useNavigate();
 
@@ -110,7 +112,8 @@ const ChatGPTVideo = () => {
       const { data, error } = await supabase.functions.invoke("generate-video-preview", {
         body: { 
           script,
-          voice: selectedVoice
+          voice: selectedVoice,
+          duration: selectedDuration
         }
       });
 
@@ -251,11 +254,17 @@ const ChatGPTVideo = () => {
 
                 {script && (
                   <div className="space-y-4">
-                    <h2 className="text-2xl font-semibold">3. Choose Voice</h2>
-                    <VoiceSelector
-                      selectedVoice={selectedVoice}
-                      onVoiceSelect={setSelectedVoice}
-                    />
+                    <h2 className="text-2xl font-semibold">3. Choose Voice & Duration</h2>
+                    <div className="space-y-4">
+                      <VoiceSelector
+                        selectedVoice={selectedVoice}
+                        onVoiceSelect={setSelectedVoice}
+                      />
+                      <DurationSelector
+                        selectedDuration={selectedDuration}
+                        onDurationSelect={setSelectedDuration}
+                      />
+                    </div>
                   </div>
                 )}
               </div>

@@ -15,8 +15,8 @@ serve(async (req) => {
   try {
     console.log('Starting video generation process...');
     
-    const { script, voice } = await req.json();
-    console.log('Received request payload:', { script, voice });
+    const { script, voice, duration = "48" } = await req.json();
+    console.log('Received request payload:', { script, voice, duration });
 
     if (!script) {
       throw new Error('No script provided');
@@ -61,7 +61,7 @@ serve(async (req) => {
     const videoDescription = openAiData.choices[0].message.content;
     console.log('Generated video description:', videoDescription);
 
-    // Then, use Replicate to generate the video using Zeroscope model
+    // Then, use Replicate to generate the video using Zeroscope XL model
     const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
     if (!replicateApiKey) {
       throw new Error('REPLICATE_API_KEY is not set');
@@ -75,13 +75,16 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "b72a26c2fb5dea1d95a8e8c1757d124495b6f0fb3acdc4070f699eb1e5af4e9a",
+        version: "cd76ef3c79c568f25d0eb36e3faa44df6433f5b7e2b3d4e2d55f6e3d5b5f51c4",
         input: {
           prompt: videoDescription,
+          num_frames: parseInt(duration),
           fps: 24,
-          num_frames: 24,
           width: 1024,
-          height: 576
+          height: 576,
+          guidance_scale: 17.5,
+          num_inference_steps: 50,
+          negative_prompt: "blurry, low quality, low resolution, bad quality"
         },
       }),
     });
