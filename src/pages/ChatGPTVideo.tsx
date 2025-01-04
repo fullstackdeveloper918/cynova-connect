@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { VideoPreview } from "@/components/chatgpt/VideoPreview";
 import { ScriptEditor } from "@/components/chatgpt/ScriptEditor";
 import { VoiceSelector } from "@/components/chatgpt/VoiceSelector";
+import { useNavigate } from "react-router-dom";
 
 const ChatGPTVideo = () => {
   const [prompt, setPrompt] = useState("");
@@ -17,6 +18,23 @@ const ChatGPTVideo = () => {
   const [previewUrl, setPreviewUrl] = useState("");
   const [selectedVoice, setSelectedVoice] = useState("Sarah");
   const [progress, setProgress] = useState(0);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    checkUser();
+  }, []);
+
+  const checkUser = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to access this feature.",
+        variant: "destructive",
+      });
+      navigate("/login");
+    }
+  };
 
   const generateContent = async () => {
     if (!prompt) {
@@ -32,11 +50,30 @@ const ChatGPTVideo = () => {
     setProgress(25);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to access this feature.",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("generate-video-content", {
-        body: { prompt, style: "engaging and professional" },
+        body: { prompt, style: "engaging and professional" }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error generating content:", error);
+        toast({
+          title: "Generation failed",
+          description: error.message || "There was an error generating your video content.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       setScript(data.script);
       setProgress(100);
