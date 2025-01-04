@@ -128,7 +128,9 @@ const ChatGPTVideo = () => {
         throw error;
       }
 
+      // Update the preview URL with the generated video URL
       setPreviewUrl(data.previewUrl);
+      
       toast({
         title: "Preview generated",
         description: "Your video preview is ready to watch.",

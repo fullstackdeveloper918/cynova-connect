@@ -8,7 +8,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -16,17 +15,44 @@ serve(async (req) => {
   try {
     const { script, voice } = await req.json();
     
-    // For demo purposes, we'll use a sample video URL
-    // In a real implementation, this would generate a video using the script and voice
-    const previewUrl = "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-    
-    console.log('Generated preview for script:', script.substring(0, 100) + '...');
-    console.log('Using voice:', voice);
+    // Get the user's session from the request
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
 
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Create a temporary project to store the preview
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .insert({
+        title: 'Preview: ' + script.substring(0, 50) + '...',
+        description: script,
+        type: 'chatgpt',
+        user_id: authHeader.split(' ')[1], // Extract user ID from Bearer token
+        status: 'preview',
+        video_url: `/preview/${Date.now()}.mp4` // Generate a unique URL
+      })
+      .select()
+      .single();
+
+    if (projectError) {
+      console.error('Error creating preview project:', projectError);
+      throw projectError;
+    }
+
+    console.log('Created preview project:', project);
+
+    // For now, we'll return the video_url from the project
+    // In a real implementation, this would be where you generate the actual video
     return new Response(
       JSON.stringify({ 
-        previewUrl,
-        message: "Preview generated successfully" 
+        previewUrl: project.video_url,
+        projectId: project.id
       }),
       { 
         headers: { 
@@ -37,7 +63,6 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error in generate-video-preview function:', error);
-    
     return new Response(
       JSON.stringify({ 
         error: 'Failed to generate video preview',
