@@ -25,7 +25,7 @@ serve(async (req) => {
 
     console.log('Starting video generation with Replicate...');
     
-    // Create prediction using Zeroscope model - verified working version
+    // Create prediction using Zeroscope v2 XL model
     const prediction = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -33,15 +33,14 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "cd76ef3a79c24ed98d4c6b5be6d7c9cc3e3f8aaa3c28ec2c7566d3d2a8422dd",
+        version: "b72a26c92b9cc526c3dc74a3edf46a47bb08d9c6d9f946f0e9c01a4d10f019d9",
         input: {
           prompt: script,
-          batch_size: 1,
           num_frames: 24,
           width: 576,
           height: 320,
-          num_inference_steps: 50,
           guidance_scale: 12.5,
+          num_inference_steps: 50,
           negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames"
         },
       }),
