@@ -3,7 +3,7 @@ export const generateAudio = async (
   voiceId: string,
   elevenLabsKey: string
 ) => {
-  console.log('Generating audio narration with ElevenLabs...');
+  console.log('Generating minimal test audio with ElevenLabs...');
   
   const audioResponse = await fetch(
     `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
@@ -16,10 +16,12 @@ export const generateAudio = async (
       },
       body: JSON.stringify({
         text: script,
-        model_id: "eleven_monolingual_v1",
+        model_id: "eleven_turbo_v2", // Using fastest model for testing
         voice_settings: {
           stability: 0.5,
           similarity_boost: 0.5,
+          style: 0, // Neutral style for testing
+          use_speaker_boost: false // Disable speaker boost for testing
         },
       }),
     }
