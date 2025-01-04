@@ -75,16 +75,15 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "4e30c0efc2c0b4f1a55c1db1dae8fc4c00fb50db5722da94a82d3fac8b9b2695",
+        version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
         input: {
           prompt: videoDescription,
-          num_frames: parseInt(duration) * 2, // Increased frame count based on duration
-          width: 768,
-          height: 432,
+          num_frames: 24,
+          width: 576,
+          height: 320,
           fps: 8,
-          guidance_scale: 17.5,
-          num_inference_steps: 50,
-          negative_prompt: "blurry, low quality, distorted, ugly"
+          num_inference_steps: 25,
+          guidance_scale: 12.5
         },
       }),
     });
@@ -125,8 +124,8 @@ serve(async (req) => {
       console.log('Poll result:', result);
 
       if (result.status === "succeeded") {
-        // For video output
-        const videoUrl = result.output;
+        // The output is an array with a single video URL
+        const videoUrl = Array.isArray(result.output) ? result.output[0] : result.output;
         console.log('Generated video URL:', videoUrl);
         
         if (!videoUrl) {
