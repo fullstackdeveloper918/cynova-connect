@@ -11,7 +11,7 @@ export const useVideoState = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<PreviewUrls | null>(null);
-  const [selectedVoice, setSelectedVoice] = useState("Sarah");
+  const [selectedVoice, setSelectedVoice] = useState("EXAVITQu4vr4xnSDxMaL"); // Default to Sarah's correct voice ID
   const [selectedDuration, setSelectedDuration] = useState("48");
   const [progress, setProgress] = useState(0);
 

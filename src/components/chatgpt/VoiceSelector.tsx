@@ -16,10 +16,10 @@ export const VoiceSelector = ({
   onVoiceSelect,
 }: VoiceSelectorProps) => {
   const voices = [
-    { id: "Sarah", name: "Sarah (Professional Female)" },
-    { id: "Daniel", name: "Daniel (Professional Male)" },
-    { id: "Emily", name: "Emily (Casual Female)" },
-    { id: "Michael", name: "Michael (Casual Male)" },
+    { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah (Professional Female)" },
+    { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel (Professional Male)" },
+    { id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice (Casual Female)" },
+    { id: "bIHbv24MWmeRgasZH58o", name: "Will (Casual Male)" },
   ];
 
   return (

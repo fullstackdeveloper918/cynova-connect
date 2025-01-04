@@ -3,7 +3,7 @@ export const generateAudio = async (
   voiceId: string,
   elevenLabsKey: string
 ) => {
-  console.log('Generating minimal test audio with ElevenLabs...');
+  console.log('Generating audio with ElevenLabs using voice ID:', voiceId);
   
   const audioResponse = await fetch(
     `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
