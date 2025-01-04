@@ -12,6 +12,7 @@ import Affiliate from "@/pages/Affiliate";
 import Projects from "@/pages/Projects";
 import Exports from "@/pages/Exports";
 import ChatGPTVideo from "@/pages/ChatGPTVideo";
+import FakeTextVideo from "@/pages/FakeTextVideo";
 
 export const routes = [
   {
@@ -56,12 +57,7 @@ export const routes = [
   },
   {
     path: "/dashboard/faketext",
-    element: (
-      <PlaceholderPage
-        title="Fake Text Videos"
-        description="Generate realistic text-based content for your videos."
-      />
-    ),
+    element: <FakeTextVideo />,
   },
   {
     path: "/dashboard/reddit",
