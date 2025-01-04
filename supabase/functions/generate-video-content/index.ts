@@ -34,40 +34,63 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a video script writer. Create engaging, clear, and concise scripts that are easy to follow. Include natural pauses and emphasis points. Keep the tone professional but conversational.'
+            content: `You are a video script writer. Create engaging, clear, and concise scripts in a ${style || 'casual'} style. Include natural pauses and emphasis points.`
           },
-          { 
-            role: 'user', 
-            content: `Create a video script about: ${prompt}. Make it engaging and suitable for a video format.` 
-          }
+          { role: 'user', content: prompt }
         ],
         temperature: 0.7,
+        max_tokens: 1000, // Limit token usage
       }),
     });
 
+    const data = await response.json();
+    console.log('OpenAI API response status:', response.status);
+
     if (!response.ok) {
-      const error = await response.json();
-      console.error('OpenAI API error:', error);
-      throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`);
+      // Check specifically for quota exceeded error
+      if (response.status === 429 || data.error?.message?.includes('quota')) {
+        console.error('OpenAI API rate limit or quota exceeded:', data.error);
+        return new Response(
+          JSON.stringify({
+            error: 'Rate limit reached. Please try again in a few moments.',
+            details: data.error?.message
+          }),
+          {
+            status: 429,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+
+      throw new Error(`OpenAI API error: ${data.error?.message || 'Unknown error'}`);
     }
 
-    const data = await response.json();
-    console.log('Successfully generated script');
+    if (!data.choices?.[0]?.message?.content) {
+      console.error('Invalid response format from OpenAI:', data);
+      throw new Error('Invalid response format from OpenAI API');
+    }
 
-    return new Response(JSON.stringify({ script: data.choices[0].message.content }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    const generatedText = data.choices[0].message.content;
+    console.log('Successfully generated script of length:', generatedText.length);
+
+    return new Response(
+      JSON.stringify({ script: generatedText }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   } catch (error) {
     console.error('Error in generate-video-content function:', error);
     
+    // Determine if it's a rate limit error
+    const isRateLimit = error.message?.includes('quota') || error.message?.includes('rate limit');
+    
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: isRateLimit ? 'Rate limit reached. Please try again in a few moments.' : 'An error occurred while generating content',
         details: error.toString()
       }),
-      {
-        status: error.message.includes('exceeded your current quota') ? 429 : 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      { 
+        status: isRateLimit ? 429 : 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
   }
