@@ -22,9 +22,22 @@ serve(async (req) => {
       throw new Error('Script is required and cannot be empty');
     }
 
-    if (script.length > 1000) {
-      throw new Error('Script is too long. Please keep it under 1000 characters.');
+    if (script.length > 5000) {
+      throw new Error('Script is too long. Please keep it under 5000 characters for optimal processing.');
     }
+
+    // Extract just the narration parts from the script for audio
+    const narrationParts = script.match(/\*Narration:\* "(.*?)"/g)?.map(part => 
+      part.replace(/\*Narration:\* "/, '').replace(/"$/, '')
+    ).join(' ') || script;
+
+    // Extract visual descriptions for video generation
+    const visualParts = script.match(/\*Visual Description:\* (.*?)(?=\n|$)/g)?.map(part =>
+      part.replace(/\*Visual Description:\* /, '')
+    ).join('. ') || script;
+
+    console.log('Extracted narration:', narrationParts);
+    console.log('Extracted visual descriptions:', visualParts);
 
     // First, generate video description with OpenAI
     const openAiKey = Deno.env.get('OPENAI_API_KEY');
@@ -48,7 +61,7 @@ serve(async (req) => {
           },
           {
             role: 'user',
-            content: `Create a detailed visual description for a video based on this script: ${script}`
+            content: `Create a detailed visual description for a video based on these visual elements: ${visualParts}`
           }
         ],
         temperature: 0.7,
@@ -83,7 +96,7 @@ serve(async (req) => {
           'xi-api-key': elevenLabsKey,
         },
         body: JSON.stringify({
-          text: script,
+          text: narrationParts,
           model_id: "eleven_monolingual_v1",
           voice_settings: {
             stability: 0.5,
@@ -151,11 +164,11 @@ serve(async (req) => {
           fps: 24,
           width: 1024,
           height: 576,
-          guidance_scale: 17.5, // Increased for better adherence to prompt
+          guidance_scale: 17.5,
           num_inference_steps: 50,
           negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames, text, watermark, logo, words",
           scheduler: "K_EULER",
-          seed: Math.floor(Math.random() * 1000000), // Random seed for variety
+          seed: Math.floor(Math.random() * 1000000),
         },
       }),
     });
