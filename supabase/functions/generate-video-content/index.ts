@@ -31,19 +31,19 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-3.5-turbo', // Changed from gpt-4 to use fewer credits
         messages: [
           {
             role: 'system',
-            content: `You are a professional video script writer. Create engaging, ${style} scripts that are concise and visually descriptive. Break down the script into clear scenes that can be visualized.`
+            content: `You are a video script writer. Create short test scripts for video generation testing.`
           },
           {
             role: 'user',
-            content: `Write a short video script about: ${prompt}. Keep it under 60 seconds when read aloud. Format the response as a series of scenes, each with a clear visual description and narration text.`
+            content: `Write a very short test script (2-3 sentences) about: ${prompt}. Keep it under 15 seconds when read aloud.`
           }
         ],
         temperature: 0.7,
-        max_tokens: 500,
+        max_tokens: 100, // Reduced from 500 to use fewer tokens
       }),
     });
 
