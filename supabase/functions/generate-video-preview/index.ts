@@ -3,18 +3,27 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Max-Age': '86400',
 };
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+      }
+    });
   }
 
   try {
+    console.log('Received request method:', req.method);
+    
     const { script, voice } = await req.json();
-    console.log('Received request:', { script, voice });
+    console.log('Received request payload:', { script, voice });
 
     if (!script) {
       throw new Error('No script provided');
@@ -26,7 +35,7 @@ serve(async (req) => {
       throw new Error('REPLICATE_API_KEY is not set');
     }
 
-    console.log('Generating video with Replicate...');
+    console.log('Starting video generation with Replicate...');
     
     const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
@@ -59,12 +68,14 @@ serve(async (req) => {
     const prediction = await response.json();
     console.log('Prediction created:', prediction);
 
-    // Poll for the result
+    // Poll for the result with timeout handling
     const pollInterval = 1000; // 1 second
     const maxAttempts = 300; // 5 minutes max
     let attempts = 0;
 
     while (attempts < maxAttempts) {
+      console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`);
+      
       const pollResponse = await fetch(
         `https://api.replicate.com/v1/predictions/${prediction.id}`,
         {
@@ -76,11 +87,12 @@ serve(async (req) => {
       );
 
       if (!pollResponse.ok) {
+        console.error('Poll response error:', pollResponse.status, pollResponse.statusText);
         throw new Error(`Failed to poll prediction: ${pollResponse.statusText}`);
       }
 
       const result = await pollResponse.json();
-      console.log('Poll result:', result);
+      console.log('Poll result status:', result.status);
 
       if (result.status === "succeeded") {
         const videoUrl = Array.isArray(result.output) ? result.output[0] : result.output;
@@ -103,8 +115,10 @@ serve(async (req) => {
           }
         );
       } else if (result.status === "failed") {
+        console.error('Video generation failed:', result.error);
         throw new Error(`Video generation failed: ${result.error}`);
       } else if (result.status === "canceled") {
+        console.error('Video generation was canceled');
         throw new Error('Video generation was canceled');
       }
 
@@ -124,7 +138,10 @@ serve(async (req) => {
       }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       }
     );
   }
