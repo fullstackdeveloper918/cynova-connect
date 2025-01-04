@@ -29,7 +29,7 @@ serve(async (req) => {
 
     console.log('Calling Replicate API to generate video...');
     
-    // Call Replicate API to generate video
+    // Call Replicate API to generate video using the latest stable model version
     const prediction = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -37,13 +37,16 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "b72a26c2fb5dea4e54958c6847c85d815b7c6115c94c4894f356d1f9c6c2c5ad",
+        // Using the latest stable version of the text-to-video model
+        version: "4e30c0eef08df0871c21b019c1132cd8cad865b3e5e4b6c7c1e2c54d6dd1d6a4",
         input: {
           prompt: script,
-          video_length: "14",
-          fps: "8",
-          width: "768",
-          height: "432",
+          num_frames: 24,
+          width: 768,
+          height: 432,
+          num_inference_steps: 50,
+          fps: 8,
+          guidance_scale: 12.5
         },
       }),
     });
