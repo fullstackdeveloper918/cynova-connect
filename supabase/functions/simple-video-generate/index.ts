@@ -28,7 +28,7 @@ serve(async (req) => {
 
     console.log('Starting video generation with Replicate...');
     
-    // Use Zeroscope XL for video generation
+    // Use the latest stable version of Zeroscope XL
     const replicateResponse = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -36,16 +36,16 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "cd76ef3c79c568f25d0eb36e3faa44df6433f5b7e2b3d4e2d55f6e3d5b5f51c4",
+        version: "b72a26c2d8e15cb07d45d21afb9af6e2af5471b294acc14fb7f0f90b8eb25c84",
         input: {
           prompt,
           num_frames: 24,
           fps: 8,
-          width: 768,
-          height: 432,
-          guidance_scale: 12.5,
+          width: 576,
+          height: 320,
+          guidance_scale: 17.5,
           num_inference_steps: 50,
-          negative_prompt: "blurry, low quality, low resolution, bad quality"
+          negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames"
         },
       }),
     });
