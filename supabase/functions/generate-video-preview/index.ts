@@ -18,7 +18,7 @@ serve(async (req) => {
     console.log('Received request payload:', { script, voice, duration });
 
     if (!script) {
-      throw new Error('No script provided');
+      throw new Error('No prompt provided');
     }
 
     // First, generate video description with OpenAI
@@ -77,12 +77,15 @@ serve(async (req) => {
         version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
         input: {
           prompt: videoDescription,
-          num_frames: parseInt(duration) * 8, // 8 frames per second
-          width: 576,
-          height: 320,
-          fps: 8,
-          num_inference_steps: 25,
-          guidance_scale: 12.5
+          num_frames: parseInt(duration), // Use duration directly for frames
+          width: 768,
+          height: 432,
+          fps: 24,
+          scheduler: "K_EULER",
+          num_inference_steps: 50,
+          guidance_scale: 17.5,
+          motion_bucket_id: 127,
+          noise_aug_strength: 0.02
         },
       }),
     });
@@ -123,8 +126,7 @@ serve(async (req) => {
       console.log('Poll result:', result);
 
       if (result.status === "succeeded") {
-        // The output is an array with a single video URL
-        const videoUrl = Array.isArray(result.output) ? result.output[0] : result.output;
+        const videoUrl = result.output;
         console.log('Generated video URL:', videoUrl);
         
         if (!videoUrl) {
