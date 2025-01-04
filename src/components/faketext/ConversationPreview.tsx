@@ -46,37 +46,46 @@ export const ConversationPreview = ({
       }
     });
 
-    const showNextMessage = async (index: number) => {
+    const playMessageSequence = async (index: number) => {
+      if (index >= messages.length) {
+        setIsPlaying(false);
+        return;
+      }
+
+      // Show the current message
       setVisibleMessages(prev => [...prev, messages[index]]);
-      
+
+      // Play audio if available
       const currentAudio = audioElements.current.get(index);
       if (currentAudio) {
         try {
-          await currentAudio.play();
-          // Wait for audio to finish
-          await new Promise((resolve) => {
+          await new Promise((resolve, reject) => {
             currentAudio.onended = resolve;
+            currentAudio.onerror = reject;
+            const playPromise = currentAudio.play();
+            if (playPromise) {
+              playPromise.catch(error => {
+                console.error('Error playing audio:', error);
+                resolve(null); // Continue sequence even if audio fails
+              });
+            }
           });
         } catch (error) {
-          console.error('Error playing audio:', error);
+          console.error('Audio playback error:', error);
         }
       }
 
       // Add delay between messages
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Show next message if available
-      if (index + 1 < messages.length) {
-        showNextMessage(index + 1);
-      } else {
-        setIsPlaying(false);
-      }
+      // Play next message
+      await playMessageSequence(index + 1);
     };
 
-    // Start with the first message
+    // Start the sequence
     if (messages.length > 0) {
       setIsPlaying(true);
-      showNextMessage(0);
+      playMessageSequence(0);
     }
 
     // Cleanup function
