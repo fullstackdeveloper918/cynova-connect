@@ -33,17 +33,17 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "b96a2f34632c4e586f632b9d3d4545516962b924518e6c3ba6212d74c0826aa9",
+        version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
         input: {
-          prompt: script,
-          num_frames: 24,
-          width: 576,
-          height: 320,
-          fps: 8,
-          scheduler: "DPMSolverMultistep",
-          num_inference_steps: 25,
-          guidance_scale: 7.5,
-          seed: Math.floor(Math.random() * 100000)
+          html: `<div style="background-color: #000; color: #fff; font-family: Arial; padding: 20px; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center;">
+            <p style="font-size: 24px;">${script}</p>
+          </div>`,
+          width: 1080,
+          height: 1920,
+          fps: 30,
+          duration: 10,
+          quality: "high",
+          format: "mp4",
         },
       }),
     });
