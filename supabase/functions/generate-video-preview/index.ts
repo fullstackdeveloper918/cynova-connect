@@ -33,17 +33,15 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // Using Zeroscope V2 model
-        version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
+        version: "b72a11fe6c2a1c97a946ad4deb260c3951f4c72c89f8f5808a58c5969d2f1c11",
         input: {
           prompt: script,
+          video_length: "14_frames_with_svd",
+          fps: 24,
           width: 576,
           height: 320,
-          fps: 24,
-          duration: 4, // 4 seconds for testing
+          num_inference_steps: 30,
           guidance_scale: 12.5,
-          num_inference_steps: 30, // Reduced for testing
-          negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames"
         },
       }),
     });
