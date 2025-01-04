@@ -18,6 +18,7 @@ export const ConversationPreview = ({
   const [visibleMessages, setVisibleMessages] = useState<Message[]>([]);
   const audioElements = useRef<Map<number, HTMLAudioElement>>(new Map());
   const [isPlaying, setIsPlaying] = useState(false);
+  const nextMessageTimeout = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     if (!messages.length) {
@@ -33,22 +34,27 @@ export const ConversationPreview = ({
     });
     audioElements.current.clear();
     setIsPlaying(false);
+    if (nextMessageTimeout.current) {
+      clearTimeout(nextMessageTimeout.current);
+    }
 
-    // Calculate delay between messages
-    const totalDuration = 30000; // 30 seconds
-    const messageDelay = totalDuration / messages.length;
-
-    // Initialize audio elements
+    // Initialize audio elements and set up event listeners
     messages.forEach((message, index) => {
       if (message.audioUrl) {
         const audio = new Audio(message.audioUrl);
         
-        // Set up audio event listeners
         audio.addEventListener('ended', () => {
-          // Play next audio if available
-          const nextAudio = audioElements.current.get(index + 1);
-          if (nextAudio) {
-            nextAudio.play().catch(console.error);
+          // Show next message after current audio ends
+          const nextIndex = index + 1;
+          if (nextIndex < messages.length) {
+            // Add a small delay between messages for natural feel
+            nextMessageTimeout.current = setTimeout(() => {
+              setVisibleMessages(prev => [...prev, messages[nextIndex]]);
+              const nextAudio = audioElements.current.get(nextIndex);
+              if (nextAudio) {
+                nextAudio.play().catch(console.error);
+              }
+            }, 500); // 500ms delay between messages
           } else {
             setIsPlaying(false);
           }
@@ -56,31 +62,31 @@ export const ConversationPreview = ({
 
         audio.addEventListener('error', (e) => {
           console.error('Audio playback error:', e);
+          setIsPlaying(false);
         });
 
         audioElements.current.set(index, audio);
       }
     });
 
-    // Show messages sequentially and play corresponding audio
-    messages.forEach((message, index) => {
-      setTimeout(() => {
-        setVisibleMessages(prev => [...prev, message]);
-        
-        // Play audio for this message
-        const audio = audioElements.current.get(index);
-        if (audio && !isPlaying) {
-          setIsPlaying(true);
-          audio.play().catch(error => {
-            console.error('Error playing audio:', error);
-            setIsPlaying(false);
-          });
-        }
-      }, index * messageDelay);
-    });
+    // Start with the first message and its audio
+    if (messages.length > 0) {
+      setVisibleMessages([messages[0]]);
+      const firstAudio = audioElements.current.get(0);
+      if (firstAudio) {
+        setIsPlaying(true);
+        firstAudio.play().catch(error => {
+          console.error('Error playing first audio:', error);
+          setIsPlaying(false);
+        });
+      }
+    }
 
     // Cleanup function
     return () => {
+      if (nextMessageTimeout.current) {
+        clearTimeout(nextMessageTimeout.current);
+      }
       audioElements.current.forEach(audio => {
         audio.pause();
         audio.currentTime = 0;
