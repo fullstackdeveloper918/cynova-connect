@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase_supabase-js@2';
+import { decode } from "https://deno.land/x/djwt@v2.8/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,6 +9,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -21,6 +23,17 @@ serve(async (req) => {
       throw new Error('No authorization header');
     }
 
+    // Extract user ID from JWT token
+    const token = authHeader.replace('Bearer ', '');
+    const [_header, payload] = decode(token);
+    const userId = payload.sub;
+
+    if (!userId) {
+      throw new Error('Invalid user ID');
+    }
+
+    console.log('Generating preview for user:', userId);
+
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -32,8 +45,8 @@ serve(async (req) => {
       .insert({
         title: 'Preview: ' + script.substring(0, 50) + '...',
         description: script,
-        type: 'chatgpt_video', // Fixed: Using correct enum value
-        user_id: authHeader.split(' ')[1], // Extract user ID from Bearer token
+        type: 'chatgpt_video',
+        user_id: userId,
         status: 'preview',
         video_url: `/preview/${Date.now()}.mp4` // Generate a unique URL
       })

@@ -125,7 +125,12 @@ const ChatGPTVideo = () => {
       });
 
       if (error) {
+        console.error("Preview generation error:", error);
         throw error;
+      }
+
+      if (!data?.previewUrl) {
+        throw new Error("No preview URL returned");
       }
 
       // Update the preview URL with the generated video URL
