@@ -1,6 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase_supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -26,40 +26,22 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // TODO: Here you would implement the actual video generation logic
-    // For now, we'll create a text-based video using HTML5 canvas
-    const canvas = new OffscreenCanvas(1280, 720);
-    const ctx = canvas.getContext('2d');
-    
-    if (!ctx) {
-      throw new Error('Failed to get canvas context');
-    }
-
-    // Set background
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, 1280, 720);
-
-    // Add text
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '48px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(script.substring(0, 50) + '...', 640, 360);
-
-    // Convert canvas to blob
-    const blob = await canvas.convertToBlob({
-      type: 'image/png'
-    });
+    // For demonstration, we'll use a simple video file
+    // In production, you would implement actual video generation here
+    const response = await fetch('https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4');
+    const videoData = await response.blob();
 
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabaseAdmin
       .storage
       .from('exports')
-      .upload(previewFileName, blob, {
+      .upload(previewFileName, videoData, {
         contentType: 'video/mp4',
         upsert: true
       });
 
     if (uploadError) {
+      console.error('Upload error:', uploadError);
       throw uploadError;
     }
 
@@ -70,6 +52,8 @@ serve(async (req) => {
       .getPublicUrl(previewFileName);
 
     console.log('Generated preview URL:', publicUrl);
+    console.log('Script preview:', script.substring(0, 100));
+    console.log('Voice used:', voice);
 
     return new Response(
       JSON.stringify({ 
