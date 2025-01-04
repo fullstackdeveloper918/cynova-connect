@@ -18,7 +18,8 @@ export const ConversationPreview = ({
   const [visibleMessages, setVisibleMessages] = useState<Message[]>([]);
   const audioContext = useRef<AudioContext | null>(null);
   const oscillator = useRef<OscillatorNode | null>(null);
-  const audioElement = useRef<HTMLAudioElement | null>(null);
+  const audioElements = useRef<Map<string, HTMLAudioElement>>(new Map());
+  const currentAudioIndex = useRef<number>(0);
 
   useEffect(() => {
     if (!messages.length) {
@@ -26,26 +27,50 @@ export const ConversationPreview = ({
       return;
     }
 
-    // Reset visible messages when new messages arrive
+    // Reset visible messages and audio when new messages arrive
     setVisibleMessages([]);
+    audioElements.current.forEach(audio => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
+    audioElements.current.clear();
+    currentAudioIndex.current = 0;
 
     // Calculate delay between messages based on total duration
     const totalDuration = 30000; // 30 seconds in milliseconds
     const messageDelay = totalDuration / messages.length;
 
-    // Play message received sound
+    // Initialize audio elements for each message with narration
+    messages.forEach((message, index) => {
+      if (message.audioUrl) {
+        const audio = new Audio(message.audioUrl);
+        audio.addEventListener('ended', () => {
+          // Play next audio if available
+          if (currentAudioIndex.current < messages.length - 1) {
+            currentAudioIndex.current++;
+            const nextAudio = audioElements.current.get(messages[currentAudioIndex.current].content);
+            nextAudio?.play().catch(error => {
+              console.error('Error playing next narration:', error);
+            });
+          }
+        });
+        audioElements.current.set(message.content, audio);
+      }
+    });
+
+    // Play message received sound and show messages sequentially
     const playMessageSound = (index: number) => {
       if (!audioContext.current) {
         audioContext.current = new AudioContext();
       }
 
+      // Play notification sound
       oscillator.current = audioContext.current.createOscillator();
       const gainNode = audioContext.current.createGain();
 
       oscillator.current.connect(gainNode);
       gainNode.connect(audioContext.current.destination);
 
-      // Different sound for user vs non-user messages
       oscillator.current.frequency.value = messages[index].isUser ? 800 : 600;
       gainNode.gain.value = 0.1;
 
@@ -59,15 +84,14 @@ export const ConversationPreview = ({
         oscillator.current?.stop();
       }, 200);
 
-      // Play narration if available
-      if (messages[index].audioUrl) {
-        if (!audioElement.current) {
-          audioElement.current = new Audio();
+      // Play narration if this is the first message
+      if (index === 0) {
+        const firstAudio = audioElements.current.get(messages[0].content);
+        if (firstAudio) {
+          firstAudio.play().catch(error => {
+            console.error('Error playing first narration:', error);
+          });
         }
-        audioElement.current.src = messages[index].audioUrl;
-        audioElement.current.play().catch(error => {
-          console.error('Error playing narration:', error);
-        });
       }
     };
 
@@ -76,18 +100,19 @@ export const ConversationPreview = ({
       setTimeout(() => {
         setVisibleMessages((prev) => [...prev, message]);
         playMessageSound(index);
-      }, index * messageDelay); // Use calculated delay
+      }, index * messageDelay);
     });
 
-    // Cleanup audio context and element on unmount
+    // Cleanup function
     return () => {
       if (audioContext.current?.state !== "closed") {
         audioContext.current?.close();
       }
-      if (audioElement.current) {
-        audioElement.current.pause();
-        audioElement.current = null;
-      }
+      audioElements.current.forEach(audio => {
+        audio.pause();
+        audio.currentTime = 0;
+      });
+      audioElements.current.clear();
     };
   }, [messages]);
 
