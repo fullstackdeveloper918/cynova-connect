@@ -26,9 +26,12 @@ export const VideoPreview = ({
     <div className="space-y-4">
       {previewUrl ? (
         <div className="w-full aspect-video rounded-lg bg-gray-50 overflow-hidden">
-          <img
+          <video
             src={previewUrl}
-            alt="AI Generated Preview"
+            controls
+            autoPlay
+            loop
+            muted
             className="w-full h-full object-cover"
           />
         </div>

@@ -28,47 +28,71 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Call OpenAI API to generate video content
-    const openaiResponse = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
+    // Call Replicate API to generate video content
+    const replicateResponse = await fetch("https://api.replicate.com/v1/predictions", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        "Content-Type": "application/json",
+        Authorization: `Token ${Deno.env.get('REPLICATE_API_KEY')}`,
       },
       body: JSON.stringify({
-        model: "dall-e-3",
-        prompt: script,
-        n: 1,
-        size: "1024x1024",
+        version: "4d1cf0c5da3c6e10c75fb7886f5c4c4c1ff55ed2983df0d8c5da25c2351b4297",
+        input: {
+          prompt: script,
+          num_frames: 50,
+          fps: 24,
+        },
       }),
     });
 
-    if (!openaiResponse.ok) {
-      const error = await openaiResponse.json();
-      console.error('OpenAI API Error:', error);
+    if (!replicateResponse.ok) {
+      const error = await replicateResponse.json();
+      console.error('Replicate API Error:', error);
       throw new Error('Failed to generate video content');
     }
 
-    const openaiData = await openaiResponse.json();
-    const imageUrl = openaiData.data[0].url;
-    console.log('Generated image URL:', imageUrl);
+    const prediction = await replicateResponse.json();
+    console.log('Prediction started:', prediction);
 
-    // Download the generated image
-    const imageResponse = await fetch(imageUrl);
-    if (!imageResponse.ok) {
-      throw new Error('Failed to download generated image');
+    // Poll for the result
+    let videoUrl = null;
+    while (!videoUrl) {
+      const statusResponse = await fetch(prediction.urls.get, {
+        headers: {
+          Authorization: `Token ${Deno.env.get('REPLICATE_API_KEY')}`,
+        },
+      });
+      
+      const result = await statusResponse.json();
+      console.log('Checking prediction status:', result);
+
+      if (result.status === 'succeeded') {
+        videoUrl = result.output;
+        break;
+      } else if (result.status === 'failed') {
+        throw new Error('Video generation failed');
+      }
+
+      // Wait before polling again
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    const imageBlob = await imageResponse.blob();
+    // Download the generated video
+    const videoResponse = await fetch(videoUrl);
+    if (!videoResponse.ok) {
+      throw new Error('Failed to download generated video');
+    }
+
+    const videoBlob = await videoResponse.blob();
     const timestamp = new Date().getTime();
-    const fileName = `preview-${timestamp}.png`;
+    const fileName = `preview-${timestamp}.mp4`;
 
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabaseAdmin
       .storage
       .from('exports')
-      .upload(fileName, imageBlob, {
-        contentType: 'image/png',
+      .upload(fileName, videoBlob, {
+        contentType: 'video/mp4',
         upsert: true
       });
 
