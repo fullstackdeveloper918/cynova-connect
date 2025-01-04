@@ -75,18 +75,19 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // Using Stable Video Diffusion model - a reliable and public model
-        version: "9c86e3a808d1142cb698be88bc772a3d3fd7c1e26f534a679d5ddc96a3b0f7eb",
+        // Using Stable Video Diffusion model
+        version: "b96a2f33cc8e4b0aa23eacf145b16f43261b9c93d7457dd4a8130a5221dce9fd",
         input: {
           prompt: videoDescription,
-          video_length: "14_frames_with_svd",
+          num_frames: 24,
+          width: 576,
+          height: 320,
           fps: 6,
-          width: 1024,
-          height: 576,
           num_inference_steps: 25,
-          min_guidance_scale: 1,
-          max_guidance_scale: 20,
-          negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames"
+          motion_bucket_id: 127,
+          cond_aug: 0.02,
+          decoding_t: 7,
+          seed: Math.floor(Math.random() * 100000),
         },
       }),
     });
