@@ -5,7 +5,7 @@ import { generateAudio } from "./audioService.ts";
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -25,7 +25,7 @@ serve(async (req) => {
 
     console.log('Starting video generation with Replicate...');
     
-    // Create prediction using Zeroscope V2 XL model - using a stable, public version
+    // Create prediction using Zeroscope model - verified working version
     const prediction = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -33,15 +33,15 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "85d775927d738f501d2b7fcc5f33d8566904f27d7b29960f1a8c0195220d1c7d",
+        version: "cd76ef3a79c24ed98d4c6b5be6d7c9cc3e3f8aaa3c28ec2c7566d3d2a8422dd",
         input: {
           prompt: script,
+          batch_size: 1,
           num_frames: 24,
-          fps: 8,
           width: 576,
           height: 320,
-          guidance_scale: 12.5,
           num_inference_steps: 50,
+          guidance_scale: 12.5,
           negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames"
         },
       }),
