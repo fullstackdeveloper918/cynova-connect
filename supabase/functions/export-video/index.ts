@@ -1,5 +1,5 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
@@ -8,33 +8,88 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { script, voice, previewUrl, userId, title, description } = await req.json();
-    
+    const { messages, voiceId, title, description } = await req.json();
+    console.log('Received request:', { messages, voiceId, title });
+
     // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    console.log('Creating export record for user:', userId);
-    
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Convert messages to narration script
+    const script = messages.map(msg => 
+      `${msg.isUser ? 'User' : 'Friend'}: ${msg.content}`
+    ).join('\n');
+
+    // Generate audio narration using ElevenLabs
+    console.log('Generating audio with ElevenLabs...');
+    const audioResponse = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+      {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': Deno.env.get('ELEVEN_LABS_API_KEY') ?? '',
+        },
+        body: JSON.stringify({
+          text: script,
+          model_id: "eleven_monolingual_v1",
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.5,
+          },
+        }),
+      }
+    );
+
+    if (!audioResponse.ok) {
+      const error = await audioResponse.json();
+      console.error('ElevenLabs API Error:', error);
+      throw new Error('Failed to generate audio');
+    }
+
+    const audioBlob = await audioResponse.blob();
+    const audioFileName = `audio-${Date.now()}.mp3`;
+
+    // Upload audio to Supabase Storage
+    console.log('Uploading audio to Storage...');
+    const { data: audioUpload, error: audioUploadError } = await supabaseAdmin
+      .storage
+      .from('exports')
+      .upload(audioFileName, audioBlob, {
+        contentType: 'audio/mpeg',
+        upsert: true
+      });
+
+    if (audioUploadError) {
+      console.error('Audio upload error:', audioUploadError);
+      throw audioUploadError;
+    }
+
+    // Get public URL for the audio
+    const { data: { publicUrl: audioUrl } } = supabaseAdmin
+      .storage
+      .from('exports')
+      .getPublicUrl(audioFileName);
+
     // Create an export record
-    const { data: exportData, error: exportError } = await supabase
+    console.log('Creating export record...');
+    const { data: exportData, error: exportError } = await supabaseAdmin
       .from('exports')
       .insert({
-        user_id: userId,
-        title: title,
-        description: description,
-        file_url: previewUrl,
+        title,
+        description,
+        file_url: audioFileName,
         file_type: 'video/mp4',
+        file_size: audioBlob.size,
         status: 'completed',
-        file_size: 0, // You might want to calculate this
-        thumbnail_url: null // You might want to generate this
       })
       .select()
       .single();
@@ -44,21 +99,20 @@ serve(async (req) => {
       throw exportError;
     }
 
-    console.log('Created export record:', exportData);
-
     return new Response(
       JSON.stringify({ 
-        exportUrl: previewUrl,
-        exportData,
+        success: true,
+        export: exportData,
         message: "Video exported successfully" 
       }),
       { 
         headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       }
     );
+
   } catch (error) {
     console.error('Error in export-video function:', error);
     
@@ -69,7 +123,7 @@ serve(async (req) => {
       }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }

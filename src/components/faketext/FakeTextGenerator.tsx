@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { MessageBubble } from "./MessageBubble";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Video } from "lucide-react";
 
 interface Message {
   content: string;
@@ -14,11 +16,26 @@ interface Message {
   isUser: boolean;
 }
 
+const VOICE_OPTIONS = [
+  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah - Professional" },
+  { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam - Friendly" },
+  { id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte - Casual" },
+];
+
+const DURATION_OPTIONS = [
+  { value: "30", label: "30 seconds" },
+  { value: "60", label: "1 minute" },
+  { value: "90", label: "1.5 minutes" },
+];
+
 export const FakeTextGenerator = () => {
   const [prompt, setPrompt] = useState("");
   const [topic, setTopic] = useState("");
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [selectedVoice, setSelectedVoice] = useState(VOICE_OPTIONS[0].id);
+  const [duration, setDuration] = useState(DURATION_OPTIONS[0].value);
+  const [exporting, setExporting] = useState(false);
   const { toast } = useToast();
 
   const generateConversation = async () => {
@@ -34,7 +51,11 @@ export const FakeTextGenerator = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-fake-text', {
-        body: { prompt, topic },
+        body: { 
+          prompt, 
+          topic,
+          duration: parseInt(duration), // Pass duration to control conversation length
+        },
       });
 
       if (error) throw error;
@@ -56,6 +77,45 @@ export const FakeTextGenerator = () => {
     }
   };
 
+  const exportVideo = async () => {
+    if (!messages.length) {
+      toast({
+        title: "No conversation",
+        description: "Please generate a conversation first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('export-video', {
+        body: {
+          messages,
+          voiceId: selectedVoice,
+          title: topic,
+          description: prompt,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Video exported!",
+        description: "Your video has been created and saved to your exports.",
+      });
+    } catch (error) {
+      console.error('Error exporting video:', error);
+      toast({
+        title: "Export failed",
+        description: "Failed to create video. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4">
@@ -68,6 +128,39 @@ export const FakeTextGenerator = () => {
             onChange={(e) => setTopic(e.target.value)}
           />
         </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="duration">Conversation Duration</Label>
+          <Select value={duration} onValueChange={setDuration}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select duration" />
+            </SelectTrigger>
+            <SelectContent>
+              {DURATION_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="voice">Narration Voice</Label>
+          <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select voice" />
+            </SelectTrigger>
+            <SelectContent>
+              {VOICE_OPTIONS.map((voice) => (
+                <SelectItem key={voice.id} value={voice.id}>
+                  {voice.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="prompt">Additional Details</Label>
           <Textarea
@@ -78,13 +171,44 @@ export const FakeTextGenerator = () => {
             className="min-h-[100px]"
           />
         </div>
-        <Button 
-          onClick={generateConversation} 
-          disabled={loading}
-          className="w-full"
-        >
-          {loading ? "Generating..." : "Generate Conversation"}
-        </Button>
+
+        <div className="flex gap-2">
+          <Button 
+            onClick={generateConversation} 
+            disabled={loading}
+            className="flex-1"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              "Generate Conversation"
+            )}
+          </Button>
+
+          {messages.length > 0 && (
+            <Button 
+              onClick={exportVideo}
+              disabled={exporting}
+              variant="secondary"
+              className="flex-1"
+            >
+              {exporting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Video className="mr-2 h-4 w-4" />
+                  Export as Video
+                </>
+              )}
+            </Button>
+          )}
+        </div>
       </div>
 
       {messages.length > 0 && (
