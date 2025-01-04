@@ -39,7 +39,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a video description generator. Create detailed, visual descriptions that can be used to generate engaging videos. Focus on describing visual elements, movements, and scenes.'
+            content: 'You are a video description generator. Create concise, visual descriptions that can be used to generate engaging videos. Focus on describing visual elements, movements, and scenes. Keep it under 75 words.'
           },
           {
             role: 'user',
@@ -60,34 +60,13 @@ serve(async (req) => {
     const videoDescription = openAiData.choices[0].message.content;
     console.log('Generated video description:', videoDescription);
 
-    // Create HTML template for video generation
-    const htmlTemplate = `
-      <div style="
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
-        color: white;
-        font-family: Arial, sans-serif;
-        padding: 2rem;
-        text-align: center;
-      ">
-        <div>
-          <h1 style="font-size: 2.5rem; margin-bottom: 1.5rem;">${script.split('\n')[0]}</h1>
-          <p style="font-size: 1.5rem; line-height: 1.6;">${videoDescription}</p>
-        </div>
-      </div>
-    `;
-
-    // Then, use Replicate to generate the video
+    // Use Replicate's Zeroscope XL model for video generation
     const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
     if (!replicateApiKey) {
       throw new Error('REPLICATE_API_KEY is not set');
     }
 
-    console.log('Starting video generation with Replicate...');
+    console.log('Starting video generation with Replicate Zeroscope XL...');
     const replicateResponse = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -95,15 +74,16 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
+        version: "85d775927d738f501d2b7fcc5f33d8566904f27d7b29960f1a8c0195220d1c7d",
         input: {
-          html: htmlTemplate,
-          width: 1080,
-          height: 1920,
-          fps: 30,
-          duration: parseInt(duration),
-          quality: "high",
-          format: "mp4",
+          prompt: videoDescription,
+          video_length: "14_frames_with_svd",
+          fps: 8,
+          width: 576,
+          height: 320,
+          num_inference_steps: 50,
+          guidance_scale: 17.5,
+          negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames"
         },
       }),
     });
@@ -144,22 +124,13 @@ serve(async (req) => {
       console.log('Poll result:', result);
 
       if (result.status === "succeeded") {
-        // Handle array of outputs
-        const outputs = result.output;
-        console.log('Generated outputs:', outputs);
+        const videoUrl = result.output;
+        console.log('Generated video URL:', videoUrl);
         
-        if (!Array.isArray(outputs) || outputs.length === 0) {
-          throw new Error('No output generated');
-        }
-
-        // Find the first MP4 file in the outputs
-        const videoUrl = outputs.find(url => typeof url === 'string' && url.endsWith('.mp4'));
         if (!videoUrl) {
-          throw new Error('No MP4 video found in the output');
+          throw new Error('No video URL in the output');
         }
 
-        console.log('Found video URL:', videoUrl);
-        
         return new Response(
           JSON.stringify({ 
             previewUrl: videoUrl,
