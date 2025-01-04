@@ -17,10 +17,9 @@ export const DurationSelector = ({
           <SelectValue placeholder="Select duration" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="24">1 second</SelectItem>
-          <SelectItem value="48">2 seconds</SelectItem>
-          <SelectItem value="72">3 seconds</SelectItem>
-          <SelectItem value="96">4 seconds</SelectItem>
+          <SelectItem value="240">30 seconds</SelectItem>
+          <SelectItem value="480">60 seconds</SelectItem>
+          <SelectItem value="720">90 seconds</SelectItem>
         </SelectContent>
       </Select>
     </div>
