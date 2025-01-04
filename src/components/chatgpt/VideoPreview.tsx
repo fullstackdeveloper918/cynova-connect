@@ -1,5 +1,5 @@
 import { Video } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface PreviewUrls {
   videoUrl: string;
@@ -18,13 +18,30 @@ export const VideoPreview = ({
   selectedVoice,
 }: VideoPreviewProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
-    // Reset audio when preview URL changes
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
+      setIsPlaying(false);
     }
   }, [previewUrl]);
+
+  useEffect(() => {
+    const handleAudioEnd = () => {
+      setIsPlaying(false);
+    };
+
+    if (audioRef.current) {
+      audioRef.current.addEventListener('ended', handleAudioEnd);
+    }
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.removeEventListener('ended', handleAudioEnd);
+      }
+    };
+  }, []);
 
   if (!script) {
     return (
@@ -41,8 +58,10 @@ export const VideoPreview = ({
     if (audioRef.current) {
       if (audioRef.current.paused) {
         audioRef.current.play();
+        setIsPlaying(true);
       } else {
         audioRef.current.pause();
+        setIsPlaying(false);
       }
     }
   };
@@ -50,7 +69,10 @@ export const VideoPreview = ({
   return (
     <div className="space-y-4">
       {previewUrl ? (
-        <div className="w-full aspect-video rounded-lg bg-gray-50 overflow-hidden relative cursor-pointer group" onClick={handleImageClick}>
+        <div 
+          className="w-full aspect-video rounded-lg bg-gray-50 overflow-hidden relative cursor-pointer group"
+          onClick={handleImageClick}
+        >
           <img 
             src={previewUrl.videoUrl} 
             alt="Video preview frame"
@@ -63,7 +85,7 @@ export const VideoPreview = ({
             className="hidden"
           />
           <div className="absolute bottom-4 left-4 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded-full">
-            Click to play/pause audio
+            {isPlaying ? 'Click to pause' : 'Click to play'}
           </div>
         </div>
       ) : (
