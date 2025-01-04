@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Message } from "./types";
-import { MessageBubble } from "./MessageBubble";
 import { PreviewControls } from "./PreviewControls";
+import { MessageList } from "./MessageList";
+import { AudioPlayer } from "./AudioPlayer";
 
 interface ConversationPreviewProps {
   messages: Message[];
@@ -16,75 +17,35 @@ export const ConversationPreview = ({
 }: ConversationPreviewProps) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [visibleMessages, setVisibleMessages] = useState<Message[]>([]);
-  const audioElements = useRef<Map<number, HTMLAudioElement>>(new Map());
-  const [isPlaying, setIsPlaying] = useState(false);
+  const audioPlayerRef = useRef<AudioPlayer>(new AudioPlayer());
 
   useEffect(() => {
+    const audioPlayer = audioPlayerRef.current;
+
     if (!messages.length) {
       setVisibleMessages([]);
+      audioPlayer.cleanup();
       return;
     }
 
-    // Reset state
+    // Reset state and initialize audio
     setVisibleMessages([]);
-    audioElements.current.forEach(audio => {
-      audio.pause();
-      audio.currentTime = 0;
-    });
-    audioElements.current.clear();
-    setIsPlaying(false);
-
-    // Initialize audio elements
-    messages.forEach((message, index) => {
-      if (message.audioUrl) {
-        const audio = new Audio(message.audioUrl);
-        audioElements.current.set(index, audio);
-      }
-    });
-
-    const playAudio = async (audio: HTMLAudioElement): Promise<void> => {
-      return new Promise((resolve, reject) => {
-        const handleEnded = () => {
-          audio.removeEventListener('ended', handleEnded);
-          audio.removeEventListener('error', handleError);
-          resolve();
-        };
-
-        const handleError = (error: Event) => {
-          audio.removeEventListener('ended', handleEnded);
-          audio.removeEventListener('error', handleError);
-          console.error('Audio playback error:', error);
-          reject(error);
-        };
-
-        audio.addEventListener('ended', handleEnded);
-        audio.addEventListener('error', handleError);
-
-        // Start playing and handle any immediate errors
-        audio.play().catch(error => {
-          console.error('Error starting audio:', error);
-          handleError(error);
-        });
-      });
-    };
+    audioPlayer.initialize(messages);
 
     const playMessageSequence = async (index: number) => {
       if (index >= messages.length) {
-        setIsPlaying(false);
+        audioPlayer.setIsPlaying(false);
         return;
       }
 
       // Show current message
       setVisibleMessages(prev => [...prev, messages[index]]);
 
-      // Play audio if available
-      const currentAudio = audioElements.current.get(index);
-      if (currentAudio) {
-        try {
-          await playAudio(currentAudio);
-        } catch (error) {
-          console.error('Failed to play audio for message:', index, error);
-        }
+      try {
+        // Play audio if available
+        await audioPlayer.playAudio(index);
+      } catch (error) {
+        console.error('Failed to play audio for message:', index, error);
       }
 
       // Add delay between messages
@@ -96,18 +57,13 @@ export const ConversationPreview = ({
 
     // Start the sequence
     if (messages.length > 0) {
-      setIsPlaying(true);
+      audioPlayer.setIsPlaying(true);
       playMessageSequence(0);
     }
 
-    // Cleanup function
+    // Cleanup
     return () => {
-      audioElements.current.forEach(audio => {
-        audio.pause();
-        audio.currentTime = 0;
-      });
-      audioElements.current.clear();
-      setIsPlaying(false);
+      audioPlayer.cleanup();
     };
   }, [messages]);
 
@@ -133,22 +89,7 @@ export const ConversationPreview = ({
               : "linear-gradient(to bottom, #ffffff, #f5f5f5)",
           }}
         >
-          <div
-            className={`text-center text-sm ${
-              isDarkMode ? "text-gray-400" : "text-gray-500"
-            } pb-2`}
-          >
-            Today
-          </div>
-          {visibleMessages.map((message, index) => (
-            <MessageBubble
-              key={index}
-              message={message.content}
-              isUser={message.isUser}
-              timestamp={message.timestamp}
-              isDarkMode={isDarkMode}
-            />
-          ))}
+          <MessageList messages={visibleMessages} isDarkMode={isDarkMode} />
         </div>
       </div>
     </div>
