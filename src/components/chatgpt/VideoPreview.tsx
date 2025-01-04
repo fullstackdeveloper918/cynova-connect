@@ -25,12 +25,13 @@ export const VideoPreview = ({
   return (
     <div className="space-y-4">
       {previewUrl ? (
-        <video
-          src={previewUrl}
-          controls
-          className="w-full aspect-video rounded-lg bg-gray-50"
-          key={`preview-${Date.now()}`} // Force re-render when URL changes
-        />
+        <div className="w-full aspect-video rounded-lg bg-gray-50 overflow-hidden">
+          <img
+            src={previewUrl}
+            alt="AI Generated Preview"
+            className="w-full h-full object-cover"
+          />
+        </div>
       ) : (
         <div className="aspect-video rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50">
           <div className="text-center space-y-2 text-muted-foreground">
