@@ -38,38 +38,48 @@ export const ConversationPreview = ({
       clearTimeout(nextMessageTimeout.current);
     }
 
+    const playNextMessage = (currentIndex: number) => {
+      const nextIndex = currentIndex + 1;
+      if (nextIndex < messages.length) {
+        nextMessageTimeout.current = setTimeout(() => {
+          setVisibleMessages(prev => [...prev, messages[nextIndex]]);
+          const nextAudio = audioElements.current.get(nextIndex);
+          if (nextAudio) {
+            nextAudio.play().catch(error => {
+              console.error('Error playing next audio:', error);
+              // Continue the chain even if audio fails
+              playNextMessage(nextIndex);
+            });
+          } else {
+            // If no audio, still continue the chain
+            playNextMessage(nextIndex);
+          }
+        }, 500);
+      } else {
+        setIsPlaying(false);
+      }
+    };
+
     // Initialize audio elements and set up event listeners
     messages.forEach((message, index) => {
       if (message.audioUrl) {
         const audio = new Audio(message.audioUrl);
         
         audio.addEventListener('ended', () => {
-          // Show next message after current audio ends
-          const nextIndex = index + 1;
-          if (nextIndex < messages.length) {
-            // Add a small delay between messages for natural feel
-            nextMessageTimeout.current = setTimeout(() => {
-              setVisibleMessages(prev => [...prev, messages[nextIndex]]);
-              const nextAudio = audioElements.current.get(nextIndex);
-              if (nextAudio) {
-                nextAudio.play().catch(console.error);
-              }
-            }, 500); // 500ms delay between messages
-          } else {
-            setIsPlaying(false);
-          }
+          playNextMessage(index);
         });
 
         audio.addEventListener('error', (e) => {
           console.error('Audio playback error:', e);
-          setIsPlaying(false);
+          // Continue the chain even if audio fails
+          playNextMessage(index);
         });
 
         audioElements.current.set(index, audio);
       }
     });
 
-    // Start with the first message and its audio
+    // Start with the first message
     if (messages.length > 0) {
       setVisibleMessages([messages[0]]);
       const firstAudio = audioElements.current.get(0);
@@ -77,8 +87,12 @@ export const ConversationPreview = ({
         setIsPlaying(true);
         firstAudio.play().catch(error => {
           console.error('Error playing first audio:', error);
-          setIsPlaying(false);
+          // If first audio fails, start the chain anyway
+          playNextMessage(0);
         });
+      } else {
+        // If no audio for first message, start the chain
+        playNextMessage(0);
       }
     }
 
