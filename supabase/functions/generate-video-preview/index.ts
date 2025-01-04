@@ -14,7 +14,7 @@ serve(async (req) => {
   try {
     console.log('Starting video generation process...');
     
-    const { script, voice, duration = "48" } = await req.json();
+    const { script, voice = "Sarah", duration = "48" } = await req.json();
     console.log('Received request payload:', { script, voice, duration });
 
     if (!script) {
@@ -35,11 +35,11 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: 'You are a video description generator. Create concise, visual descriptions that can be used to generate engaging videos. Focus on describing visual elements, movements, and scenes. Keep it under 75 words.'
+            content: 'Create a concise, visual description for video generation. Focus on describing visual elements, movements, and scenes. Keep it under 75 words.'
           },
           {
             role: 'user',
@@ -69,7 +69,7 @@ serve(async (req) => {
 
     const voiceId = "EXAVITQu4vr4xnSDxMaL"; // Sarah's voice ID
     const audioResponse = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
       {
         method: 'POST',
         headers: {
@@ -89,16 +89,36 @@ serve(async (req) => {
     );
 
     if (!audioResponse.ok) {
-      const error = await audioResponse.json();
+      const error = await audioResponse.text();
       console.error('ElevenLabs API Error:', error);
-      throw new Error(`ElevenLabs API error: ${JSON.stringify(error)}`);
+      throw new Error(`ElevenLabs API error: ${error}`);
     }
 
     const audioBlob = await audioResponse.blob();
-    const audioUrl = URL.createObjectURL(audioBlob);
-    console.log('Audio narration generated successfully');
+    const audioArrayBuffer = await audioBlob.arrayBuffer();
 
-    // Use Replicate's API for video generation with proper duration settings
+    // Upload audio to Supabase Storage
+    const audioFileName = `audio-${Date.now()}.mp3`;
+    const { data: audioUploadData, error: audioUploadError } = await supabase
+      .storage
+      .from('exports')
+      .upload(audioFileName, audioArrayBuffer, {
+        contentType: 'audio/mpeg',
+        upsert: true
+      });
+
+    if (audioUploadError) {
+      console.error('Audio upload error:', audioUploadError);
+      throw audioUploadError;
+    }
+
+    // Get public URL for audio
+    const { data: { publicUrl: audioUrl } } = supabase
+      .storage
+      .from('exports')
+      .getPublicUrl(audioFileName);
+
+    // Use Replicate's API for video generation
     const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
     if (!replicateApiKey) {
       throw new Error('REPLICATE_API_KEY is not set');
@@ -111,7 +131,7 @@ serve(async (req) => {
     
     console.log('Using Replicate model version:', modelVersion);
     
-    const replicateResponse = await fetch(`https://api.replicate.com/v1/predictions`, {
+    const replicateResponse = await fetch('https://api.replicate.com/v1/predictions', {
       method: "POST",
       headers: {
         "Authorization": `Token ${replicateApiKey}`,
@@ -121,11 +141,11 @@ serve(async (req) => {
         version: modelVersion,
         input: {
           prompt: videoDescription,
-          video_length: "30_frames_with_svd", // Increased frames for longer video
-          fps: 24, // Increased FPS for smoother video
-          width: 768,
-          height: 432,
-          guidance_scale: 17.5,
+          num_frames: 24 * 30, // 30 seconds at 24 FPS
+          fps: 24,
+          width: 1024,
+          height: 576,
+          guidance_scale: 12.5,
           num_inference_steps: 50,
           negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames"
         },
@@ -135,22 +155,13 @@ serve(async (req) => {
     if (!replicateResponse.ok) {
       const error = await replicateResponse.json();
       console.error('Replicate API Error:', error);
-      
-      if (error.detail?.includes('Invalid token')) {
-        throw new Error('Invalid Replicate API token. Please check your API key.');
-      } else if (error.detail?.includes('Permission denied')) {
-        throw new Error('Permission denied by Replicate. Please verify your API key has the correct permissions.');
-      } else if (error.status === 402) {
-        throw new Error('Replicate API quota exceeded or payment required.');
-      }
-      
       throw new Error(`Replicate API error: ${JSON.stringify(error)}`);
     }
 
     const prediction = await replicateResponse.json();
     console.log('Prediction created:', prediction);
 
-    // Poll for completion with increased timeout and better logging
+    // Poll for completion
     const maxAttempts = 180; // 3 minutes
     const pollInterval = 2000; // Poll every 2 seconds
     let attempts = 0;
@@ -180,11 +191,12 @@ serve(async (req) => {
       if (result.status === "succeeded") {
         console.log('Video generation succeeded:', result);
         
-        // Return both video and audio URLs
         return new Response(
           JSON.stringify({ 
-            videoUrl: result.output,
-            audioUrl: audioUrl,
+            previewUrl: {
+              videoUrl: result.output,
+              audioUrl: audioUrl
+            },
             message: "Preview generated successfully" 
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
