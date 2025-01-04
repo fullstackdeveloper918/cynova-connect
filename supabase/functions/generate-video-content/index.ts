@@ -15,13 +15,13 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, style } = await req.json();
-
     if (!openAIApiKey) {
+      console.error('OpenAI API key is not configured');
       throw new Error('OpenAI API key is not configured');
     }
 
-    console.log('Sending request to OpenAI with prompt:', prompt);
+    const { prompt, style } = await req.json();
+    console.log('Received prompt:', prompt);
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -41,20 +41,35 @@ serve(async (req) => {
       }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('OpenAI API error:', errorData);
-      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
-    }
-
     const data = await response.json();
     console.log('OpenAI API response:', data);
 
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    if (!response.ok) {
+      // Check specifically for quota exceeded error
+      if (data.error?.message?.includes('exceeded your current quota')) {
+        console.error('OpenAI API quota exceeded:', data.error);
+        return new Response(
+          JSON.stringify({
+            error: 'OpenAI API quota exceeded. Please try again later or contact support.',
+            details: data.error.message
+          }),
+          {
+            status: 429, // Too Many Requests
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+
+      throw new Error(`OpenAI API error: ${data.error?.message || 'Unknown error'}`);
+    }
+
+    if (!data.choices?.[0]?.message?.content) {
+      console.error('Invalid response format from OpenAI:', data);
       throw new Error('Invalid response format from OpenAI API');
     }
 
     const generatedText = data.choices[0].message.content;
+    console.log('Successfully generated text:', generatedText.substring(0, 100) + '...');
 
     return new Response(
       JSON.stringify({ script: generatedText }),
