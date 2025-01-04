@@ -1,9 +1,14 @@
 import { Video } from "lucide-react";
 import { useEffect, useRef } from "react";
 
+interface PreviewUrls {
+  videoUrl: string;
+  audioUrl: string;
+}
+
 interface VideoPreviewProps {
   script: string;
-  previewUrl: string;
+  previewUrl: PreviewUrls | null;
   selectedVoice: string;
 }
 
