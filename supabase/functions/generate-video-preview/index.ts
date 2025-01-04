@@ -114,12 +114,13 @@ serve(async (req) => {
     const prediction = await replicateResponse.json();
     console.log('Prediction created:', prediction);
 
-    // Poll for completion
-    const maxAttempts = 60;
+    // Poll for completion with increased timeout and better logging
+    const maxAttempts = 180; // Increased to 3 minutes
+    const pollInterval = 2000; // Poll every 2 seconds
     let attempts = 0;
 
     while (attempts < maxAttempts) {
-      console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`);
+      console.log(`Polling attempt ${attempts + 1}/${maxAttempts} for prediction ${prediction.id}`);
       
       const pollResponse = await fetch(
         `https://api.replicate.com/v1/predictions/${prediction.id}`,
@@ -138,7 +139,7 @@ serve(async (req) => {
       }
 
       const result = await pollResponse.json();
-      console.log('Poll result status:', result.status);
+      console.log(`Poll result status for ${prediction.id}:`, result.status);
 
       if (result.status === "succeeded") {
         console.log('Video generation succeeded:', result);
@@ -156,11 +157,11 @@ serve(async (req) => {
         throw new Error('Video generation was canceled');
       }
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
       attempts++;
     }
 
-    throw new Error('Video generation timed out');
+    throw new Error(`Video generation timed out after ${maxAttempts * pollInterval / 1000} seconds`);
 
   } catch (error) {
     console.error('Error in generate-video-preview function:', error);
