@@ -144,18 +144,22 @@ serve(async (req) => {
       console.log('Poll result:', result);
 
       if (result.status === "succeeded") {
-        const videoUrl = result.output;
-        console.log('Generated video URL:', videoUrl);
+        // Handle array of outputs
+        const outputs = result.output;
+        console.log('Generated outputs:', outputs);
         
+        if (!Array.isArray(outputs) || outputs.length === 0) {
+          throw new Error('No output generated');
+        }
+
+        // Find the first MP4 file in the outputs
+        const videoUrl = outputs.find(url => typeof url === 'string' && url.endsWith('.mp4'));
         if (!videoUrl) {
-          throw new Error('No video URL in the output');
+          throw new Error('No MP4 video found in the output');
         }
 
-        // Verify that the output is an MP4 video
-        if (!videoUrl.endsWith('.mp4')) {
-          throw new Error('Generated output is not a video file');
-        }
-
+        console.log('Found video URL:', videoUrl);
+        
         return new Response(
           JSON.stringify({ 
             previewUrl: videoUrl,
