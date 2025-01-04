@@ -18,7 +18,7 @@ serve(async (req) => {
     console.log('Received request payload:', { script, voice, duration });
 
     if (!script) {
-      throw new Error('No prompt provided');
+      throw new Error('No script provided');
     }
 
     // First, generate video description with OpenAI
@@ -60,6 +60,27 @@ serve(async (req) => {
     const videoDescription = openAiData.choices[0].message.content;
     console.log('Generated video description:', videoDescription);
 
+    // Create HTML template for video generation
+    const htmlTemplate = `
+      <div style="
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+        color: white;
+        font-family: Arial, sans-serif;
+        padding: 2rem;
+        text-align: center;
+      ">
+        <div>
+          <h1 style="font-size: 2.5rem; margin-bottom: 1.5rem;">${script.split('\n')[0]}</h1>
+          <p style="font-size: 1.5rem; line-height: 1.6;">${videoDescription}</p>
+        </div>
+      </div>
+    `;
+
     // Then, use Replicate to generate the video
     const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
     if (!replicateApiKey) {
@@ -76,16 +97,13 @@ serve(async (req) => {
       body: JSON.stringify({
         version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
         input: {
-          prompt: videoDescription,
-          num_frames: parseInt(duration), // Use duration directly for frames
-          width: 768,
-          height: 432,
-          fps: 24,
-          scheduler: "K_EULER",
-          num_inference_steps: 50,
-          guidance_scale: 17.5,
-          motion_bucket_id: 127,
-          noise_aug_strength: 0.02
+          html: htmlTemplate,
+          width: 1080,
+          height: 1920,
+          fps: 30,
+          duration: parseInt(duration),
+          quality: "high",
+          format: "mp4",
         },
       }),
     });
@@ -131,6 +149,11 @@ serve(async (req) => {
         
         if (!videoUrl) {
           throw new Error('No video URL in the output');
+        }
+
+        // Verify that the output is an MP4 video
+        if (!videoUrl.endsWith('.mp4')) {
+          throw new Error('Generated output is not a video file');
         }
 
         return new Response(
