@@ -28,7 +28,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Call Replicate API to generate video content
+    // Call Replicate API to generate video content using Zeroscope model
     const replicateResponse = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -36,11 +36,13 @@ serve(async (req) => {
         Authorization: `Token ${Deno.env.get('REPLICATE_API_KEY')}`,
       },
       body: JSON.stringify({
-        version: "4d1cf0c5da3c6e10c75fb7886f5c4c4c1ff55ed2983df0d8c5da25c2351b4297",
+        version: "b72a26c2fb5dea4e54958c6847c85d815b7c6115c94c4894f356d1f9c6c2c5ad",
         input: {
           prompt: script,
-          num_frames: 50,
-          fps: 24,
+          video_length: "14", // 14 frames for a short preview
+          fps: 8,
+          width: 768,
+          height: 432
         },
       }),
     });
@@ -56,7 +58,10 @@ serve(async (req) => {
 
     // Poll for the result
     let videoUrl = null;
-    while (!videoUrl) {
+    let attempts = 0;
+    const maxAttempts = 60; // Maximum number of attempts (60 seconds)
+
+    while (!videoUrl && attempts < maxAttempts) {
       const statusResponse = await fetch(prediction.urls.get, {
         headers: {
           Authorization: `Token ${Deno.env.get('REPLICATE_API_KEY')}`,
@@ -75,6 +80,11 @@ serve(async (req) => {
 
       // Wait before polling again
       await new Promise(resolve => setTimeout(resolve, 1000));
+      attempts++;
+    }
+
+    if (!videoUrl) {
+      throw new Error('Video generation timed out');
     }
 
     // Download the generated video
