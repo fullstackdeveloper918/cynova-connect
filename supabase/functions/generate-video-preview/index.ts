@@ -32,7 +32,7 @@ serve(async (req) => {
       .insert({
         title: 'Preview: ' + script.substring(0, 50) + '...',
         description: script,
-        type: 'chatgpt',
+        type: 'chatgpt_video', // Fixed: Using correct enum value
         user_id: authHeader.split(' ')[1], // Extract user ID from Bearer token
         status: 'preview',
         video_url: `/preview/${Date.now()}.mp4` // Generate a unique URL
