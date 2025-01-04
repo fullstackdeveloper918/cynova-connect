@@ -1,11 +1,9 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Max-Age': '86400',
 };
 
 serve(async (req) => {
@@ -91,6 +89,7 @@ serve(async (req) => {
           num_inference_steps: 25,
           guidance_scale: 12.5,
           negative_prompt: "bad quality, worse quality, low quality, blurry, low resolution",
+          input_image: "https://replicate.delivery/pbxt/JfpjLqFKyHi3ESgjEXrBaRbmqHXBGRKnglb5gDc7UwxhiPwQA/placeholder.jpg"
         },
       }),
     });
