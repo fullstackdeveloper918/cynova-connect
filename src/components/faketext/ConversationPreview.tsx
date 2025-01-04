@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { Message } from "./types";
 import { MessageBubble } from "./MessageBubble";
 import { useEffect, useRef } from "react";
+import html2canvas from "html2canvas";
 
 interface ConversationPreviewProps {
   messages: Message[];
@@ -14,34 +15,55 @@ interface ConversationPreviewProps {
 export const ConversationPreview = ({ messages, onExport, exporting }: ConversationPreviewProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     if (!messages.length || !containerRef.current) return;
 
-    // Create a MediaRecorder to record the conversation container
-    const stream = containerRef.current.captureStream(30); // 30 FPS
-    const mediaRecorder = new MediaRecorder(stream);
-    const chunks: BlobPart[] = [];
+    const createVideoPreview = async () => {
+      // Convert the div to a canvas
+      const canvas = await html2canvas(containerRef.current!);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
-    mediaRecorder.ondataavailable = (e) => {
-      if (e.data.size > 0) {
-        chunks.push(e.data);
-      }
+      // Create a media stream from the canvas
+      const stream = canvas.captureStream(30); // 30 FPS
+      const mediaRecorder = new MediaRecorder(stream);
+      const chunks: BlobPart[] = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunks.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        if (videoRef.current) {
+          videoRef.current.src = URL.createObjectURL(blob);
+        }
+      };
+
+      // Animate the messages (simple fade-in effect)
+      let currentFrame = 0;
+      const animate = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(containerRef.current!, 0, 0);
+        currentFrame++;
+        
+        if (currentFrame < 150) { // 5 seconds at 30 FPS
+          requestAnimationFrame(animate);
+        } else {
+          mediaRecorder.stop();
+        }
+      };
+
+      // Start recording and animation
+      mediaRecorder.start();
+      animate();
     };
 
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(chunks, { type: 'video/webm' });
-      if (videoRef.current) {
-        videoRef.current.src = URL.createObjectURL(blob);
-      }
-    };
-
-    // Record for 5 seconds to create a preview
-    mediaRecorder.start();
-    setTimeout(() => {
-      mediaRecorder.stop();
-    }, 5000);
-
+    createVideoPreview();
   }, [messages]);
 
   if (!messages.length) return null;
