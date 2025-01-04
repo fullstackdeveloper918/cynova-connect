@@ -11,6 +11,7 @@ import YouTubeDownloader from "@/pages/YouTubeDownloader";
 import Affiliate from "@/pages/Affiliate";
 import Projects from "@/pages/Projects";
 import Exports from "@/pages/Exports";
+import ChatGPTVideo from "@/pages/ChatGPTVideo";
 
 export const routes = [
   {
@@ -51,12 +52,7 @@ export const routes = [
   },
   {
     path: "/dashboard/chatgpt",
-    element: (
-      <PlaceholderPage
-        title="ChatGPT Videos"
-        description="Create engaging videos using AI-generated content and narration."
-      />
-    ),
+    element: <ChatGPTVideo />,
   },
   {
     path: "/dashboard/faketext",
