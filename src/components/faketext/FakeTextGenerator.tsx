@@ -38,12 +38,19 @@ export const FakeTextGenerator = () => {
           prompt, 
           topic,
           duration: parseInt(duration),
+          voiceId: selectedVoice
         },
       });
 
       if (error) throw error;
 
-      setMessages(data.messages);
+      // Add audio URLs to messages if available
+      const messagesWithAudio = data.messages.map((msg: Message) => ({
+        ...msg,
+        audioUrl: msg.audioUrl || null
+      }));
+
+      setMessages(messagesWithAudio);
       toast({
         title: "Conversation generated!",
         description: "Your iMessage conversation has been created.",

@@ -1,6 +1,6 @@
 export interface Message {
   content: string;
-  sender: string;
-  timestamp: string;
   isUser: boolean;
+  timestamp: string;
+  audioUrl?: string;
 }

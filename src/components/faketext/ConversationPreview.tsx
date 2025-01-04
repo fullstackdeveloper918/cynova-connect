@@ -18,6 +18,7 @@ export const ConversationPreview = ({
   const [visibleMessages, setVisibleMessages] = useState<Message[]>([]);
   const audioContext = useRef<AudioContext | null>(null);
   const oscillator = useRef<OscillatorNode | null>(null);
+  const audioElement = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (!messages.length) {
@@ -27,6 +28,10 @@ export const ConversationPreview = ({
 
     // Reset visible messages when new messages arrive
     setVisibleMessages([]);
+
+    // Calculate delay between messages based on total duration
+    const totalDuration = 30000; // 30 seconds in milliseconds
+    const messageDelay = totalDuration / messages.length;
 
     // Play message received sound
     const playMessageSound = (index: number) => {
@@ -53,6 +58,17 @@ export const ConversationPreview = ({
       setTimeout(() => {
         oscillator.current?.stop();
       }, 200);
+
+      // Play narration if available
+      if (messages[index].audioUrl) {
+        if (!audioElement.current) {
+          audioElement.current = new Audio();
+        }
+        audioElement.current.src = messages[index].audioUrl;
+        audioElement.current.play().catch(error => {
+          console.error('Error playing narration:', error);
+        });
+      }
     };
 
     // Animate messages appearing one by one with sound
@@ -60,13 +76,17 @@ export const ConversationPreview = ({
       setTimeout(() => {
         setVisibleMessages((prev) => [...prev, message]);
         playMessageSound(index);
-      }, index * 1000);
+      }, index * messageDelay); // Use calculated delay
     });
 
-    // Cleanup audio context on unmount
+    // Cleanup audio context and element on unmount
     return () => {
       if (audioContext.current?.state !== "closed") {
         audioContext.current?.close();
+      }
+      if (audioElement.current) {
+        audioElement.current.pause();
+        audioElement.current = null;
       }
     };
   }, [messages]);
