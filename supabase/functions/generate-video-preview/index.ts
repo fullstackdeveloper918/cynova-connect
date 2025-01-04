@@ -15,24 +15,69 @@ serve(async (req) => {
 
   try {
     const { script, voice } = await req.json();
+
+    // Create a unique filename for this preview
+    const timestamp = new Date().getTime();
+    const previewFileName = `preview-${timestamp}.mp4`;
     
-    // For demo purposes, we'll use a sample video URL
-    // In a real implementation, this would generate a video using the script and voice
-    const previewUrl = "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+    // Initialize Supabase client with service role key to access storage
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // TODO: Here you would implement the actual video generation logic
+    // For now, we'll create a text-based video using HTML5 canvas
+    const canvas = new OffscreenCanvas(1280, 720);
+    const ctx = canvas.getContext('2d');
     
-    console.log('Generated preview for script:', script.substring(0, 100) + '...');
-    console.log('Using voice:', voice);
+    if (!ctx) {
+      throw new Error('Failed to get canvas context');
+    }
+
+    // Set background
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, 1280, 720);
+
+    // Add text
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(script.substring(0, 50) + '...', 640, 360);
+
+    // Convert canvas to blob
+    const blob = await canvas.convertToBlob({
+      type: 'image/png'
+    });
+
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabaseAdmin
+      .storage
+      .from('exports')
+      .upload(previewFileName, blob, {
+        contentType: 'video/mp4',
+        upsert: true
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    // Get the public URL for the uploaded file
+    const { data: { publicUrl } } = supabaseAdmin
+      .storage
+      .from('exports')
+      .getPublicUrl(previewFileName);
+
+    console.log('Generated preview URL:', publicUrl);
 
     return new Response(
       JSON.stringify({ 
-        previewUrl,
+        previewUrl: publicUrl,
         message: "Preview generated successfully" 
       }),
       { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
   } catch (error) {
