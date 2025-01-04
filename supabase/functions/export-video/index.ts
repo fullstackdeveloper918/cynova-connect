@@ -22,6 +22,18 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Get the user ID from the authorization header
+    const authHeader = req.headers.get('authorization')?.split('Bearer ')[1];
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
+    // Verify the JWT and get the user
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(authHeader);
+    if (authError || !user) {
+      throw new Error('Invalid authorization');
+    }
+
     // Convert messages to narration script
     const script = messages.map(msg => 
       `${msg.isUser ? 'User' : 'Friend'}: ${msg.content}`
@@ -79,7 +91,7 @@ serve(async (req) => {
       .from('exports')
       .getPublicUrl(audioFileName);
 
-    // Create an export record
+    // Create an export record with user_id
     console.log('Creating export record...');
     const { data: exportData, error: exportError } = await supabaseAdmin
       .from('exports')
@@ -90,6 +102,7 @@ serve(async (req) => {
         file_type: 'video/mp4',
         file_size: audioBlob.size,
         status: 'completed',
+        user_id: user.id, // Add the user_id here
       })
       .select()
       .single();

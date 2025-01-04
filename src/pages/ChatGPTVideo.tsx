@@ -30,7 +30,7 @@ const ChatGPTVideo = () => {
   }, []);
 
   useEffect(() => {
-    let interval: number;
+    let interval: NodeJS.Timeout;
     if (frames.length > 0) {
       interval = setInterval(() => {
         setCurrentFrame((prev) => (prev + 1) % frames.length);
