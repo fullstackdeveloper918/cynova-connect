@@ -32,21 +32,22 @@ export const ExportsGrid = () => {
 
   const handleDownload = async (exportItem: Export) => {
     try {
-      const { data, error } = await supabase.storage
+      // Get the public URL for the file
+      const { data: publicURL } = supabase.storage
         .from('exports')
-        .download(exportItem.file_url);
+        .getPublicUrl(exportItem.file_url);
 
-      if (error) throw error;
+      if (!publicURL?.publicUrl) {
+        throw new Error('Could not generate download URL');
+      }
 
-      // Create a download link
-      const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = exportItem.title;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Create a temporary anchor element to trigger the download
+      const link = document.createElement('a');
+      link.href = publicURL.publicUrl;
+      link.download = exportItem.title;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
       toast({
         title: "Download started",
@@ -56,7 +57,7 @@ export const ExportsGrid = () => {
       console.error('Download error:', error);
       toast({
         title: "Download failed",
-        description: "There was an error downloading your file.",
+        description: "There was an error downloading your file. Please try again.",
         variant: "destructive",
       });
     }
