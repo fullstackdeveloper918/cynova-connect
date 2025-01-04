@@ -67,10 +67,14 @@ serve(async (req) => {
     }
 
     console.log('Starting video generation with Replicate...');
-    console.log('API Key prefix:', replicateApiKey.substring(0, 5) + '...');
-
-    // Create prediction using Replicate's REST API
-    const modelVersion = "85d775927d738f501d2b7fcc5f33d8566904f27d7b29960f1a8c0195220d1c7d";
+    
+    // Using the Zeroscope model with a specific version
+    const modelOwner = "anotherjesse";
+    const modelName = "zeroscope-v2-xl";
+    const modelVersion = "71996d331e8ede8ef7bd76eba9fae076d31792e4ddf4ad057779b443d6aea62f";
+    
+    console.log(`Using Replicate model: ${modelOwner}/${modelName}@${modelVersion}`);
+    
     const replicateResponse = await fetch(`https://api.replicate.com/v1/predictions`, {
       method: "POST",
       headers: {
@@ -85,8 +89,8 @@ serve(async (req) => {
           fps: 8,
           width: 576,
           height: 320,
-          num_inference_steps: 50,
           guidance_scale: 17.5,
+          num_inference_steps: 50,
           negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames"
         },
       }),
