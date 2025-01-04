@@ -40,17 +40,20 @@ export const useVideoPreview = () => {
 
       console.log("Frame generation response:", data);
       
-      // For now, we'll just use the first frame as a preview
-      // In a full implementation, we'd stitch these frames together into a video
-      setPreviewUrl({
-        videoUrl: data.frameUrls[0],
-        audioUrl: "" // We'll implement audio separately
-      });
-      
-      toast({
-        title: "Preview generated",
-        description: "Your video preview is ready to watch.",
-      });
+      // Use the first frame as preview
+      if (data.frameUrls && data.frameUrls.length > 0) {
+        setPreviewUrl({
+          videoUrl: data.frameUrls[0],
+          audioUrl: "" // We'll implement audio separately
+        });
+        
+        toast({
+          title: "Preview generated",
+          description: "Your video preview is ready to watch.",
+        });
+      } else {
+        throw new Error("No frames were generated");
+      }
 
     } catch (error) {
       console.error("Preview generation error:", error);
