@@ -25,16 +25,11 @@ export const VideoPreview = ({
   return (
     <div className="space-y-4">
       {previewUrl ? (
-        <div className="relative aspect-video rounded-lg overflow-hidden bg-black">
-          <video
-            key={previewUrl} // Force video reload when URL changes
-            src={previewUrl}
-            controls
-            className="absolute inset-0 w-full h-full object-contain"
-          >
-            Your browser does not support the video tag.
-          </video>
-        </div>
+        <video
+          src={previewUrl}
+          controls
+          className="w-full aspect-video rounded-lg"
+        />
       ) : (
         <div className="aspect-video rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50">
           <div className="text-center space-y-2 text-muted-foreground">

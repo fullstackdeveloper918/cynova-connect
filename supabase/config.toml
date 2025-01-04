@@ -12,21 +12,10 @@ port = 54322
 enabled = true
 port = 54323
 
-[functions]
-[functions.create-checkout]
+[[functions]]
+name = "create-checkout"
 verify_jwt = false
 
-[functions.download-youtube]
-verify_jwt = false
-
-[functions.generate-video-preview]
-verify_jwt = false
-
-[functions.generate-video-content]
-verify_jwt = false
-
-[functions.export-video]
-verify_jwt = false
-
-[functions.download-tiktok]
+[[functions]]
+name = "download-youtube"
 verify_jwt = false
