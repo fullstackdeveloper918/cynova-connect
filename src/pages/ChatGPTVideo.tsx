@@ -118,7 +118,28 @@ const ChatGPTVideo = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check if it's a billing setup error
+        const errorData = JSON.parse(error.message);
+        if (errorData?.status === 402 || errorData?.body?.includes('billing')) {
+          toast({
+            title: "Billing setup required",
+            description: "Please set up billing on Replicate to use this feature. Click here to set up billing.",
+            action: (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open('https://replicate.com/account/billing#billing', '_blank')}
+              >
+                Set up billing
+              </Button>
+            ),
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
 
       // Force a new preview URL to trigger video reload
       const previewUrlWithTimestamp = `${data.previewUrl}?t=${Date.now()}`;
@@ -129,13 +150,12 @@ const ChatGPTVideo = () => {
         description: "Your video preview is ready to watch.",
       });
 
-      // Log the preview URL for debugging
       console.log("Preview URL:", previewUrlWithTimestamp);
     } catch (error) {
       console.error("Preview generation error:", error);
       toast({
         title: "Preview generation failed",
-        description: "There was an error generating your video preview.",
+        description: "There was an error generating your video preview. Please try again.",
         variant: "destructive",
       });
     } finally {

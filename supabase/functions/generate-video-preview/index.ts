@@ -29,7 +29,7 @@ serve(async (req) => {
 
     console.log('Calling Replicate API to generate video...');
     
-    // Call Replicate API to generate video using a verified stable model version
+    // Call Replicate API to generate video
     const prediction = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -37,7 +37,6 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // Using a verified working version of the text-to-video model
         version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
         input: {
           prompt: script,
@@ -51,14 +50,28 @@ serve(async (req) => {
       }),
     });
 
-    if (!prediction.ok) {
-      const error = await prediction.json();
-      console.error('Replicate API Error:', error);
-      throw new Error(`Replicate API error: ${error.detail || JSON.stringify(error)}`);
-    }
-
     const predictionData = await prediction.json();
-    console.log('Prediction started:', predictionData);
+    console.log('Prediction response:', predictionData);
+
+    if (!prediction.ok) {
+      // Check specifically for billing-related errors
+      if (predictionData.detail?.includes('billing') || predictionData.detail?.includes('payment')) {
+        console.error('Billing setup required:', predictionData.detail);
+        return new Response(
+          JSON.stringify({
+            error: 'Billing setup required',
+            details: 'Please set up billing on Replicate to use this feature. Visit https://replicate.com/account/billing#billing',
+            url: 'https://replicate.com/account/billing#billing'
+          }),
+          { 
+            status: 402, // Payment Required
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+      
+      throw new Error(`Replicate API error: ${predictionData.detail || JSON.stringify(predictionData)}`);
+    }
 
     // Poll for the result
     let attempts = 0;
