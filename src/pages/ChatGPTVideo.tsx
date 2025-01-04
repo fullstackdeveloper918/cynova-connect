@@ -56,13 +56,22 @@ const ChatGPTVideo = () => {
 
             <div className="grid gap-8 md:grid-cols-2">
               <div className="space-y-6">
-                <PromptInput
-                  prompt={prompt}
-                  onPromptChange={setPrompt}
-                  onGenerate={generateContent}
-                  isGenerating={isGenerating}
-                  progress={progress}
-                />
+                <div className="space-y-4">
+                  <h2 className="text-2xl font-semibold">1. Set Video Parameters</h2>
+                  <div className="space-y-4">
+                    <DurationSelector
+                      selectedDuration={selectedDuration}
+                      onDurationSelect={setSelectedDuration}
+                    />
+                    <PromptInput
+                      prompt={prompt}
+                      onPromptChange={setPrompt}
+                      onGenerate={generateContent}
+                      isGenerating={isGenerating}
+                      progress={progress}
+                    />
+                  </div>
+                </div>
 
                 {script && (
                   <>
@@ -72,17 +81,11 @@ const ChatGPTVideo = () => {
                     </div>
 
                     <div className="space-y-4">
-                      <h2 className="text-2xl font-semibold">3. Choose Voice & Duration</h2>
-                      <div className="space-y-4">
-                        <VoiceSelector
-                          selectedVoice={selectedVoice}
-                          onVoiceSelect={setSelectedVoice}
-                        />
-                        <DurationSelector
-                          selectedDuration={selectedDuration}
-                          onDurationSelect={setSelectedDuration}
-                        />
-                      </div>
+                      <h2 className="text-2xl font-semibold">3. Choose Voice</h2>
+                      <VoiceSelector
+                        selectedVoice={selectedVoice}
+                        onVoiceSelect={setSelectedVoice}
+                      />
                     </div>
                   </>
                 )}

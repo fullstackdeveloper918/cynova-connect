@@ -20,7 +20,6 @@ export const PromptInput = ({
 }: PromptInputProps) => {
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-semibold">1. Describe Your Video</h2>
       <Textarea
         placeholder="Describe the video you want to create..."
         value={prompt}
