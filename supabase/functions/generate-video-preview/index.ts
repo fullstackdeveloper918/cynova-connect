@@ -23,6 +23,7 @@ serve(async (req) => {
 
     const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
     if (!replicateApiKey) {
+      console.error('REPLICATE_API_KEY is not set in environment variables');
       throw new Error('REPLICATE_API_KEY is not set');
     }
 
@@ -39,7 +40,7 @@ serve(async (req) => {
         version: "b72a26c2fb5dea4e54958c6847c85d815b7c6115c94c4894f356d1f9c6c2c5ad",
         input: {
           prompt: script,
-          video_length: "14", // Replicate expects a string
+          video_length: "14",
           fps: "8",
           width: "768",
           height: "432",
@@ -50,7 +51,7 @@ serve(async (req) => {
     if (!prediction.ok) {
       const error = await prediction.json();
       console.error('Replicate API Error:', error);
-      throw new Error(`Replicate API error: ${error.detail || 'Unknown error'}`);
+      throw new Error(`Replicate API error: ${error.detail || JSON.stringify(error)}`);
     }
 
     const predictionData = await prediction.json();
