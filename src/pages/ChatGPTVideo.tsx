@@ -15,6 +15,7 @@ const ChatGPTVideo = () => {
   const [prompt, setPrompt] = useState("");
   const [script, setScript] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState("");
   const [selectedVoice, setSelectedVoice] = useState("Sarah");
   const [progress, setProgress] = useState(0);
@@ -93,6 +94,65 @@ const ChatGPTVideo = () => {
     }
   };
 
+  const handlePreview = async () => {
+    if (!script) {
+      toast({
+        title: "No script available",
+        description: "Please generate or enter a script first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsPreviewLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to access this feature.",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke("generate-video-preview", {
+        body: { 
+          script,
+          voice: selectedVoice
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setPreviewUrl(data.previewUrl);
+      toast({
+        title: "Preview generated",
+        description: "Your video preview is ready to watch.",
+      });
+    } catch (error) {
+      console.error("Preview generation error:", error);
+      toast({
+        title: "Preview generation failed",
+        description: "There was an error generating your video preview.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPreviewLoading(false);
+    }
+  };
+
+  const handleExport = async () => {
+    // Will be implemented in a future update
+    toast({
+      title: "Coming soon",
+      description: "Video export functionality will be available soon.",
+    });
+  };
+
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       <motion.div
@@ -164,11 +224,24 @@ const ChatGPTVideo = () => {
             />
             {script && (
               <div className="flex gap-4">
-                <Button className="flex-1" onClick={() => {}}>
-                  <Play className="mr-2 h-4 w-4" />
-                  Preview
+                <Button 
+                  className="flex-1" 
+                  onClick={handlePreview}
+                  disabled={isPreviewLoading}
+                >
+                  {isPreviewLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="mr-2 h-4 w-4" />
+                      Preview
+                    </>
+                  )}
                 </Button>
-                <Button variant="secondary" className="flex-1" onClick={() => {}}>
+                <Button variant="secondary" className="flex-1" onClick={handleExport}>
                   <Save className="mr-2 h-4 w-4" />
                   Export
                 </Button>
