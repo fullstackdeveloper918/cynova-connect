@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -77,13 +76,20 @@ serve(async (req) => {
       body: JSON.stringify({
         version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
         input: {
-          prompt: videoDescription,
-          num_frames: 24,
-          width: 576,
-          height: 320,
-          fps: 8,
-          num_inference_steps: 25,
-          guidance_scale: 12.5
+          html: `
+            <div style="width: 1080px; height: 1920px; background: white; padding: 20px; font-family: Arial;">
+              <h1 style="font-size: 48px; color: #333;">${script.substring(0, 100)}...</h1>
+              <div style="font-size: 24px; color: #666; margin-top: 20px;">
+                ${videoDescription}
+              </div>
+            </div>
+          `,
+          width: 1080,
+          height: 1920,
+          fps: 30,
+          duration: parseInt(duration),
+          quality: "high",
+          format: "mp4"
         },
       }),
     });
@@ -124,8 +130,7 @@ serve(async (req) => {
       console.log('Poll result:', result);
 
       if (result.status === "succeeded") {
-        // The output is an array with a single video URL
-        const videoUrl = Array.isArray(result.output) ? result.output[0] : result.output;
+        const videoUrl = result.output;
         console.log('Generated video URL:', videoUrl);
         
         if (!videoUrl) {
