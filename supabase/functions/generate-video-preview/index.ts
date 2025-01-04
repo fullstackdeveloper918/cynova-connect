@@ -25,7 +25,7 @@ serve(async (req) => {
 
     console.log('Starting video generation with Replicate...');
     
-    // Create prediction with proper authentication and correct model
+    // Create prediction using Zeroscope V2 model
     const prediction = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -33,14 +33,14 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // Using the Zeroscope XL model which is specifically for text-to-video generation
-        version: "b72a26c92b9cc526809439de7296c910a8f62aa6ebdc95f9a99b9c4d4f8ecd56",
+        // Using Zeroscope V2 model
+        version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
         input: {
           prompt: script,
-          video_length: "14_frames_with_svd",  // Shorter for testing
-          fps: 8,
           width: 576,
           height: 320,
+          fps: 24,
+          duration: 4, // 4 seconds for testing
           guidance_scale: 12.5,
           num_inference_steps: 30, // Reduced for testing
           negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames"
