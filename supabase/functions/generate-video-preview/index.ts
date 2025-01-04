@@ -7,13 +7,14 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { script } = await req.json();
-    console.log('Received request:', { script });
+    const { script, voice } = await req.json();
+    console.log('Received request:', { script, voice });
 
     if (!script) {
       throw new Error('No script provided');
@@ -27,7 +28,6 @@ serve(async (req) => {
 
     console.log('Generating video with Replicate...');
     
-    // Use Replicate's Stable Video Diffusion model
     const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -63,7 +63,6 @@ serve(async (req) => {
     const pollInterval = 1000; // 1 second
     const maxAttempts = 300; // 5 minutes max
     let attempts = 0;
-    let result;
 
     while (attempts < maxAttempts) {
       const pollResponse = await fetch(
@@ -76,11 +75,14 @@ serve(async (req) => {
         }
       );
 
-      result = await pollResponse.json();
+      if (!pollResponse.ok) {
+        throw new Error(`Failed to poll prediction: ${pollResponse.statusText}`);
+      }
+
+      const result = await pollResponse.json();
       console.log('Poll result:', result);
 
       if (result.status === "succeeded") {
-        // The output is an array where the first element is the video URL
         const videoUrl = Array.isArray(result.output) ? result.output[0] : result.output;
         console.log('Generated video URL:', videoUrl);
         
@@ -102,6 +104,8 @@ serve(async (req) => {
         );
       } else if (result.status === "failed") {
         throw new Error(`Video generation failed: ${result.error}`);
+      } else if (result.status === "canceled") {
+        throw new Error('Video generation was canceled');
       }
 
       await new Promise(resolve => setTimeout(resolve, pollInterval));
