@@ -120,11 +120,17 @@ const ChatGPTVideo = () => {
 
       if (error) throw error;
 
-      setPreviewUrl(data.previewUrl);
+      // Force a new preview URL to trigger video reload
+      const previewUrlWithTimestamp = `${data.previewUrl}?t=${Date.now()}`;
+      setPreviewUrl(previewUrlWithTimestamp);
+      
       toast({
         title: "Preview generated",
         description: "Your video preview is ready to watch.",
       });
+
+      // Log the preview URL for debugging
+      console.log("Preview URL:", previewUrlWithTimestamp);
     } catch (error) {
       console.error("Preview generation error:", error);
       toast({
