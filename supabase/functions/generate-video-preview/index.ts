@@ -1,6 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,96 +7,90 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { script, voice } = await req.json();
-    console.log('Received request:', { script, voice });
+    const { script } = await req.json();
+    console.log('Received request:', { script });
 
     if (!script) {
       throw new Error('No script provided');
     }
 
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openaiApiKey) {
-      console.error('OPENAI_API_KEY is not set in environment variables');
-      throw new Error('OPENAI_API_KEY is not set');
+    const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
+    if (!replicateApiKey) {
+      console.error('REPLICATE_API_KEY is not set');
+      throw new Error('REPLICATE_API_KEY is not set');
     }
 
-    console.log('Generating frames with DALL-E...');
+    console.log('Generating video with Replicate...');
     
-    // Generate 4 frames using DALL-E 3
-    const frames = [];
-    const framePrompts = splitScriptIntoFrames(script);
-    
-    for (const framePrompt of framePrompts) {
-      const response = await fetch('https://api.openai.com/v1/images/generations', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openaiApiKey}`,
-          'Content-Type': 'application/json',
+    // Use Replicate's text-to-video model
+    const response = await fetch("https://api.replicate.com/v1/predictions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Token ${replicateApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        version: "7f41f689247f1e671d3f5f2d2dd0978b6532af61b2c109dd5f5ad3be3a76e01d",
+        input: {
+          prompt: script,
+          num_frames: 50,
+          width: 1024,
+          height: 576,
+          num_inference_steps: 50,
+          fps: 15,
         },
-        body: JSON.stringify({
-          model: "dall-e-3",
-          prompt: framePrompt,
-          n: 1,
-          size: "1024x1024",
-          quality: "standard",
-          response_format: "url"
-        }),
-      });
+      }),
+    });
 
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('DALL-E API Error:', error);
-        throw new Error(`DALL-E API error: ${error.error?.message || JSON.stringify(error)}`);
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('Replicate API Error:', error);
+      throw new Error(`Replicate API error: ${error.detail || JSON.stringify(error)}`);
+    }
+
+    const prediction = await response.json();
+    console.log('Prediction created:', prediction);
+
+    // Poll for the result
+    const pollInterval = 1000; // 1 second
+    const maxAttempts = 300; // 5 minutes max
+    let attempts = 0;
+    let result;
+
+    while (attempts < maxAttempts) {
+      const pollResponse = await fetch(
+        `https://api.replicate.com/v1/predictions/${prediction.id}`,
+        {
+          headers: {
+            "Authorization": `Token ${replicateApiKey}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      result = await pollResponse.json();
+      if (result.status === "succeeded") {
+        break;
+      } else if (result.status === "failed") {
+        throw new Error(`Video generation failed: ${result.error}`);
       }
 
-      const data = await response.json();
-      frames.push(data.data[0].url);
-      console.log('Generated frame:', data.data[0].url);
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+      attempts++;
     }
 
-    // Initialize Supabase client
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // Download and combine frames into a video-like slideshow
-    const frameResponses = await Promise.all(frames.map(url => fetch(url)));
-    const frameBlobs = await Promise.all(frameResponses.map(res => res.blob()));
-    
-    // Create a simple slideshow from the frames
-    const fileName = `preview-${Date.now()}.mp4`;
-
-    // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabaseAdmin
-      .storage
-      .from('exports')
-      .upload(fileName, frameBlobs[0], { // For now, just use the first frame as a preview
-        contentType: 'image/png',
-        upsert: true
-      });
-
-    if (uploadError) {
-      console.error('Upload error:', uploadError);
-      throw uploadError;
+    if (!result?.output) {
+      throw new Error('Video generation timed out or failed');
     }
-
-    // Get public URL
-    const { data: { publicUrl } } = supabaseAdmin
-      .storage
-      .from('exports')
-      .getPublicUrl(fileName);
 
     return new Response(
       JSON.stringify({ 
-        previewUrl: publicUrl,
-        frames: frames, // Include all frame URLs for frontend display
+        previewUrl: result.output,
         message: "Preview generated successfully" 
       }),
       { 
@@ -123,20 +116,3 @@ serve(async (req) => {
     );
   }
 });
-
-// Helper function to split script into frame prompts
-function splitScriptIntoFrames(script: string): string[] {
-  // Split the script into roughly equal parts for each frame
-  const sentences = script.split(/[.!?]+/).filter(s => s.trim().length > 0);
-  const frameCount = Math.min(4, Math.max(1, sentences.length));
-  const framesPrompts = [];
-  
-  for (let i = 0; i < frameCount; i++) {
-    const start = Math.floor((i * sentences.length) / frameCount);
-    const end = Math.floor(((i + 1) * sentences.length) / frameCount);
-    const frameScript = sentences.slice(start, end).join('. ');
-    framesPrompts.push(`Create a high-quality, photorealistic image for a video frame that represents this scene: ${frameScript}`);
-  }
-
-  return framesPrompts;
-}

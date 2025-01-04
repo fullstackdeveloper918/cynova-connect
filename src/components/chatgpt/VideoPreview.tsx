@@ -31,14 +31,13 @@ export const VideoPreview = ({
             controls
             autoPlay
             loop
-            muted
             className="w-full h-full object-cover"
           />
         </div>
       ) : (
         <div className="aspect-video rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50">
           <div className="text-center space-y-2 text-muted-foreground">
-            <Video className="mx-auto h-12 w-12" />
+            <Video className="mx-auto h-12 w-12 animate-pulse" />
             <p>Click preview to generate your video</p>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -21,23 +21,7 @@ const ChatGPTVideo = () => {
   const [previewUrl, setPreviewUrl] = useState("");
   const [selectedVoice, setSelectedVoice] = useState("Sarah");
   const [progress, setProgress] = useState(0);
-  const [frames, setFrames] = useState<string[]>([]);
-  const [currentFrame, setCurrentFrame] = useState(0);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    checkUser();
-  }, []);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (frames.length > 0) {
-      interval = setInterval(() => {
-        setCurrentFrame((prev) => (prev + 1) % frames.length);
-      }, 2000); // Change frame every 2 seconds
-    }
-    return () => clearInterval(interval);
-  }, [frames]);
 
   const checkUser = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -133,7 +117,6 @@ const ChatGPTVideo = () => {
       if (error) throw error;
 
       setPreviewUrl(data.previewUrl);
-      setFrames(data.frames || []);
       
       toast({
         title: "Preview generated",
@@ -279,24 +262,11 @@ const ChatGPTVideo = () => {
 
               <div className="space-y-6">
                 <h2 className="text-2xl font-semibold">Preview</h2>
-                {frames.length > 0 ? (
-                  <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100">
-                    <img
-                      src={frames[currentFrame]}
-                      alt={`Frame ${currentFrame + 1}`}
-                      className="w-full h-full object-cover transition-opacity duration-500"
-                    />
-                    <div className="absolute bottom-4 right-4 bg-black/50 text-white px-2 py-1 rounded">
-                      Frame {currentFrame + 1} / {frames.length}
-                    </div>
-                  </div>
-                ) : (
-                  <VideoPreview
-                    script={script}
-                    previewUrl={previewUrl}
-                    selectedVoice={selectedVoice}
-                  />
-                )}
+                <VideoPreview
+                  script={script}
+                  previewUrl={previewUrl}
+                  selectedVoice={selectedVoice}
+                />
                 {script && (
                   <div className="flex gap-4">
                     <Button 
