@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,16 +16,16 @@ serve(async (req) => {
   try {
     const { script, voice } = await req.json();
     
-    // For now, we'll return a mock video URL
+    // For demo purposes, we'll use a sample video URL
     // In a real implementation, this would generate a video using the script and voice
-    const mockPreviewUrl = "https://example.com/preview.mp4";
+    const previewUrl = "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
     
     console.log('Generated preview for script:', script.substring(0, 100) + '...');
     console.log('Using voice:', voice);
 
     return new Response(
       JSON.stringify({ 
-        previewUrl: mockPreviewUrl,
+        previewUrl,
         message: "Preview generated successfully" 
       }),
       { 

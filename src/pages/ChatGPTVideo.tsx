@@ -146,11 +146,52 @@ const ChatGPTVideo = () => {
   };
 
   const handleExport = async () => {
-    // Will be implemented in a future update
-    toast({
-      title: "Coming soon",
-      description: "Video export functionality will be available soon.",
-    });
+    if (!script || !previewUrl) {
+      toast({
+        title: "Cannot export yet",
+        description: "Please generate a script and preview the video first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to access this feature.",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke("export-video", {
+        body: { 
+          script,
+          voice: selectedVoice,
+          previewUrl
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Export successful",
+        description: "Your video has been exported and saved to your account.",
+      });
+
+      // Redirect to exports page
+      navigate("/dashboard/exports");
+    } catch (error) {
+      console.error("Export error:", error);
+      toast({
+        title: "Export failed",
+        description: "There was an error exporting your video. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
