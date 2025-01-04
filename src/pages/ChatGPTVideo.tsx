@@ -1,214 +1,32 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Wand2, Play, Save, Loader2 } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { SidebarProvider, Sidebar, SidebarHeader } from "@/components/ui/sidebar";
+import { SidebarNavigation } from "@/components/sidebar/SidebarNavigation";
 import { VideoPreview } from "@/components/chatgpt/VideoPreview";
 import { ScriptEditor } from "@/components/chatgpt/ScriptEditor";
 import { VoiceSelector } from "@/components/chatgpt/VoiceSelector";
 import { DurationSelector } from "@/components/chatgpt/DurationSelector";
-import { useNavigate } from "react-router-dom";
-import { SidebarProvider, Sidebar, SidebarHeader } from "@/components/ui/sidebar";
-import { SidebarNavigation } from "@/components/sidebar/SidebarNavigation";
-
-interface PreviewUrls {
-  videoUrl: string;
-  audioUrl: string;
-}
+import { PromptInput } from "@/components/chatgpt/PromptInput";
+import { PreviewControls } from "@/components/chatgpt/PreviewControls";
+import { useChatGPTVideo } from "@/hooks/useChatGPTVideo";
 
 const ChatGPTVideo = () => {
-  const [prompt, setPrompt] = useState("");
-  const [script, setScript] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<PreviewUrls | null>(null);
-  const [selectedVoice, setSelectedVoice] = useState("Sarah");
-  const [selectedDuration, setSelectedDuration] = useState("48");
-  const [progress, setProgress] = useState(0);
-  const navigate = useNavigate();
-
-  const checkUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to access this feature.",
-        variant: "destructive",
-      });
-      navigate("/login");
-    }
-    return session;
-  };
-
-  const generateContent = async () => {
-    if (!prompt) {
-      toast({
-        title: "Please enter a prompt",
-        description: "Describe what kind of video you want to create.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsGenerating(true);
-    setProgress(25);
-
-    try {
-      const session = await checkUser();
-      if (!session) return;
-
-      console.log("Calling generate-video-content function with prompt:", prompt);
-      const { data, error } = await supabase.functions.invoke("generate-video-content", {
-        body: { prompt, style: "engaging and professional" }
-      });
-
-      if (error) {
-        console.error("Error from generate-video-content:", error);
-        throw error;
-      }
-
-      console.log("Generated content response:", data);
-      setScript(data.script);
-      setProgress(100);
-      toast({
-        title: "Script generated successfully",
-        description: "You can now edit the script and preview the video.",
-      });
-    } catch (error) {
-      console.error("Error generating content:", error);
-      toast({
-        title: "Generation failed",
-        description: "There was an error generating your video content.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handlePreview = async () => {
-    if (!script) {
-      toast({
-        title: "No script available",
-        description: "Please generate or enter a script first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsPreviewLoading(true);
-    try {
-      const session = await checkUser();
-      if (!session) return;
-
-      console.log("Calling generate-video-preview with:", { script, voice: selectedVoice, duration: selectedDuration });
-      const { data, error } = await supabase.functions.invoke("generate-video-preview", {
-        body: { 
-          script,
-          voice: selectedVoice,
-          duration: selectedDuration
-        }
-      });
-
-      if (error) {
-        console.error("Error from generate-video-preview:", error);
-        throw error;
-      }
-
-      console.log("Preview generation response:", data);
-      setPreviewUrl(data.previewUrl);
-      
-      toast({
-        title: "Preview generated",
-        description: "Your video preview is ready to watch.",
-      });
-
-    } catch (error) {
-      console.error("Preview generation error:", error);
-      toast({
-        title: "Preview generation failed",
-        description: "There was an error generating your video preview. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsPreviewLoading(false);
-    }
-  };
-
-  const handleExport = async () => {
-    if (!script || !previewUrl) {
-      toast({
-        title: "Cannot export yet",
-        description: "Please generate a script and preview the video first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const session = await checkUser();
-      if (!session) return;
-
-      // First create a project
-      const { data: projectData, error: projectError } = await supabase
-        .from('projects')
-        .insert({
-          user_id: session.user.id,
-          title: "ChatGPT Generated Video",
-          description: script.substring(0, 100) + "...",
-          type: "chatgpt_video",
-          thumbnail_url: previewUrl.videoUrl // Updated to use videoUrl from PreviewUrls
-        })
-        .select()
-        .single();
-
-      if (projectError) {
-        console.error("Error creating project:", projectError);
-        throw projectError;
-      }
-
-      console.log("Project created:", projectData);
-
-      // Then create an export record
-      const { data: exportData, error: exportError } = await supabase
-        .from('exports')
-        .insert({
-          user_id: session.user.id,
-          project_id: projectData.id,
-          title: "ChatGPT Generated Video",
-          description: script.substring(0, 100) + "...",
-          file_url: previewUrl.videoUrl, // Updated to use videoUrl from PreviewUrls
-          thumbnail_url: previewUrl.videoUrl, // Updated to use videoUrl from PreviewUrls
-          status: 'completed'
-        })
-        .select()
-        .single();
-
-      if (exportError) {
-        console.error("Error creating export:", exportError);
-        throw exportError;
-      }
-
-      console.log("Export created:", exportData);
-
-      toast({
-        title: "Export successful",
-        description: "Your video has been exported and saved to your account.",
-      });
-
-      navigate("/dashboard/exports");
-    } catch (error) {
-      console.error("Export error:", error);
-      toast({
-        title: "Export failed",
-        description: "There was an error exporting your video. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
+  const {
+    prompt,
+    setPrompt,
+    script,
+    setScript,
+    isGenerating,
+    isPreviewLoading,
+    previewUrl,
+    selectedVoice,
+    setSelectedVoice,
+    selectedDuration,
+    setSelectedDuration,
+    progress,
+    generateContent,
+    handlePreview,
+    handleExport
+  } = useChatGPTVideo();
 
   return (
     <SidebarProvider>
@@ -238,55 +56,35 @@ const ChatGPTVideo = () => {
 
             <div className="grid gap-8 md:grid-cols-2">
               <div className="space-y-6">
-                <div className="space-y-4">
-                  <h2 className="text-2xl font-semibold">1. Describe Your Video</h2>
-                  <Textarea
-                    placeholder="Describe the video you want to create..."
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    className="h-32"
-                  />
-                  <Button
-                    onClick={generateContent}
-                    disabled={isGenerating || !prompt}
-                    className="w-full"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Wand2 className="mr-2 h-4 w-4" />
-                        Generate Script
-                      </>
-                    )}
-                  </Button>
-                  {isGenerating && <Progress value={progress} />}
-                </div>
+                <PromptInput
+                  prompt={prompt}
+                  onPromptChange={setPrompt}
+                  onGenerate={generateContent}
+                  isGenerating={isGenerating}
+                  progress={progress}
+                />
 
                 {script && (
-                  <div className="space-y-4">
-                    <h2 className="text-2xl font-semibold">2. Edit Script</h2>
-                    <ScriptEditor script={script} onScriptChange={setScript} />
-                  </div>
-                )}
-
-                {script && (
-                  <div className="space-y-4">
-                    <h2 className="text-2xl font-semibold">3. Choose Voice & Duration</h2>
+                  <>
                     <div className="space-y-4">
-                      <VoiceSelector
-                        selectedVoice={selectedVoice}
-                        onVoiceSelect={setSelectedVoice}
-                      />
-                      <DurationSelector
-                        selectedDuration={selectedDuration}
-                        onDurationSelect={setSelectedDuration}
-                      />
+                      <h2 className="text-2xl font-semibold">2. Edit Script</h2>
+                      <ScriptEditor script={script} onScriptChange={setScript} />
                     </div>
-                  </div>
+
+                    <div className="space-y-4">
+                      <h2 className="text-2xl font-semibold">3. Choose Voice & Duration</h2>
+                      <div className="space-y-4">
+                        <VoiceSelector
+                          selectedVoice={selectedVoice}
+                          onVoiceSelect={setSelectedVoice}
+                        />
+                        <DurationSelector
+                          selectedDuration={selectedDuration}
+                          onDurationSelect={setSelectedDuration}
+                        />
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
 
@@ -297,36 +95,13 @@ const ChatGPTVideo = () => {
                   previewUrl={previewUrl}
                   selectedVoice={selectedVoice}
                 />
-                {script && (
-                  <div className="flex gap-4">
-                    <Button 
-                      className="flex-1" 
-                      onClick={handlePreview}
-                      disabled={isPreviewLoading}
-                    >
-                      {isPreviewLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Play className="mr-2 h-4 w-4" />
-                          Preview
-                        </>
-                      )}
-                    </Button>
-                    <Button 
-                      variant="secondary" 
-                      className="flex-1" 
-                      onClick={handleExport}
-                      disabled={!previewUrl}
-                    >
-                      <Save className="mr-2 h-4 w-4" />
-                      Export
-                    </Button>
-                  </div>
-                )}
+                <PreviewControls
+                  script={script}
+                  previewUrl={previewUrl}
+                  onPreview={handlePreview}
+                  onExport={handleExport}
+                  isPreviewLoading={isPreviewLoading}
+                />
               </div>
             </div>
           </motion.div>
