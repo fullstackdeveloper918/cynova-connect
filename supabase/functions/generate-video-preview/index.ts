@@ -80,7 +80,26 @@ serve(async (req) => {
       console.log('Poll result:', result);
 
       if (result.status === "succeeded") {
-        break;
+        // The output is an array where the first element is the video URL
+        const videoUrl = Array.isArray(result.output) ? result.output[0] : result.output;
+        console.log('Generated video URL:', videoUrl);
+        
+        if (!videoUrl) {
+          throw new Error('No video URL in the output');
+        }
+
+        return new Response(
+          JSON.stringify({ 
+            previewUrl: videoUrl,
+            message: "Preview generated successfully" 
+          }),
+          { 
+            headers: { 
+              ...corsHeaders,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
       } else if (result.status === "failed") {
         throw new Error(`Video generation failed: ${result.error}`);
       }
@@ -89,22 +108,7 @@ serve(async (req) => {
       attempts++;
     }
 
-    if (!result?.output) {
-      throw new Error('Video generation timed out or failed');
-    }
-
-    return new Response(
-      JSON.stringify({ 
-        previewUrl: result.output,
-        message: "Preview generated successfully" 
-      }),
-      { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+    throw new Error('Video generation timed out');
 
   } catch (error) {
     console.error('Error in generate-video-preview function:', error);
