@@ -16,11 +16,14 @@ serve(async (req) => {
     console.log('Generating conversation:', { prompt, topic, duration, voiceId });
 
     const openAiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAiKey) {
-      throw new Error('OPENAI_API_KEY is not set');
+    const elevenLabsKey = Deno.env.get('ELEVEN_LABS_API_KEY');
+
+    if (!openAiKey || !elevenLabsKey) {
+      throw new Error('Missing required API keys');
     }
 
     // Generate conversation using OpenAI
+    console.log('Calling OpenAI API...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -48,6 +51,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       const error = await response.json();
+      console.error('OpenAI API Error:', error);
       throw new Error(error.error?.message || 'Failed to generate conversation');
     }
 
@@ -55,10 +59,48 @@ serve(async (req) => {
     const messages = JSON.parse(data.choices[0].message.content);
 
     // Generate audio for each message
+    console.log('Generating audio for messages...');
     const messagesWithAudio = await Promise.all(
       messages.map(async (message: any) => {
-        const audioUrl = await generateAudioForMessage(message.content, voiceId);
-        return { ...message, audioUrl };
+        try {
+          console.log('Generating audio for message:', message.content);
+          const audioResponse = await fetch(
+            `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+            {
+              method: 'POST',
+              headers: {
+                'Accept': 'audio/mpeg',
+                'Content-Type': 'application/json',
+                'xi-api-key': elevenLabsKey,
+              },
+              body: JSON.stringify({
+                text: message.content,
+                model_id: "eleven_monolingual_v1",
+                voice_settings: {
+                  stability: 0.5,
+                  similarity_boost: 0.5,
+                },
+              }),
+            }
+          );
+
+          if (!audioResponse.ok) {
+            const errorData = await audioResponse.json();
+            console.error('ElevenLabs API Error:', errorData);
+            throw new Error('Failed to generate audio');
+          }
+
+          const audioBuffer = await audioResponse.arrayBuffer();
+          const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
+          return { 
+            ...message, 
+            audioUrl: `data:audio/mpeg;base64,${base64Audio}` 
+          };
+        } catch (error) {
+          console.error('Error generating audio for message:', error);
+          // Return message without audio if generation fails
+          return message;
+        }
       })
     );
 
@@ -88,41 +130,3 @@ serve(async (req) => {
     );
   }
 });
-
-async function generateAudioForMessage(text: string, voiceId: string) {
-  const elevenLabsApiKey = Deno.env.get('ELEVEN_LABS_API_KEY');
-  if (!elevenLabsApiKey) {
-    throw new Error('ELEVEN_LABS_API_KEY is not set');
-  }
-
-  const response = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
-    {
-      method: 'POST',
-      headers: {
-        'Accept': 'audio/mpeg',
-        'Content-Type': 'application/json',
-        'xi-api-key': elevenLabsApiKey,
-      },
-      body: JSON.stringify({
-        text,
-        model_id: "eleven_monolingual_v1",
-        voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.5,
-        },
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const error = await response.json();
-    console.error('ElevenLabs API Error:', error);
-    throw new Error('Failed to generate audio');
-  }
-
-  // Convert audio to base64 for easy transmission
-  const audioBuffer = await response.arrayBuffer();
-  const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
-  return `data:audio/mpeg;base64,${base64Audio}`;
-}
