@@ -34,57 +34,40 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a video script writer. Create engaging, clear, and concise scripts in a ${style || 'casual'} style. Include natural pauses and emphasis points.`
+            content: 'You are a video script writer. Create engaging, clear, and concise scripts that are easy to follow. Include natural pauses and emphasis points. Keep the tone professional but conversational.'
           },
-          { role: 'user', content: prompt }
+          { 
+            role: 'user', 
+            content: `Create a video script about: ${prompt}. Make it engaging and suitable for a video format.` 
+          }
         ],
+        temperature: 0.7,
       }),
     });
 
-    const data = await response.json();
-    console.log('OpenAI API response:', data);
-
     if (!response.ok) {
-      // Check specifically for quota exceeded error
-      if (data.error?.message?.includes('exceeded your current quota')) {
-        console.error('OpenAI API quota exceeded:', data.error);
-        return new Response(
-          JSON.stringify({
-            error: 'OpenAI API quota exceeded. Please try again later or contact support.',
-            details: data.error.message
-          }),
-          {
-            status: 429, // Too Many Requests
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      }
-
-      throw new Error(`OpenAI API error: ${data.error?.message || 'Unknown error'}`);
+      const error = await response.json();
+      console.error('OpenAI API error:', error);
+      throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`);
     }
 
-    if (!data.choices?.[0]?.message?.content) {
-      console.error('Invalid response format from OpenAI:', data);
-      throw new Error('Invalid response format from OpenAI API');
-    }
+    const data = await response.json();
+    console.log('Successfully generated script');
 
-    const generatedText = data.choices[0].message.content;
-    console.log('Successfully generated text:', generatedText.substring(0, 100) + '...');
-
-    return new Response(
-      JSON.stringify({ script: generatedText }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ script: data.choices[0].message.content }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error('Error in generate-video-content function:', error);
+    
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'An error occurred while generating content',
+        error: error.message,
         details: error.toString()
       }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        status: error.message.includes('exceeded your current quota') ? 429 : 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   }
