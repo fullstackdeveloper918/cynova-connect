@@ -15,52 +15,66 @@ interface ConversationPreviewProps {
 export const ConversationPreview = ({ messages, onExport, exporting }: ConversationPreviewProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     if (!messages.length || !containerRef.current) return;
 
     const createVideoPreview = async () => {
-      // Convert the div to a canvas
-      const canvas = await html2canvas(containerRef.current!);
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      // Create a media stream from the canvas
-      const stream = canvas.captureStream(30); // 30 FPS
-      const mediaRecorder = new MediaRecorder(stream);
-      const chunks: BlobPart[] = [];
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunks.push(e.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
-        if (videoRef.current) {
-          videoRef.current.src = URL.createObjectURL(blob);
-        }
-      };
-
-      // Animate the messages (simple fade-in effect)
-      let currentFrame = 0;
-      const animate = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(containerRef.current!, 0, 0);
-        currentFrame++;
+      try {
+        // First create a canvas from the div
+        const initialCanvas = await html2canvas(containerRef.current!);
         
-        if (currentFrame < 150) { // 5 seconds at 30 FPS
-          requestAnimationFrame(animate);
-        } else {
-          mediaRecorder.stop();
-        }
-      };
+        // Create a new canvas for animation
+        const animationCanvas = document.createElement('canvas');
+        animationCanvas.width = initialCanvas.width;
+        animationCanvas.height = initialCanvas.height;
+        const ctx = animationCanvas.getContext('2d');
+        
+        if (!ctx) return;
 
-      // Start recording and animation
-      mediaRecorder.start();
-      animate();
+        // Create a media stream from the animation canvas
+        const stream = animationCanvas.captureStream(30); // 30 FPS
+        const mediaRecorder = new MediaRecorder(stream);
+        const chunks: BlobPart[] = [];
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) {
+            chunks.push(e.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'video/webm' });
+          if (videoRef.current) {
+            videoRef.current.src = URL.createObjectURL(blob);
+          }
+        };
+
+        // Animate the messages with a fade-in effect
+        let currentFrame = 0;
+        const animate = () => {
+          ctx.clearRect(0, 0, animationCanvas.width, animationCanvas.height);
+          
+          // Draw the initial canvas with opacity based on frame
+          ctx.globalAlpha = Math.min(currentFrame / 30, 1); // Fade in over 1 second
+          ctx.drawImage(initialCanvas, 0, 0);
+          ctx.globalAlpha = 1;
+          
+          currentFrame++;
+          
+          if (currentFrame < 150) { // 5 seconds at 30 FPS
+            requestAnimationFrame(animate);
+          } else {
+            mediaRecorder.stop();
+          }
+        };
+
+        // Start recording and animation
+        mediaRecorder.start();
+        animate();
+      } catch (error) {
+        console.error('Error creating video preview:', error);
+      }
     };
 
     createVideoPreview();
