@@ -17,8 +17,9 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Starting export-video function...');
     const { messages, voiceId, title, description } = await req.json();
-    console.log('Received request:', { messages, voiceId, title });
+    console.log('Received request:', { messagesCount: messages.length, voiceId, title });
 
     const supabaseAdmin = initSupabaseAdmin();
 
@@ -39,11 +40,26 @@ serve(async (req) => {
 
     // Generate audio narration
     console.log('Generating audio narration...');
-    const audioData = await generateAudioNarration(script, voiceId);
+    let audioData;
+    try {
+      audioData = await generateAudioNarration(script, voiceId);
+      console.log('Audio narration generated successfully');
+    } catch (error) {
+      console.error('Audio generation error:', error);
+      throw new Error(`Failed to generate audio narration: ${error.message}`);
+    }
 
     // Start video generation
-    const prediction = await generateVideo(messages);
-    const videoUrl = await pollVideoGeneration(prediction.id);
+    console.log('Starting video generation...');
+    let videoUrl;
+    try {
+      const prediction = await generateVideo(messages);
+      videoUrl = await pollVideoGeneration(prediction.id);
+      console.log('Video generated successfully');
+    } catch (error) {
+      console.error('Video generation error:', error);
+      throw new Error(`Failed to generate video: ${error.message}`);
+    }
 
     // Download the generated video
     console.log('Downloading generated video...');
@@ -60,10 +76,17 @@ serve(async (req) => {
     const audioFileName = `audio-${timestamp}.mp3`;
 
     // Upload both files to Supabase Storage
-    await Promise.all([
-      uploadToStorage(supabaseAdmin, videoFileName, videoData, 'video/mp4'),
-      uploadToStorage(supabaseAdmin, audioFileName, audioData, 'audio/mpeg')
-    ]);
+    console.log('Uploading files to storage...');
+    try {
+      await Promise.all([
+        uploadToStorage(supabaseAdmin, videoFileName, videoData, 'video/mp4'),
+        uploadToStorage(supabaseAdmin, audioFileName, audioData, 'audio/mpeg')
+      ]);
+      console.log('Files uploaded successfully');
+    } catch (error) {
+      console.error('Storage upload error:', error);
+      throw new Error(`Failed to upload files: ${error.message}`);
+    }
 
     // Get public URL
     const { data: { publicUrl: videoPublicUrl } } = supabaseAdmin
@@ -72,6 +95,7 @@ serve(async (req) => {
       .getPublicUrl(videoFileName);
 
     // Create export record
+    console.log('Creating export record...');
     const { data: exportData, error: exportError } = await supabaseAdmin
       .from('exports')
       .insert({
@@ -88,9 +112,11 @@ serve(async (req) => {
       .single();
 
     if (exportError) {
+      console.error('Export record creation error:', exportError);
       throw exportError;
     }
 
+    console.log('Export completed successfully');
     return new Response(
       JSON.stringify({ 
         success: true,
@@ -120,3 +146,40 @@ serve(async (req) => {
     );
   }
 });
+
+// Poll for video generation completion
+const pollVideoGeneration = async (predictionId: string): Promise<string> => {
+  console.log('Polling for video generation completion...');
+  let attempts = 0;
+  const maxAttempts = 60;
+
+  while (attempts < maxAttempts) {
+    const response = await fetch(
+      `https://api.replicate.com/v1/predictions/${predictionId}`,
+      {
+        headers: {
+          Authorization: `Token ${Deno.env.get('REPLICATE_API_KEY')}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to check prediction status: ${await response.text()}`);
+    }
+
+    const prediction = await response.json();
+    console.log('Prediction status:', prediction.status);
+
+    if (prediction.status === 'succeeded') {
+      return prediction.output;
+    } else if (prediction.status === 'failed') {
+      throw new Error('Video generation failed');
+    }
+
+    attempts++;
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
+  throw new Error('Video generation timed out');
+};
