@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { generateAudio } from "./audioService.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { generateAudio } from "./audioService.ts";
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -98,6 +98,7 @@ serve(async (req) => {
     }
 
     // Generate audio narration with ElevenLabs
+    console.log('Generating audio narration...');
     const audioResponse = await generateAudio(script, voice, elevenLabsKey);
     const audioBlob = await audioResponse.blob();
     const audioBase64 = await new Promise((resolve) => {

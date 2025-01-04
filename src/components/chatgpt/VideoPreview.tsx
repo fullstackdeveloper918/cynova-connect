@@ -35,8 +35,9 @@ export const VideoPreview = ({
         videoRef.current.pause();
         audioRef.current.pause();
       } else {
-        // Use a default video background for now
-        videoRef.current.src = "/stock/minecraft-gameplay.mp4";
+        if (previewUrl?.videoUrl) {
+          videoRef.current.src = previewUrl.videoUrl;
+        }
         videoRef.current.play();
         audioRef.current.play();
       }
