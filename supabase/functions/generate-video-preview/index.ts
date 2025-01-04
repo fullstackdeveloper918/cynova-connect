@@ -7,13 +7,9 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { 
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json',
-      }
-    });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -44,7 +40,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a video description generator. Create detailed, visual descriptions that can be used to generate engaging videos.'
+            content: 'You are a video description generator. Create detailed, visual descriptions that can be used to generate engaging videos. Focus on describing visual elements, movements, and scenes.'
           },
           {
             role: 'user',
@@ -65,7 +61,7 @@ serve(async (req) => {
     const videoDescription = openAiData.choices[0].message.content;
     console.log('Generated video description:', videoDescription);
 
-    // Then, use Replicate to generate the video
+    // Then, use Replicate to generate the video using Zeroscope model
     const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
     if (!replicateApiKey) {
       throw new Error('REPLICATE_API_KEY is not set');
@@ -79,17 +75,13 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "3f0457e4619daac51203dedb472816fd4af51f3149fa7a9e0b5ffcf1b8172438",
+        version: "b72a26c2fb5dea1d95a8e8c1757d124495b6f0fb3acdc4070f699eb1e5af4e9a",
         input: {
           prompt: videoDescription,
-          video_length: "14_frames_with_svd",
-          fps: 6,
+          fps: 24,
+          num_frames: 24,
           width: 1024,
-          height: 576,
-          num_inference_steps: 25,
-          guidance_scale: 12.5,
-          negative_prompt: "bad quality, worse quality, low quality, blurry, low resolution",
-          input_image: "https://replicate.delivery/pbxt/JfpjLqFKyHi3ESgjEXrBaRbmqHXBGRKnglb5gDc7UwxhiPwQA/placeholder.jpg"
+          height: 576
         },
       }),
     });
@@ -130,7 +122,7 @@ serve(async (req) => {
       console.log('Poll result status:', result.status);
 
       if (result.status === "succeeded") {
-        const videoUrl = Array.isArray(result.output) ? result.output[0] : result.output;
+        const videoUrl = result.output;
         console.log('Generated video URL:', videoUrl);
         
         if (!videoUrl) {
