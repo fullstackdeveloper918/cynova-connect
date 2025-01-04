@@ -1,10 +1,23 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { createClient } from '@supabase/supabase-js';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Initialize Supabase client for the edge function
+const supabaseAdmin = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  }
+);
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -17,7 +30,6 @@ serve(async (req) => {
     const { script, voice = "Sarah", duration = "48" } = await req.json();
     console.log('Received request payload:', { script, voice, duration });
 
-    // Validate inputs before making expensive API calls
     if (!script || script.trim().length === 0) {
       throw new Error('Script is required and cannot be empty');
     }
@@ -117,7 +129,7 @@ serve(async (req) => {
 
     // Upload audio to Supabase Storage
     const audioFileName = `audio-${Date.now()}.mp3`;
-    const { data: audioUploadData, error: audioUploadError } = await supabase
+    const { data: audioUploadData, error: audioUploadError } = await supabaseAdmin
       .storage
       .from('exports')
       .upload(audioFileName, audioArrayBuffer, {
@@ -131,7 +143,7 @@ serve(async (req) => {
     }
 
     // Get public URL for audio
-    const { data: { publicUrl: audioUrl } } = supabase
+    const { data: { publicUrl: audioUrl } } = supabaseAdmin
       .storage
       .from('exports')
       .getPublicUrl(audioFileName);
