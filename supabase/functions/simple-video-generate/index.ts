@@ -23,12 +23,13 @@ serve(async (req) => {
     // Get API key
     const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
     if (!replicateApiKey) {
+      console.error('REPLICATE_API_KEY is not set');
       throw new Error('REPLICATE_API_KEY is not set');
     }
 
     console.log('Starting video generation with Replicate...');
     
-    // Use the latest stable version of Zeroscope XL
+    // Use a stable version of Zeroscope XL
     const replicateResponse = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -36,14 +37,14 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "b72a26c2d8e15cb07d45d21afb9af6e2af5471b294acc14fb7f0f90b8eb25c84",
+        version: "85d775927d738f501d2b7fcc5f33d8566904f27d7b29960f1a8c0195220d1c7d",
         input: {
           prompt,
           num_frames: 24,
           fps: 8,
           width: 576,
           height: 320,
-          guidance_scale: 17.5,
+          guidance_scale: 12.5,
           num_inference_steps: 50,
           negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames"
         },
