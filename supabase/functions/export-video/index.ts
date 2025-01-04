@@ -48,8 +48,30 @@ const generateAudioNarration = async (script: string, voiceId: string) => {
 };
 
 // Generate video using Replicate
-const generateVideo = async (prompt: string) => {
+const generateVideo = async (messages: any[]) => {
   console.log('Starting video generation with Replicate...');
+  
+  // Create HTML representation of the iMessage conversation
+  const conversationHtml = messages.map(msg => `
+    <div class="message ${msg.isUser ? 'user' : 'friend'}">
+      <div class="bubble">
+        ${msg.content}
+      </div>
+      <div class="timestamp">${msg.timestamp}</div>
+    </div>
+  `).join('');
+
+  const htmlTemplate = `
+    <div class="conversation" style="
+      background-color: #F5F5F5;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    ">
+      ${conversationHtml}
+    </div>
+  `;
+
+  // Use Replicate to create video from HTML
   const response = await fetch("https://api.replicate.com/v1/predictions", {
     method: "POST",
     headers: {
@@ -59,14 +81,13 @@ const generateVideo = async (prompt: string) => {
     body: JSON.stringify({
       version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
       input: {
-        prompt,
-        num_frames: 50,
-        width: 1024,
-        height: 576,
+        html: htmlTemplate,
+        width: 1080,
+        height: 1920,
         fps: 30,
-        guidance_scale: 17.5,
-        motion_bucket_id: 127,
-        noise_aug_strength: 0.02,
+        duration: 10, // Adjust based on conversation length
+        quality: "high",
+        format: "mp4",
       },
     }),
   });
@@ -82,7 +103,7 @@ const generateVideo = async (prompt: string) => {
 const pollVideoGeneration = async (predictionId: string): Promise<string> => {
   console.log('Polling for video generation completion...');
   let attempts = 0;
-  const maxAttempts = 60; // 60 seconds timeout
+  const maxAttempts = 60;
 
   while (attempts < maxAttempts) {
     const response = await fetch(
@@ -141,7 +162,6 @@ const uploadToStorage = async (
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -150,16 +170,13 @@ serve(async (req) => {
     const { messages, voiceId, title, description } = await req.json();
     console.log('Received request:', { messages, voiceId, title });
 
-    // Initialize Supabase admin client
     const supabaseAdmin = initSupabaseAdmin();
 
-    // Get the user ID from the authorization header
     const authHeader = req.headers.get('authorization')?.split('Bearer ')[1];
     if (!authHeader) {
       throw new Error('No authorization header');
     }
 
-    // Verify the JWT and get the user
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(authHeader);
     if (authError || !user) {
       throw new Error('Invalid authorization');
@@ -174,9 +191,8 @@ serve(async (req) => {
     console.log('Generating audio narration...');
     const audioData = await generateAudioNarration(script, voiceId);
 
-    // Start video generation with a more descriptive prompt
-    const videoPrompt = messages.map((msg: any) => msg.content).join(' ');
-    const prediction = await generateVideo(videoPrompt);
+    // Start video generation
+    const prediction = await generateVideo(messages);
     const videoUrl = await pollVideoGeneration(prediction.id);
 
     // Download the generated video
@@ -199,7 +215,7 @@ serve(async (req) => {
       uploadToStorage(supabaseAdmin, audioFileName, audioData, 'audio/mpeg')
     ]);
 
-    // Get public URLs
+    // Get public URL
     const { data: { publicUrl: videoPublicUrl } } = supabaseAdmin
       .storage
       .from('exports')
