@@ -44,7 +44,7 @@ const generateAudioNarration = async (script: string, voiceId: string) => {
     throw new Error('Failed to generate audio narration');
   }
 
-  return response;
+  return await response.arrayBuffer();
 };
 
 // Generate video using Replicate
@@ -65,6 +65,8 @@ const generateVideo = async (prompt: string) => {
         height: 576,
         fps: 30,
         guidance_scale: 17.5,
+        motion_bucket_id: 127,
+        noise_aug_strength: 0.02,
       },
     }),
   });
@@ -80,7 +82,7 @@ const generateVideo = async (prompt: string) => {
 const pollVideoGeneration = async (predictionId: string): Promise<string> => {
   console.log('Polling for video generation completion...');
   let attempts = 0;
-  const maxAttempts = 30; // 30 seconds timeout
+  const maxAttempts = 60; // 60 seconds timeout
 
   while (attempts < maxAttempts) {
     const response = await fetch(
@@ -97,12 +99,12 @@ const pollVideoGeneration = async (predictionId: string): Promise<string> => {
       throw new Error(`Failed to check prediction status: ${await response.text()}`);
     }
 
-    const status = await response.json();
-    console.log('Prediction status:', status.status);
+    const prediction = await response.json();
+    console.log('Prediction status:', prediction.status);
 
-    if (status.status === 'succeeded') {
-      return status.output;
-    } else if (status.status === 'failed') {
+    if (prediction.status === 'succeeded') {
+      return prediction.output;
+    } else if (prediction.status === 'failed') {
       throw new Error('Video generation failed');
     }
 
@@ -117,11 +119,12 @@ const pollVideoGeneration = async (predictionId: string): Promise<string> => {
 const uploadToStorage = async (
   supabaseAdmin: any,
   fileName: string,
-  blob: Blob,
+  data: ArrayBuffer,
   contentType: string
 ) => {
   console.log(`Uploading ${contentType} to Storage...`);
-  const { data, error } = await supabaseAdmin
+  const blob = new Blob([data], { type: contentType });
+  const { data: uploadData, error } = await supabaseAdmin
     .storage
     .from('exports')
     .upload(fileName, blob, {
@@ -134,52 +137,7 @@ const uploadToStorage = async (
     throw error;
   }
 
-  return data;
-};
-
-// Create export record in database
-const createExportRecord = async (
-  supabaseAdmin: any,
-  {
-    title,
-    description,
-    fileName,
-    fileType,
-    fileSize,
-    userId,
-    thumbnailUrl,
-  }: {
-    title: string;
-    description: string;
-    fileName: string;
-    fileType: string;
-    fileSize: number;
-    userId: string;
-    thumbnailUrl: string;
-  }
-) => {
-  console.log('Creating export record...');
-  const { data, error } = await supabaseAdmin
-    .from('exports')
-    .insert({
-      title,
-      description,
-      file_url: fileName,
-      file_type: fileType,
-      file_size: fileSize,
-      status: 'completed',
-      user_id: userId,
-      thumbnail_url: thumbnailUrl,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error creating export record:', error);
-    throw error;
-  }
-
-  return data;
+  return uploadData;
 };
 
 serve(async (req) => {
@@ -213,10 +171,12 @@ serve(async (req) => {
     ).join('\n');
 
     // Generate audio narration
-    const audioResponse = await generateAudioNarration(script, voiceId);
+    console.log('Generating audio narration...');
+    const audioData = await generateAudioNarration(script, voiceId);
 
-    // Start video generation
-    const prediction = await generateVideo(messages.map((msg: any) => msg.content).join(' '));
+    // Start video generation with a more descriptive prompt
+    const videoPrompt = messages.map((msg: any) => msg.content).join(' ');
+    const prediction = await generateVideo(videoPrompt);
     const videoUrl = await pollVideoGeneration(prediction.id);
 
     // Download the generated video
@@ -226,28 +186,44 @@ serve(async (req) => {
       throw new Error('Failed to download generated video');
     }
 
-    const videoBlob = await videoResponse.blob();
-    const videoFileName = `video-${Date.now()}.mp4`;
+    const videoData = await videoResponse.arrayBuffer();
 
-    // Upload video to Supabase Storage
-    await uploadToStorage(supabaseAdmin, videoFileName, videoBlob, 'video/mp4');
+    // Generate unique filenames
+    const timestamp = Date.now();
+    const videoFileName = `video-${timestamp}.mp4`;
+    const audioFileName = `audio-${timestamp}.mp3`;
 
-    // Get public URL for the video
-    const { data: { publicUrl: publicVideoUrl } } = supabaseAdmin
+    // Upload both files to Supabase Storage
+    await Promise.all([
+      uploadToStorage(supabaseAdmin, videoFileName, videoData, 'video/mp4'),
+      uploadToStorage(supabaseAdmin, audioFileName, audioData, 'audio/mpeg')
+    ]);
+
+    // Get public URLs
+    const { data: { publicUrl: videoPublicUrl } } = supabaseAdmin
       .storage
       .from('exports')
       .getPublicUrl(videoFileName);
 
     // Create export record
-    const exportData = await createExportRecord(supabaseAdmin, {
-      title,
-      description,
-      fileName: videoFileName,
-      fileType: 'video/mp4',
-      fileSize: videoBlob.size,
-      userId: user.id,
-      thumbnailUrl: publicVideoUrl,
-    });
+    const { data: exportData, error: exportError } = await supabaseAdmin
+      .from('exports')
+      .insert({
+        user_id: user.id,
+        title,
+        description,
+        file_url: videoFileName,
+        file_type: 'video/mp4',
+        file_size: videoData.byteLength,
+        thumbnail_url: videoPublicUrl,
+        status: 'completed'
+      })
+      .select()
+      .single();
+
+    if (exportError) {
+      throw exportError;
+    }
 
     return new Response(
       JSON.stringify({ 
