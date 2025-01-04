@@ -16,10 +16,8 @@ export const ConversationPreview = ({
 }: ConversationPreviewProps) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [visibleMessages, setVisibleMessages] = useState<Message[]>([]);
-  const audioContext = useRef<AudioContext | null>(null);
-  const oscillator = useRef<OscillatorNode | null>(null);
-  const audioElements = useRef<Map<string, HTMLAudioElement>>(new Map());
-  const currentAudioIndex = useRef<number>(0);
+  const audioElements = useRef<Map<number, HTMLAudioElement>>(new Map());
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     if (!messages.length) {
@@ -27,92 +25,68 @@ export const ConversationPreview = ({
       return;
     }
 
-    // Reset visible messages and audio when new messages arrive
+    // Reset state
     setVisibleMessages([]);
     audioElements.current.forEach(audio => {
       audio.pause();
       audio.currentTime = 0;
     });
     audioElements.current.clear();
-    currentAudioIndex.current = 0;
+    setIsPlaying(false);
 
-    // Calculate delay between messages based on total duration
-    const totalDuration = 30000; // 30 seconds in milliseconds
+    // Calculate delay between messages
+    const totalDuration = 30000; // 30 seconds
     const messageDelay = totalDuration / messages.length;
 
-    // Initialize audio elements for each message with narration
+    // Initialize audio elements
     messages.forEach((message, index) => {
       if (message.audioUrl) {
         const audio = new Audio(message.audioUrl);
+        
+        // Set up audio event listeners
         audio.addEventListener('ended', () => {
           // Play next audio if available
-          if (currentAudioIndex.current < messages.length - 1) {
-            currentAudioIndex.current++;
-            const nextAudio = audioElements.current.get(messages[currentAudioIndex.current].content);
-            nextAudio?.play().catch(error => {
-              console.error('Error playing next narration:', error);
-            });
+          const nextAudio = audioElements.current.get(index + 1);
+          if (nextAudio) {
+            nextAudio.play().catch(console.error);
+          } else {
+            setIsPlaying(false);
           }
         });
-        audioElements.current.set(message.content, audio);
+
+        audio.addEventListener('error', (e) => {
+          console.error('Audio playback error:', e);
+        });
+
+        audioElements.current.set(index, audio);
       }
     });
 
-    // Play message received sound and show messages sequentially
-    const playMessageSound = (index: number) => {
-      if (!audioContext.current) {
-        audioContext.current = new AudioContext();
-      }
-
-      // Play notification sound
-      oscillator.current = audioContext.current.createOscillator();
-      const gainNode = audioContext.current.createGain();
-
-      oscillator.current.connect(gainNode);
-      gainNode.connect(audioContext.current.destination);
-
-      oscillator.current.frequency.value = messages[index].isUser ? 800 : 600;
-      gainNode.gain.value = 0.1;
-
-      oscillator.current.start();
-      gainNode.gain.exponentialRampToValueAtTime(
-        0.00001,
-        audioContext.current.currentTime + 0.2
-      );
-
-      setTimeout(() => {
-        oscillator.current?.stop();
-      }, 200);
-
-      // Play narration if this is the first message
-      if (index === 0) {
-        const firstAudio = audioElements.current.get(messages[0].content);
-        if (firstAudio) {
-          firstAudio.play().catch(error => {
-            console.error('Error playing first narration:', error);
-          });
-        }
-      }
-    };
-
-    // Animate messages appearing one by one with sound
+    // Show messages sequentially and play corresponding audio
     messages.forEach((message, index) => {
       setTimeout(() => {
-        setVisibleMessages((prev) => [...prev, message]);
-        playMessageSound(index);
+        setVisibleMessages(prev => [...prev, message]);
+        
+        // Play audio for this message
+        const audio = audioElements.current.get(index);
+        if (audio && !isPlaying) {
+          setIsPlaying(true);
+          audio.play().catch(error => {
+            console.error('Error playing audio:', error);
+            setIsPlaying(false);
+          });
+        }
       }, index * messageDelay);
     });
 
     // Cleanup function
     return () => {
-      if (audioContext.current?.state !== "closed") {
-        audioContext.current?.close();
-      }
       audioElements.current.forEach(audio => {
         audio.pause();
         audio.currentTime = 0;
       });
       audioElements.current.clear();
+      setIsPlaying(false);
     };
   }, [messages]);
 
