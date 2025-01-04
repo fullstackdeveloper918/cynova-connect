@@ -60,23 +60,25 @@ serve(async (req) => {
     const videoDescription = openAiData.choices[0].message.content;
     console.log('Generated video description:', videoDescription);
 
-    // Use Replicate's Zeroscope XL model for video generation
+    // Use Replicate's API for video generation
     const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
     if (!replicateApiKey) {
       throw new Error('REPLICATE_API_KEY is not set');
     }
 
-    console.log('Starting video generation with Replicate Zeroscope XL...');
-    console.log('Using Replicate API Key:', replicateApiKey.substring(0, 5) + '...');
+    console.log('Starting video generation with Replicate...');
+    console.log('API Key prefix:', replicateApiKey.substring(0, 5) + '...');
 
-    const replicateResponse = await fetch("https://api.replicate.com/v1/predictions", {
+    // Create prediction using Replicate's REST API
+    const modelVersion = "85d775927d738f501d2b7fcc5f33d8566904f27d7b29960f1a8c0195220d1c7d";
+    const replicateResponse = await fetch(`https://api.replicate.com/v1/predictions`, {
       method: "POST",
       headers: {
         "Authorization": `Token ${replicateApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "85d775927d738f501d2b7fcc5f33d8566904f27d7b29960f1a8c0195220d1c7d",
+        version: modelVersion,
         input: {
           prompt: videoDescription,
           video_length: "14_frames_with_svd",
@@ -92,9 +94,8 @@ serve(async (req) => {
 
     if (!replicateResponse.ok) {
       const error = await replicateResponse.json();
-      console.error('Replicate API Error Response:', error);
+      console.error('Replicate API Error:', error);
       
-      // Check for specific error types
       if (error.detail?.includes('Invalid token')) {
         throw new Error('Invalid Replicate API token. Please check your API key.');
       } else if (error.detail?.includes('Permission denied')) {
@@ -103,15 +104,14 @@ serve(async (req) => {
         throw new Error('Replicate API quota exceeded or payment required.');
       }
       
-      throw new Error(`Replicate API error: ${error.detail || JSON.stringify(error)}`);
+      throw new Error(`Replicate API error: ${JSON.stringify(error)}`);
     }
 
     const prediction = await replicateResponse.json();
     console.log('Prediction created:', prediction);
 
-    // Poll for the result
-    const pollInterval = 1000;
-    const maxAttempts = 300;
+    // Poll for completion
+    const maxAttempts = 60;
     let attempts = 0;
 
     while (attempts < maxAttempts) {
@@ -134,37 +134,25 @@ serve(async (req) => {
       }
 
       const result = await pollResponse.json();
-      console.log('Poll result:', result);
+      console.log('Poll result status:', result.status);
 
       if (result.status === "succeeded") {
-        const videoUrl = result.output;
-        console.log('Generated video URL:', videoUrl);
-        
-        if (!videoUrl) {
-          throw new Error('No video URL in the output');
-        }
-
+        console.log('Video generation succeeded:', result);
         return new Response(
           JSON.stringify({ 
-            previewUrl: videoUrl,
+            previewUrl: result.output,
             message: "Preview generated successfully" 
           }),
-          { 
-            headers: { 
-              ...corsHeaders,
-              'Content-Type': 'application/json'
-            }
-          }
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       } else if (result.status === "failed") {
         console.error('Video generation failed:', result.error);
         throw new Error(`Video generation failed: ${result.error}`);
       } else if (result.status === "canceled") {
-        console.error('Video generation was canceled');
         throw new Error('Video generation was canceled');
       }
 
-      await new Promise(resolve => setTimeout(resolve, pollInterval));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       attempts++;
     }
 
@@ -172,7 +160,6 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in generate-video-preview function:', error);
-    
     return new Response(
       JSON.stringify({ 
         error: 'Failed to generate video preview',
@@ -180,10 +167,7 @@ serve(async (req) => {
       }),
       { 
         status: 500,
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
