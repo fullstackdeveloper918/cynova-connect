@@ -39,20 +39,21 @@ serve(async (req) => {
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
-        max_tokens: 1000, // Limit token usage
+        max_tokens: 1000,
       }),
     });
 
+    console.log('OpenAI API Response Status:', response.status);
+    
     const data = await response.json();
-    console.log('OpenAI API response status:', response.status);
+    console.log('OpenAI API Response Headers:', Object.fromEntries(response.headers));
 
     if (!response.ok) {
-      // Check specifically for quota exceeded error
-      if (response.status === 429 || data.error?.message?.includes('quota')) {
-        console.error('OpenAI API rate limit or quota exceeded:', data.error);
+      console.error('OpenAI API Error Response:', data);
+      if (response.status === 429) {
         return new Response(
           JSON.stringify({
-            error: 'Rate limit reached. Please try again in a few moments.',
+            error: 'OpenAI API rate limit reached. Please try again in a few moments.',
             details: data.error?.message
           }),
           {
@@ -61,7 +62,6 @@ serve(async (req) => {
           }
         );
       }
-
       throw new Error(`OpenAI API error: ${data.error?.message || 'Unknown error'}`);
     }
 
@@ -80,16 +80,13 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in generate-video-content function:', error);
     
-    // Determine if it's a rate limit error
-    const isRateLimit = error.message?.includes('quota') || error.message?.includes('rate limit');
-    
     return new Response(
       JSON.stringify({ 
-        error: isRateLimit ? 'Rate limit reached. Please try again in a few moments.' : 'An error occurred while generating content',
+        error: 'An error occurred while generating content',
         details: error.toString()
       }),
       { 
-        status: isRateLimit ? 429 : 500,
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
