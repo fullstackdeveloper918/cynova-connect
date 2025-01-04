@@ -17,31 +17,30 @@ export const VideoPreview = ({
   previewUrl,
   selectedVoice,
 }: VideoPreviewProps) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
-    if (audioRef.current) {
+    if (videoRef.current && audioRef.current) {
+      videoRef.current.currentTime = 0;
       audioRef.current.currentTime = 0;
       setIsPlaying(false);
     }
   }, [previewUrl]);
 
-  useEffect(() => {
-    const handleAudioEnd = () => {
-      setIsPlaying(false);
-    };
-
-    if (audioRef.current) {
-      audioRef.current.addEventListener('ended', handleAudioEnd);
-    }
-
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.removeEventListener('ended', handleAudioEnd);
+  const handlePlayPause = () => {
+    if (videoRef.current && audioRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+        audioRef.current.pause();
+      } else {
+        videoRef.current.play();
+        audioRef.current.play();
       }
-    };
-  }, []);
+      setIsPlaying(!isPlaying);
+    }
+  };
 
   if (!script) {
     return (
@@ -54,36 +53,25 @@ export const VideoPreview = ({
     );
   }
 
-  const handleImageClick = () => {
-    if (audioRef.current) {
-      if (audioRef.current.paused) {
-        audioRef.current.play();
-        setIsPlaying(true);
-      } else {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      }
-    }
-  };
-
   return (
     <div className="space-y-4">
       {previewUrl ? (
         <div 
           className="w-full aspect-video rounded-lg bg-gray-50 overflow-hidden relative cursor-pointer group"
-          onClick={handleImageClick}
+          onClick={handlePlayPause}
         >
-          <img 
-            src={previewUrl.videoUrl} 
-            alt="Video preview frame"
+          <video
+            ref={videoRef}
+            src={previewUrl.videoUrl}
             className="w-full h-full object-cover"
+            loop
           />
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200" />
           <audio
             ref={audioRef}
             src={previewUrl.audioUrl}
             className="hidden"
           />
+          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200" />
           <div className="absolute bottom-4 left-4 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded-full">
             {isPlaying ? 'Click to pause' : 'Click to play'}
           </div>
