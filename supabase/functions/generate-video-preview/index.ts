@@ -60,7 +60,45 @@ serve(async (req) => {
     const videoDescription = openAiData.choices[0].message.content;
     console.log('Generated video description:', videoDescription);
 
-    // Use Replicate's API for video generation
+    // Generate audio narration using ElevenLabs
+    console.log('Generating audio narration with ElevenLabs...');
+    const elevenLabsKey = Deno.env.get('ELEVEN_LABS_API_KEY');
+    if (!elevenLabsKey) {
+      throw new Error('ELEVEN_LABS_API_KEY is not set');
+    }
+
+    const voiceId = "EXAVITQu4vr4xnSDxMaL"; // Sarah's voice ID
+    const audioResponse = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+      {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': elevenLabsKey,
+        },
+        body: JSON.stringify({
+          text: script,
+          model_id: "eleven_monolingual_v1",
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.5,
+          },
+        }),
+      }
+    );
+
+    if (!audioResponse.ok) {
+      const error = await audioResponse.json();
+      console.error('ElevenLabs API Error:', error);
+      throw new Error(`ElevenLabs API error: ${JSON.stringify(error)}`);
+    }
+
+    const audioBlob = await audioResponse.blob();
+    const audioUrl = URL.createObjectURL(audioBlob);
+    console.log('Audio narration generated successfully');
+
+    // Use Replicate's API for video generation with proper duration settings
     const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
     if (!replicateApiKey) {
       throw new Error('REPLICATE_API_KEY is not set');
@@ -68,12 +106,10 @@ serve(async (req) => {
 
     console.log('Starting video generation with Replicate...');
     
-    // Using the Zeroscope model with a specific version
-    const modelOwner = "anotherjesse";
-    const modelName = "zeroscope-v2-xl";
+    // Using the Zeroscope model with specific duration settings
     const modelVersion = "71996d331e8ede8ef7bd76eba9fae076d31792e4ddf4ad057779b443d6aea62f";
     
-    console.log(`Using Replicate model: ${modelOwner}/${modelName}@${modelVersion}`);
+    console.log('Using Replicate model version:', modelVersion);
     
     const replicateResponse = await fetch(`https://api.replicate.com/v1/predictions`, {
       method: "POST",
@@ -85,10 +121,10 @@ serve(async (req) => {
         version: modelVersion,
         input: {
           prompt: videoDescription,
-          video_length: "14_frames_with_svd",
-          fps: 8,
-          width: 576,
-          height: 320,
+          video_length: "30_frames_with_svd", // Increased frames for longer video
+          fps: 24, // Increased FPS for smoother video
+          width: 768,
+          height: 432,
           guidance_scale: 17.5,
           num_inference_steps: 50,
           negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames"
@@ -115,7 +151,7 @@ serve(async (req) => {
     console.log('Prediction created:', prediction);
 
     // Poll for completion with increased timeout and better logging
-    const maxAttempts = 180; // Increased to 3 minutes
+    const maxAttempts = 180; // 3 minutes
     const pollInterval = 2000; // Poll every 2 seconds
     let attempts = 0;
 
@@ -143,9 +179,12 @@ serve(async (req) => {
 
       if (result.status === "succeeded") {
         console.log('Video generation succeeded:', result);
+        
+        // Return both video and audio URLs
         return new Response(
           JSON.stringify({ 
-            previewUrl: result.output,
+            videoUrl: result.output,
+            audioUrl: audioUrl,
             message: "Preview generated successfully" 
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

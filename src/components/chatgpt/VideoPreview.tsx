@@ -1,4 +1,5 @@
 import { Video } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 interface VideoPreviewProps {
   script: string;
@@ -11,6 +12,25 @@ export const VideoPreview = ({
   previewUrl,
   selectedVoice,
 }: VideoPreviewProps) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    if (previewUrl && videoRef.current && audioRef.current) {
+      // Sync video and audio playback
+      videoRef.current.onplay = () => {
+        audioRef.current?.play();
+      };
+      videoRef.current.onpause = () => {
+        audioRef.current?.pause();
+      };
+      videoRef.current.onended = () => {
+        audioRef.current?.pause();
+        if (audioRef.current) audioRef.current.currentTime = 0;
+      };
+    }
+  }, [previewUrl]);
+
   if (!script) {
     return (
       <div className="aspect-video rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50">
@@ -25,13 +45,17 @@ export const VideoPreview = ({
   return (
     <div className="space-y-4">
       {previewUrl ? (
-        <div className="w-full aspect-video rounded-lg bg-gray-50 overflow-hidden">
+        <div className="w-full aspect-video rounded-lg bg-gray-50 overflow-hidden relative">
           <video
-            src={previewUrl}
+            ref={videoRef}
+            src={previewUrl.videoUrl}
             controls
-            autoPlay
-            loop
             className="w-full h-full object-cover"
+          />
+          <audio
+            ref={audioRef}
+            src={previewUrl.audioUrl}
+            className="hidden"
           />
         </div>
       ) : (
