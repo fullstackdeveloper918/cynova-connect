@@ -28,7 +28,7 @@ export const useVideoPreview = () => {
 
     setIsPreviewLoading(true);
     try {
-      console.log("Calling generate-video-preview with script and voice settings");
+      // For now, we'll just generate the audio and use a template video
       const { data, error } = await supabase.functions.invoke("generate-video-preview", {
         body: { 
           script,
@@ -44,9 +44,11 @@ export const useVideoPreview = () => {
 
       console.log("Preview generation response:", data);
       
-      // Use the first frame as preview and include audio URL
-      if (data.previewUrl?.videoUrl && data.previewUrl?.audioUrl) {
-        setPreviewUrl(data.previewUrl);
+      if (data.previewUrl?.audioUrl) {
+        setPreviewUrl({
+          videoUrl: "/stock/minecraft-gameplay.mp4", // Using a template video for now
+          audioUrl: data.previewUrl.audioUrl
+        });
         
         toast({
           title: "Preview generated",
