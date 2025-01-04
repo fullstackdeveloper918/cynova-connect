@@ -7,7 +7,183 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Initialize Supabase admin client
+const initSupabaseAdmin = () => {
+  return createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+};
+
+// Generate audio narration using ElevenLabs
+const generateAudioNarration = async (script: string, voiceId: string) => {
+  console.log('Generating audio with ElevenLabs...');
+  const response = await fetch(
+    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+    {
+      method: 'POST',
+      headers: {
+        'Accept': 'audio/mpeg',
+        'Content-Type': 'application/json',
+        'xi-api-key': Deno.env.get('ELEVEN_LABS_API_KEY') ?? '',
+      },
+      body: JSON.stringify({
+        text: script,
+        model_id: "eleven_monolingual_v1",
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.5,
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    console.error('ElevenLabs API Error:', error);
+    throw new Error('Failed to generate audio narration');
+  }
+
+  return response;
+};
+
+// Generate video using Replicate
+const generateVideo = async (prompt: string) => {
+  console.log('Starting video generation with Replicate...');
+  const response = await fetch("https://api.replicate.com/v1/predictions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Token ${Deno.env.get('REPLICATE_API_KEY')}`,
+    },
+    body: JSON.stringify({
+      version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
+      input: {
+        prompt,
+        num_frames: 50,
+        width: 1024,
+        height: 576,
+        fps: 30,
+        guidance_scale: 17.5,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Replicate API error: ${await response.text()}`);
+  }
+
+  return await response.json();
+};
+
+// Poll for video generation completion
+const pollVideoGeneration = async (predictionId: string): Promise<string> => {
+  console.log('Polling for video generation completion...');
+  let attempts = 0;
+  const maxAttempts = 30; // 30 seconds timeout
+
+  while (attempts < maxAttempts) {
+    const response = await fetch(
+      `https://api.replicate.com/v1/predictions/${predictionId}`,
+      {
+        headers: {
+          Authorization: `Token ${Deno.env.get('REPLICATE_API_KEY')}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to check prediction status: ${await response.text()}`);
+    }
+
+    const status = await response.json();
+    console.log('Prediction status:', status.status);
+
+    if (status.status === 'succeeded') {
+      return status.output;
+    } else if (status.status === 'failed') {
+      throw new Error('Video generation failed');
+    }
+
+    attempts++;
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
+  throw new Error('Video generation timed out');
+};
+
+// Upload file to Supabase Storage
+const uploadToStorage = async (
+  supabaseAdmin: any,
+  fileName: string,
+  blob: Blob,
+  contentType: string
+) => {
+  console.log(`Uploading ${contentType} to Storage...`);
+  const { data, error } = await supabaseAdmin
+    .storage
+    .from('exports')
+    .upload(fileName, blob, {
+      contentType,
+      upsert: true
+    });
+
+  if (error) {
+    console.error('Upload error:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+// Create export record in database
+const createExportRecord = async (
+  supabaseAdmin: any,
+  {
+    title,
+    description,
+    fileName,
+    fileType,
+    fileSize,
+    userId,
+    thumbnailUrl,
+  }: {
+    title: string;
+    description: string;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    userId: string;
+    thumbnailUrl: string;
+  }
+) => {
+  console.log('Creating export record...');
+  const { data, error } = await supabaseAdmin
+    .from('exports')
+    .insert({
+      title,
+      description,
+      file_url: fileName,
+      file_type: fileType,
+      file_size: fileSize,
+      status: 'completed',
+      user_id: userId,
+      thumbnail_url: thumbnailUrl,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating export record:', error);
+    throw error;
+  }
+
+  return data;
+};
+
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -16,11 +192,8 @@ serve(async (req) => {
     const { messages, voiceId, title, description } = await req.json();
     console.log('Received request:', { messages, voiceId, title });
 
-    // Initialize Supabase client
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    // Initialize Supabase admin client
+    const supabaseAdmin = initSupabaseAdmin();
 
     // Get the user ID from the authorization header
     const authHeader = req.headers.get('authorization')?.split('Bearer ')[1];
@@ -35,96 +208,16 @@ serve(async (req) => {
     }
 
     // Convert messages to narration script
-    const script = messages.map(msg => 
+    const script = messages.map((msg: any) => 
       `${msg.isUser ? 'User' : 'Friend'}: ${msg.content}`
     ).join('\n');
 
-    // Generate audio narration using ElevenLabs
-    console.log('Generating audio with ElevenLabs...');
-    const audioResponse = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
-      {
-        method: 'POST',
-        headers: {
-          'Accept': 'audio/mpeg',
-          'Content-Type': 'application/json',
-          'xi-api-key': Deno.env.get('ELEVEN_LABS_API_KEY') ?? '',
-        },
-        body: JSON.stringify({
-          text: script,
-          model_id: "eleven_monolingual_v1",
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.5,
-          },
-        }),
-      }
-    );
+    // Generate audio narration
+    const audioResponse = await generateAudioNarration(script, voiceId);
 
-    if (!audioResponse.ok) {
-      const error = await audioResponse.json();
-      console.error('ElevenLabs API Error:', error);
-      throw new Error('Failed to generate audio');
-    }
-
-    // Start video generation with Replicate
-    console.log('Starting video generation with Replicate...');
-    const replicateResponse = await fetch("https://api.replicate.com/v1/predictions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${Deno.env.get('REPLICATE_API_KEY')}`,
-      },
-      body: JSON.stringify({
-        version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
-        input: {
-          prompt: messages.map(msg => msg.content).join(' '),
-          num_frames: 50,
-          width: 1024,
-          height: 576,
-          fps: 30,
-          guidance_scale: 17.5,
-        },
-      }),
-    });
-
-    if (!replicateResponse.ok) {
-      throw new Error(`Replicate API error: ${await replicateResponse.text()}`);
-    }
-
-    const prediction = await replicateResponse.json();
-    console.log('Replicate prediction started:', prediction);
-
-    // Poll for video generation completion
-    let videoUrl = null;
-    while (!videoUrl) {
-      const statusResponse = await fetch(
-        `https://api.replicate.com/v1/predictions/${prediction.id}`,
-        {
-          headers: {
-            Authorization: `Token ${Deno.env.get('REPLICATE_API_KEY')}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!statusResponse.ok) {
-        throw new Error(`Failed to check prediction status: ${await statusResponse.text()}`);
-      }
-
-      const status = await statusResponse.json();
-      console.log('Prediction status:', status.status);
-
-      if (status.status === 'succeeded') {
-        videoUrl = status.output;
-        break;
-      } else if (status.status === 'failed') {
-        throw new Error('Video generation failed');
-      }
-
-      // Wait before polling again
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
+    // Start video generation
+    const prediction = await generateVideo(messages.map((msg: any) => msg.content).join(' '));
+    const videoUrl = await pollVideoGeneration(prediction.id);
 
     // Download the generated video
     console.log('Downloading generated video...');
@@ -137,47 +230,24 @@ serve(async (req) => {
     const videoFileName = `video-${Date.now()}.mp4`;
 
     // Upload video to Supabase Storage
-    console.log('Uploading video to Storage...');
-    const { data: videoUpload, error: videoUploadError } = await supabaseAdmin
-      .storage
-      .from('exports')
-      .upload(videoFileName, videoBlob, {
-        contentType: 'video/mp4',
-        upsert: true
-      });
-
-    if (videoUploadError) {
-      console.error('Video upload error:', videoUploadError);
-      throw videoUploadError;
-    }
+    await uploadToStorage(supabaseAdmin, videoFileName, videoBlob, 'video/mp4');
 
     // Get public URL for the video
-    const { data: { publicUrl: videoUrl } } = supabaseAdmin
+    const { data: { publicUrl: publicVideoUrl } } = supabaseAdmin
       .storage
       .from('exports')
       .getPublicUrl(videoFileName);
 
-    // Create an export record
-    console.log('Creating export record...');
-    const { data: exportData, error: exportError } = await supabaseAdmin
-      .from('exports')
-      .insert({
-        title,
-        description,
-        file_url: videoFileName,
-        file_type: 'video/mp4',
-        file_size: videoBlob.size,
-        status: 'completed',
-        user_id: user.id,
-        thumbnail_url: videoUrl,
-      })
-      .select()
-      .single();
-
-    if (exportError) {
-      console.error('Error creating export record:', exportError);
-      throw exportError;
-    }
+    // Create export record
+    const exportData = await createExportRecord(supabaseAdmin, {
+      title,
+      description,
+      fileName: videoFileName,
+      fileType: 'video/mp4',
+      fileSize: videoBlob.size,
+      userId: user.id,
+      thumbnailUrl: publicVideoUrl,
+    });
 
     return new Response(
       JSON.stringify({ 
