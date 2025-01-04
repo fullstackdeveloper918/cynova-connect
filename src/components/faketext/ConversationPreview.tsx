@@ -18,7 +18,6 @@ export const ConversationPreview = ({
   const [visibleMessages, setVisibleMessages] = useState<Message[]>([]);
   const audioElements = useRef<Map<number, HTMLAudioElement>>(new Map());
   const [isPlaying, setIsPlaying] = useState(false);
-  const nextMessageTimeout = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     if (!messages.length) {
@@ -34,9 +33,6 @@ export const ConversationPreview = ({
     });
     audioElements.current.clear();
     setIsPlaying(false);
-    if (nextMessageTimeout.current) {
-      clearTimeout(nextMessageTimeout.current);
-    }
 
     // Initialize audio elements
     messages.forEach((message, index) => {
@@ -46,39 +42,55 @@ export const ConversationPreview = ({
       }
     });
 
+    const playAudio = async (audio: HTMLAudioElement): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        const handleEnded = () => {
+          audio.removeEventListener('ended', handleEnded);
+          audio.removeEventListener('error', handleError);
+          resolve();
+        };
+
+        const handleError = (error: Event) => {
+          audio.removeEventListener('ended', handleEnded);
+          audio.removeEventListener('error', handleError);
+          console.error('Audio playback error:', error);
+          reject(error);
+        };
+
+        audio.addEventListener('ended', handleEnded);
+        audio.addEventListener('error', handleError);
+
+        // Start playing and handle any immediate errors
+        audio.play().catch(error => {
+          console.error('Error starting audio:', error);
+          handleError(error);
+        });
+      });
+    };
+
     const playMessageSequence = async (index: number) => {
       if (index >= messages.length) {
         setIsPlaying(false);
         return;
       }
 
-      // Show the current message
+      // Show current message
       setVisibleMessages(prev => [...prev, messages[index]]);
 
       // Play audio if available
       const currentAudio = audioElements.current.get(index);
       if (currentAudio) {
         try {
-          await new Promise((resolve, reject) => {
-            currentAudio.onended = resolve;
-            currentAudio.onerror = reject;
-            const playPromise = currentAudio.play();
-            if (playPromise) {
-              playPromise.catch(error => {
-                console.error('Error playing audio:', error);
-                resolve(null); // Continue sequence even if audio fails
-              });
-            }
-          });
+          await playAudio(currentAudio);
         } catch (error) {
-          console.error('Audio playback error:', error);
+          console.error('Failed to play audio for message:', index, error);
         }
       }
 
       // Add delay between messages
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Play next message
+      // Continue to next message
       await playMessageSequence(index + 1);
     };
 
@@ -90,9 +102,6 @@ export const ConversationPreview = ({
 
     // Cleanup function
     return () => {
-      if (nextMessageTimeout.current) {
-        clearTimeout(nextMessageTimeout.current);
-      }
       audioElements.current.forEach(audio => {
         audio.pause();
         audio.currentTime = 0;
