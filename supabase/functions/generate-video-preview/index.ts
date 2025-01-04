@@ -25,8 +25,8 @@ serve(async (req) => {
 
     console.log('Starting video generation with Replicate...');
     
-    // Generate video with Replicate
-    const replicateResponse = await fetch("https://api.replicate.com/v1/predictions", {
+    // Create prediction with proper authentication
+    const prediction = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
         "Authorization": `Token ${replicateApiKey}`,
@@ -47,26 +47,26 @@ serve(async (req) => {
       }),
     });
 
-    if (!replicateResponse.ok) {
-      const error = await replicateResponse.text();
+    if (!prediction.ok) {
+      const error = await prediction.text();
       console.error('Replicate API Error:', error);
       throw new Error(`Replicate API error: ${error}`);
     }
 
-    const prediction = await replicateResponse.json();
-    console.log('Video generation started:', prediction);
+    const predictionData = await prediction.json();
+    console.log('Video generation started:', predictionData);
 
-    // Poll for the video result
-    const pollInterval = 1000;
-    const maxAttempts = 60;
+    // Poll for completion
     let attempts = 0;
+    const maxAttempts = 60;
+    const pollInterval = 1000;
     let videoUrl = null;
 
     while (attempts < maxAttempts && !videoUrl) {
       console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`);
       
       const pollResponse = await fetch(
-        `https://api.replicate.com/v1/predictions/${prediction.id}`,
+        `https://api.replicate.com/v1/predictions/${predictionData.id}`,
         {
           headers: {
             "Authorization": `Token ${replicateApiKey}`,
