@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -15,16 +14,16 @@ serve(async (req) => {
   try {
     const { prompt, style = "engaging and professional" } = await req.json();
     console.log('Received prompt:', prompt);
-    console.log('Style:', style);
 
     const openAiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAiKey) {
       throw new Error('OPENAI_API_KEY is not set');
     }
 
-    console.log('Calling OpenAI API to generate script...');
+    console.log('Generating script with OpenAI...');
     
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Generate script using GPT-4
+    const scriptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openAiKey}`,
@@ -35,33 +34,64 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a professional video script writer. Create engaging, ${style} scripts that are concise and visually descriptive.`
+            content: `You are a professional video script writer. Create engaging, ${style} scripts that are concise and visually descriptive. Break down the script into clear scenes that can be visualized.`
           },
           {
             role: 'user',
-            content: `Write a short video script about: ${prompt}. Keep it under 60 seconds when read aloud. Focus on visual descriptions that can be animated.`
+            content: `Write a short video script about: ${prompt}. Keep it under 60 seconds when read aloud. Focus on visual descriptions that can be animated. Format the response as a JSON array of scenes, where each scene has a "description" and "duration" in seconds.`
           }
         ],
+        response_format: { type: "json_object" },
         temperature: 0.7,
-        max_tokens: 500,
       }),
     });
 
-    const data = await response.json();
-    console.log('OpenAI API Response:', data);
+    const scriptData = await scriptResponse.json();
+    console.log('Script generated:', scriptData);
 
-    if (!response.ok) {
-      console.error('OpenAI API Error:', data);
-      throw new Error(data.error?.message || 'Failed to generate script');
+    if (!scriptResponse.ok) {
+      throw new Error(scriptData.error?.message || 'Failed to generate script');
     }
 
-    const script = data.choices[0].message.content;
-    console.log('Generated script:', script);
+    const scenes = JSON.parse(scriptData.choices[0].message.content).scenes;
+
+    // Generate images for each scene using DALL-E 3
+    console.log('Generating images for scenes...');
+    const imagePromises = scenes.map(async (scene: any) => {
+      const imageResponse = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: "dall-e-3",
+          prompt: scene.description,
+          n: 1,
+          size: "1024x1024",
+          quality: "standard",
+          style: "vivid",
+        }),
+      });
+
+      const imageData = await imageResponse.json();
+      if (!imageResponse.ok) {
+        throw new Error(imageData.error?.message || 'Failed to generate image');
+      }
+
+      return {
+        ...scene,
+        imageUrl: imageData.data[0].url,
+      };
+    });
+
+    const scenesWithImages = await Promise.all(imagePromises);
+    console.log('All scenes generated with images');
 
     return new Response(
       JSON.stringify({ 
-        script,
-        message: "Script generated successfully" 
+        scenes: scenesWithImages,
+        message: "Video content generated successfully" 
       }),
       { 
         headers: { 
