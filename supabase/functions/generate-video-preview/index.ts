@@ -51,7 +51,7 @@ serve(async (req) => {
     console.log('Extracted narration:', narrationParts);
     console.log('Extracted visual descriptions:', visualParts);
 
-    // First, generate video description with OpenAI
+    // Generate video description with OpenAI
     const openAiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAiKey) {
       throw new Error('OPENAI_API_KEY is not set');
@@ -156,7 +156,7 @@ serve(async (req) => {
 
     console.log('Starting video generation with Replicate...');
     
-    // Using an optimized model version for better quality
+    // Using an optimized model version for better memory efficiency
     const modelVersion = "71996d331e8ede8ef7bd76eba9fae076d31792e4ddf4ad057779b443d6aea62f";
     
     console.log('Using Replicate model version:', modelVersion);
@@ -172,12 +172,12 @@ serve(async (req) => {
         version: modelVersion,
         input: {
           prompt: videoDescription,
-          num_frames: 24 * 30, // 30 seconds at 24 FPS
-          fps: 24,
-          width: 1024,
-          height: 576,
-          guidance_scale: 17.5,
-          num_inference_steps: 50,
+          num_frames: Math.min(24 * 15, parseInt(duration)), // Reduced number of frames
+          fps: 12, // Reduced FPS
+          width: 512, // Reduced resolution
+          height: 512,
+          guidance_scale: 12.5, // Reduced guidance scale
+          num_inference_steps: 30, // Reduced inference steps
           negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames, text, watermark, logo, words",
           scheduler: "K_EULER",
           seed: Math.floor(Math.random() * 1000000),
