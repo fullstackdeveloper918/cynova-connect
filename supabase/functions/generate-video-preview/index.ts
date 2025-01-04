@@ -28,21 +28,30 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
+    if (!replicateApiKey) {
+      throw new Error('REPLICATE_API_KEY is not set');
+    }
+
+    console.log('Calling Replicate API to generate video...');
+    
     // Call Replicate API to generate video content using Zeroscope model
     const replicateResponse = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Token ${Deno.env.get('REPLICATE_API_KEY')}`,
+        Authorization: `Token ${replicateApiKey}`,
       },
       body: JSON.stringify({
         version: "b72a26c2fb5dea4e54958c6847c85d815b7c6115c94c4894f356d1f9c6c2c5ad",
         input: {
           prompt: script,
-          video_length: "14", // 14 frames for a short preview
+          video_length: 14, // Number of frames as a number, not a string
           fps: 8,
           width: 768,
-          height: 432
+          height: 432,
+          num_inference_steps: 50, // Added for better quality
+          guidance_scale: 17.5, // Added for better adherence to prompt
         },
       }),
     });
@@ -50,7 +59,7 @@ serve(async (req) => {
     if (!replicateResponse.ok) {
       const error = await replicateResponse.json();
       console.error('Replicate API Error:', error);
-      throw new Error('Failed to generate video content');
+      throw new Error(`Replicate API error: ${error.detail || 'Unknown error'}`);
     }
 
     const prediction = await replicateResponse.json();
@@ -59,27 +68,38 @@ serve(async (req) => {
     // Poll for the result
     let videoUrl = null;
     let attempts = 0;
-    const maxAttempts = 60; // Maximum number of attempts (60 seconds)
+    const maxAttempts = 120; // Increased to 2 minutes for longer generations
+    const pollInterval = 2000; // Poll every 2 seconds
 
     while (!videoUrl && attempts < maxAttempts) {
+      console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`);
+      
       const statusResponse = await fetch(prediction.urls.get, {
         headers: {
-          Authorization: `Token ${Deno.env.get('REPLICATE_API_KEY')}`,
+          Authorization: `Token ${replicateApiKey}`,
         },
       });
       
+      if (!statusResponse.ok) {
+        const error = await statusResponse.json();
+        console.error('Status check error:', error);
+        throw new Error('Failed to check generation status');
+      }
+
       const result = await statusResponse.json();
-      console.log('Checking prediction status:', result);
+      console.log('Prediction status:', result.status);
 
       if (result.status === 'succeeded') {
         videoUrl = result.output;
+        console.log('Video generation succeeded:', videoUrl);
         break;
       } else if (result.status === 'failed') {
-        throw new Error('Video generation failed');
+        console.error('Generation failed:', result.error);
+        throw new Error(`Video generation failed: ${result.error || 'Unknown error'}`);
       }
 
       // Wait before polling again
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
       attempts++;
     }
 
@@ -88,6 +108,7 @@ serve(async (req) => {
     }
 
     // Download the generated video
+    console.log('Downloading generated video...');
     const videoResponse = await fetch(videoUrl);
     if (!videoResponse.ok) {
       throw new Error('Failed to download generated video');
@@ -98,6 +119,7 @@ serve(async (req) => {
     const fileName = `preview-${timestamp}.mp4`;
 
     // Upload to Supabase Storage
+    console.log('Uploading to Supabase Storage...');
     const { data: uploadData, error: uploadError } = await supabaseAdmin
       .storage
       .from('exports')
