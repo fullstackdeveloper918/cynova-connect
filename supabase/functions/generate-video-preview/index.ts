@@ -121,10 +121,11 @@ serve(async (req) => {
       }
 
       const result = await pollResponse.json();
-      console.log('Poll result status:', result.status);
+      console.log('Poll result:', result);
 
       if (result.status === "succeeded") {
-        const videoUrl = result.output;
+        // The output is an array with a single video URL
+        const videoUrl = Array.isArray(result.output) ? result.output[0] : result.output;
         console.log('Generated video URL:', videoUrl);
         
         if (!videoUrl) {
