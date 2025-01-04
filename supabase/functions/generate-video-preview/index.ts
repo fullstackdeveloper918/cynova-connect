@@ -75,17 +75,17 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // Using a verified working version of Stable Video Diffusion
+        // Using Stable Video Diffusion model with correct parameters
         version: "435061a1b5a4c1e26740464bf786efdfa9cb3a3ac488595a2de23e143fdb0117",
         input: {
           prompt: videoDescription,
-          num_frames: 14,
-          width: 576,
-          height: 320,
-          fps: 7,
-          num_inference_steps: 25,
+          video_length: "14_frames_with_svd",
+          sizing_strategy: "maintain_aspect_ratio",
+          frames_per_second: 7,
           motion_bucket_id: 127,
           cond_aug: 0.02,
+          width: 576,
+          height: 320
         },
       }),
     });
