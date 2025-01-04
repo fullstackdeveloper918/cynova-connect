@@ -70,12 +70,12 @@ export function Navigation() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center justify-center flex-1">
-            <NavigationMenu className="relative">
+            <NavigationMenu>
               <NavigationMenuList>
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-background hover:bg-accent">Features</NavigationMenuTrigger>
+                  <NavigationMenuTrigger className="bg-transparent hover:bg-transparent">Features</NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className="grid w-[400px] gap-3 p-4 bg-popover shadow-lg rounded-lg border md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                    <ul className="grid w-[400px] gap-3 p-4 bg-white md:w-[500px] md:grid-cols-2 lg:w-[600px]">
                       {features.map((feature) => (
                         <li key={feature.title}>
                           <NavigationMenuLink asChild>
@@ -151,7 +151,7 @@ export function Navigation() {
             </button>
 
             {isOpen && (
-              <div className="absolute top-16 left-0 right-0 bg-popover shadow-lg border-b border-border p-4 z-50">
+              <div className="absolute top-16 left-0 right-0 bg-white border-b border-gray-200 p-4">
                 <nav className="space-y-4">
                   <div className="space-y-2">
                     <div className="font-medium">Features</div>
@@ -159,8 +159,7 @@ export function Navigation() {
                       <Link
                         key={feature.title}
                         to={feature.href}
-                        className="block px-2 py-1 text-sm text-foreground hover:text-accent-foreground"
-                        onClick={() => setIsOpen(false)}
+                        className="block px-2 py-1 text-sm text-gray-600 hover:text-gray-900"
                       >
                         {feature.title}
                       </Link>
@@ -171,13 +170,13 @@ export function Navigation() {
                       scrollToPricing();
                       setIsOpen(false);
                     }}
-                    className="block w-full text-left px-2 py-1 text-foreground hover:text-accent-foreground"
+                    className="block w-full text-left px-2 py-1 text-gray-600 hover:text-gray-900"
                   >
                     Pricing
                   </button>
                   <Link
                     to="/affiliate"
-                    className="block px-2 py-1 text-foreground hover:text-accent-foreground"
+                    className="block px-2 py-1 text-gray-600 hover:text-gray-900"
                     onClick={() => setIsOpen(false)}
                   >
                     Affiliate
