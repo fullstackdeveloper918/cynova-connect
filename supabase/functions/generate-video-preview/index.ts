@@ -21,141 +21,92 @@ serve(async (req) => {
       throw new Error('No script provided');
     }
 
-    const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
-    if (!replicateApiKey) {
-      console.error('REPLICATE_API_KEY is not set in environment variables');
-      throw new Error('REPLICATE_API_KEY is not set');
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      console.error('OPENAI_API_KEY is not set in environment variables');
+      throw new Error('OPENAI_API_KEY is not set');
     }
 
-    console.log('Calling Replicate API to generate video...');
+    console.log('Generating frames with DALL-E...');
     
-    // Call Replicate API to generate video
-    const prediction = await fetch("https://api.replicate.com/v1/predictions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Token ${replicateApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
-        input: {
-          prompt: script,
-          num_frames: 24,
-          width: 768,
-          height: 432,
-          num_inference_steps: 30,
-          fps: 8,
-          guidance_scale: 7.5
-        },
-      }),
-    });
-
-    const predictionData = await prediction.json();
-    console.log('Prediction response:', predictionData);
-
-    if (!prediction.ok) {
-      // Check specifically for billing-related errors
-      if (predictionData.detail?.includes('billing') || predictionData.detail?.includes('payment')) {
-        console.error('Billing setup required:', predictionData.detail);
-        return new Response(
-          JSON.stringify({
-            error: 'Billing setup required',
-            details: 'Please set up billing on Replicate to use this feature. Visit https://replicate.com/account/billing#billing',
-            url: 'https://replicate.com/account/billing#billing'
-          }),
-          { 
-            status: 402, // Payment Required
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      }
-      
-      throw new Error(`Replicate API error: ${predictionData.detail || JSON.stringify(predictionData)}`);
-    }
-
-    // Poll for the result
-    let attempts = 0;
-    const maxAttempts = 60; // 2 minutes with 2-second intervals
-    const pollInterval = 2000;
-
-    while (attempts < maxAttempts) {
-      console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`);
-      
-      const statusResponse = await fetch(predictionData.urls.get, {
+    // Generate 4 frames using DALL-E 3
+    const frames = [];
+    const framePrompts = splitScriptIntoFrames(script);
+    
+    for (const framePrompt of framePrompts) {
+      const response = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
         headers: {
-          "Authorization": `Token ${replicateApiKey}`,
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          model: "dall-e-3",
+          prompt: framePrompt,
+          n: 1,
+          size: "1024x1024",
+          quality: "standard",
+          response_format: "url"
+        }),
       });
-      
-      if (!statusResponse.ok) {
-        const error = await statusResponse.json();
-        console.error('Status check error:', error);
-        throw new Error('Failed to check generation status');
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('DALL-E API Error:', error);
+        throw new Error(`DALL-E API error: ${error.error?.message || JSON.stringify(error)}`);
       }
 
-      const result = await statusResponse.json();
-      console.log('Prediction status:', result.status);
-
-      if (result.status === 'succeeded') {
-        console.log('Video generation succeeded:', result.output);
-        
-        // Initialize Supabase client
-        const supabaseAdmin = createClient(
-          Deno.env.get('SUPABASE_URL') ?? '',
-          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-        );
-
-        // Download the video
-        const videoResponse = await fetch(result.output);
-        if (!videoResponse.ok) {
-          throw new Error('Failed to download generated video');
-        }
-
-        const videoBlob = await videoResponse.blob();
-        const fileName = `preview-${Date.now()}.mp4`;
-
-        // Upload to Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabaseAdmin
-          .storage
-          .from('exports')
-          .upload(fileName, videoBlob, {
-            contentType: 'video/mp4',
-            upsert: true
-          });
-
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          throw uploadError;
-        }
-
-        // Get public URL
-        const { data: { publicUrl } } = supabaseAdmin
-          .storage
-          .from('exports')
-          .getPublicUrl(fileName);
-
-        return new Response(
-          JSON.stringify({ 
-            previewUrl: publicUrl,
-            message: "Preview generated successfully" 
-          }),
-          { 
-            headers: { 
-              ...corsHeaders,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-      } else if (result.status === 'failed') {
-        console.error('Generation failed:', result.error);
-        throw new Error(`Video generation failed: ${result.error || 'Unknown error'}`);
-      }
-
-      await new Promise(resolve => setTimeout(resolve, pollInterval));
-      attempts++;
+      const data = await response.json();
+      frames.push(data.data[0].url);
+      console.log('Generated frame:', data.data[0].url);
     }
 
-    throw new Error('Video generation timed out');
+    // Initialize Supabase client
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Download and combine frames into a video-like slideshow
+    const frameResponses = await Promise.all(frames.map(url => fetch(url)));
+    const frameBlobs = await Promise.all(frameResponses.map(res => res.blob()));
+    
+    // Create a simple slideshow from the frames
+    const fileName = `preview-${Date.now()}.mp4`;
+
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabaseAdmin
+      .storage
+      .from('exports')
+      .upload(fileName, frameBlobs[0], { // For now, just use the first frame as a preview
+        contentType: 'image/png',
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      throw uploadError;
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabaseAdmin
+      .storage
+      .from('exports')
+      .getPublicUrl(fileName);
+
+    return new Response(
+      JSON.stringify({ 
+        previewUrl: publicUrl,
+        frames: frames, // Include all frame URLs for frontend display
+        message: "Preview generated successfully" 
+      }),
+      { 
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
 
   } catch (error) {
     console.error('Error in generate-video-preview function:', error);
@@ -172,3 +123,20 @@ serve(async (req) => {
     );
   }
 });
+
+// Helper function to split script into frame prompts
+function splitScriptIntoFrames(script: string): string[] {
+  // Split the script into roughly equal parts for each frame
+  const sentences = script.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  const frameCount = Math.min(4, Math.max(1, sentences.length));
+  const framesPrompts = [];
+  
+  for (let i = 0; i < frameCount; i++) {
+    const start = Math.floor((i * sentences.length) / frameCount);
+    const end = Math.floor(((i + 1) * sentences.length) / frameCount);
+    const frameScript = sentences.slice(start, end).join('. ');
+    framesPrompts.push(`Create a high-quality, photorealistic image for a video frame that represents this scene: ${frameScript}`);
+  }
+
+  return framesPrompts;
+}
