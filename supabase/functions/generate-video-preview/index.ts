@@ -36,14 +36,14 @@ serve(async (req) => {
         version: "3f0457e4619daac51203dedb472816fd4af51f3149fa7a9e0b5ffcf1b8172438",
         input: {
           prompt: script,
-          video_length: "14_frames_with_svd",
-          sizing_strategy: "maintain_aspect_ratio",
-          frames_per_second: 6,
+          num_frames: 14,
+          width: 576,
+          height: 320,
+          fps: 6,
           motion_bucket_id: 127,
           cond_aug: 0.02,
           decoding_t: 7,
-          width: 576,
-          height: 320
+          seed: Math.floor(Math.random() * 100000)
         },
       }),
     });
