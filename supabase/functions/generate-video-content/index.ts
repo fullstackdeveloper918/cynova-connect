@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { Configuration, OpenAIApi } from "https://esm.sh/openai@3.2.1";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,35 +22,40 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not set');
     }
 
-    const configuration = new Configuration({
-      apiKey: openAiKey,
-    });
-
-    const openai = new OpenAIApi(configuration);
-
     console.log('Calling OpenAI API to generate script...');
     
-    const completion = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: `You are a professional video script writer. Create engaging, ${style} scripts that are concise and visually descriptive.`
-        },
-        {
-          role: "user",
-          content: `Write a short video script about: ${prompt}. Keep it under 60 seconds when read aloud. Focus on visual descriptions that can be animated.`
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 500,
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a professional video script writer. Create engaging, ${style} scripts that are concise and visually descriptive.`
+          },
+          {
+            role: 'user',
+            content: `Write a short video script about: ${prompt}. Keep it under 60 seconds when read aloud. Focus on visual descriptions that can be animated.`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      }),
     });
 
-    if (!completion.data.choices[0].message?.content) {
-      throw new Error('No script generated');
+    const data = await response.json();
+    console.log('OpenAI API Response:', data);
+
+    if (!response.ok) {
+      console.error('OpenAI API Error:', data);
+      throw new Error(data.error?.message || 'Failed to generate script');
     }
 
-    const script = completion.data.choices[0].message.content;
+    const script = data.choices[0].message.content;
     console.log('Generated script:', script);
 
     return new Response(
