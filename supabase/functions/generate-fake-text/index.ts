@@ -33,9 +33,20 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an AI that generates realistic iMessage conversations. Generate a conversation about the given topic. 
-            Return the response as an array of message objects, each with: content, sender, timestamp, and isUser (boolean).
-            Keep messages short and natural, like real text messages. Include 4-6 messages in total.`
+            content: `You are an AI that generates realistic iMessage conversations. Generate a conversation about the given topic.
+            Format your response as a JSON array of message objects, each with these exact properties:
+            - content: the message text
+            - sender: the name of the sender
+            - timestamp: the time in "h:mm A" format
+            - isUser: boolean, alternating between true and false
+            
+            Example format:
+            [
+              {"content": "Hey, what's up?", "sender": "User", "timestamp": "2:30 PM", "isUser": true},
+              {"content": "Not much, just working on that project", "sender": "Friend", "timestamp": "2:31 PM", "isUser": false}
+            ]
+            
+            Keep messages natural and conversational. Include 4-6 messages total.`
           },
           {
             role: 'user',
@@ -53,21 +64,24 @@ serve(async (req) => {
       throw new Error(data.error?.message || 'Failed to generate conversation');
     }
 
-    // Parse the response and format messages
-    const content = data.choices[0].message.content;
     let messages;
     try {
-      messages = JSON.parse(content);
+      // Try to parse the response as JSON
+      const content = data.choices[0].message.content;
+      messages = JSON.parse(content.trim());
+      
+      // Validate the message format
+      if (!Array.isArray(messages) || !messages.every(msg => 
+        typeof msg.content === 'string' &&
+        typeof msg.sender === 'string' &&
+        typeof msg.timestamp === 'string' &&
+        typeof msg.isUser === 'boolean'
+      )) {
+        throw new Error('Invalid message format');
+      }
     } catch (e) {
-      // If the response isn't valid JSON, create a simple message array
-      messages = [
-        {
-          content: content,
-          sender: "User",
-          timestamp: new Date().toLocaleTimeString(),
-          isUser: true
-        }
-      ];
+      console.error('Error parsing messages:', e);
+      throw new Error('Failed to parse conversation format');
     }
 
     return new Response(
