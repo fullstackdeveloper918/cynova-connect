@@ -27,7 +27,7 @@ serve(async (req) => {
 
     console.log('Generating video with Replicate...');
     
-    // Use Replicate's text-to-video model
+    // Use Replicate's Stable Video Diffusion model
     const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -35,14 +35,16 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "7f41f689247f1e671d3f5f2d2dd0978b6532af61b2c109dd5f5ad3be3a76e01d",
+        version: "061e0772ae9d5a2e3545f36b20918c9eb12a6c9e11a32739f0dd7881f4692d1b",
         input: {
           prompt: script,
-          num_frames: 50,
+          video_length: "14_frames_with_svd",
+          fps: 6,
           width: 1024,
           height: 576,
-          num_inference_steps: 50,
-          fps: 15,
+          num_inference_steps: 25,
+          guidance_scale: 12.5,
+          negative_prompt: "bad quality, worse quality, low quality"
         },
       }),
     });
@@ -74,6 +76,8 @@ serve(async (req) => {
       );
 
       result = await pollResponse.json();
+      console.log('Poll result:', result);
+
       if (result.status === "succeeded") {
         break;
       } else if (result.status === "failed") {
