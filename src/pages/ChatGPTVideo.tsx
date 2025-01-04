@@ -14,12 +14,17 @@ import { useNavigate } from "react-router-dom";
 import { SidebarProvider, Sidebar, SidebarHeader } from "@/components/ui/sidebar";
 import { SidebarNavigation } from "@/components/sidebar/SidebarNavigation";
 
+interface PreviewUrls {
+  videoUrl: string;
+  audioUrl: string;
+}
+
 const ChatGPTVideo = () => {
   const [prompt, setPrompt] = useState("");
   const [script, setScript] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewUrl, setPreviewUrl] = useState<PreviewUrls | null>(null);
   const [selectedVoice, setSelectedVoice] = useState("Sarah");
   const [selectedDuration, setSelectedDuration] = useState("48");
   const [progress, setProgress] = useState(0);
@@ -154,8 +159,8 @@ const ChatGPTVideo = () => {
           user_id: session.user.id,
           title: "ChatGPT Generated Video",
           description: script.substring(0, 100) + "...",
-          type: "chatgpt_video", // Fixed: Using the correct enum value
-          thumbnail_url: previewUrl
+          type: "chatgpt_video",
+          thumbnail_url: previewUrl.videoUrl // Updated to use videoUrl from PreviewUrls
         })
         .select()
         .single();
@@ -175,8 +180,8 @@ const ChatGPTVideo = () => {
           project_id: projectData.id,
           title: "ChatGPT Generated Video",
           description: script.substring(0, 100) + "...",
-          file_url: previewUrl,
-          thumbnail_url: previewUrl,
+          file_url: previewUrl.videoUrl, // Updated to use videoUrl from PreviewUrls
+          thumbnail_url: previewUrl.videoUrl, // Updated to use videoUrl from PreviewUrls
           status: 'completed'
         })
         .select()
