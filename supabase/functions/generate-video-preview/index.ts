@@ -67,6 +67,8 @@ serve(async (req) => {
     }
 
     console.log('Starting video generation with Replicate Zeroscope XL...');
+    console.log('Using Replicate API Key:', replicateApiKey.substring(0, 5) + '...');
+
     const replicateResponse = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -90,7 +92,17 @@ serve(async (req) => {
 
     if (!replicateResponse.ok) {
       const error = await replicateResponse.json();
-      console.error('Replicate API Error:', error);
+      console.error('Replicate API Error Response:', error);
+      
+      // Check for specific error types
+      if (error.detail?.includes('Invalid token')) {
+        throw new Error('Invalid Replicate API token. Please check your API key.');
+      } else if (error.detail?.includes('Permission denied')) {
+        throw new Error('Permission denied by Replicate. Please verify your API key has the correct permissions.');
+      } else if (error.status === 402) {
+        throw new Error('Replicate API quota exceeded or payment required.');
+      }
+      
       throw new Error(`Replicate API error: ${error.detail || JSON.stringify(error)}`);
     }
 
@@ -116,8 +128,9 @@ serve(async (req) => {
       );
 
       if (!pollResponse.ok) {
-        console.error('Poll response error:', pollResponse.status, pollResponse.statusText);
-        throw new Error(`Failed to poll prediction: ${pollResponse.statusText}`);
+        const error = await pollResponse.json();
+        console.error('Poll response error:', error);
+        throw new Error(`Failed to poll prediction: ${JSON.stringify(error)}`);
       }
 
       const result = await pollResponse.json();
