@@ -67,29 +67,95 @@ serve(async (req) => {
       throw new Error('Failed to generate audio');
     }
 
-    const audioBlob = await audioResponse.blob();
-    const audioFileName = `audio-${Date.now()}.mp3`;
+    // Start video generation with Replicate
+    console.log('Starting video generation with Replicate...');
+    const replicateResponse = await fetch("https://api.replicate.com/v1/predictions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Token ${Deno.env.get('REPLICATE_API_KEY')}`,
+      },
+      body: JSON.stringify({
+        version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
+        input: {
+          prompt: messages.map(msg => msg.content).join(' '),
+          num_frames: 50,
+          width: 1024,
+          height: 576,
+          fps: 30,
+          guidance_scale: 17.5,
+        },
+      }),
+    });
 
-    // Upload audio to Supabase Storage
-    console.log('Uploading audio to Storage...');
-    const { data: audioUpload, error: audioUploadError } = await supabaseAdmin
+    if (!replicateResponse.ok) {
+      throw new Error(`Replicate API error: ${await replicateResponse.text()}`);
+    }
+
+    const prediction = await replicateResponse.json();
+    console.log('Replicate prediction started:', prediction);
+
+    // Poll for video generation completion
+    let videoUrl = null;
+    while (!videoUrl) {
+      const statusResponse = await fetch(
+        `https://api.replicate.com/v1/predictions/${prediction.id}`,
+        {
+          headers: {
+            Authorization: `Token ${Deno.env.get('REPLICATE_API_KEY')}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!statusResponse.ok) {
+        throw new Error(`Failed to check prediction status: ${await statusResponse.text()}`);
+      }
+
+      const status = await statusResponse.json();
+      console.log('Prediction status:', status.status);
+
+      if (status.status === 'succeeded') {
+        videoUrl = status.output;
+        break;
+      } else if (status.status === 'failed') {
+        throw new Error('Video generation failed');
+      }
+
+      // Wait before polling again
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    // Download the generated video
+    console.log('Downloading generated video...');
+    const videoResponse = await fetch(videoUrl);
+    if (!videoResponse.ok) {
+      throw new Error('Failed to download generated video');
+    }
+
+    const videoBlob = await videoResponse.blob();
+    const videoFileName = `video-${Date.now()}.mp4`;
+
+    // Upload video to Supabase Storage
+    console.log('Uploading video to Storage...');
+    const { data: videoUpload, error: videoUploadError } = await supabaseAdmin
       .storage
       .from('exports')
-      .upload(audioFileName, audioBlob, {
-        contentType: 'audio/mpeg',
+      .upload(videoFileName, videoBlob, {
+        contentType: 'video/mp4',
         upsert: true
       });
 
-    if (audioUploadError) {
-      console.error('Audio upload error:', audioUploadError);
-      throw audioUploadError;
+    if (videoUploadError) {
+      console.error('Video upload error:', videoUploadError);
+      throw videoUploadError;
     }
 
-    // Get public URL for the audio
-    const { data: { publicUrl: audioUrl } } = supabaseAdmin
+    // Get public URL for the video
+    const { data: { publicUrl: videoUrl } } = supabaseAdmin
       .storage
       .from('exports')
-      .getPublicUrl(audioFileName);
+      .getPublicUrl(videoFileName);
 
     // Create an export record
     console.log('Creating export record...');
@@ -98,12 +164,12 @@ serve(async (req) => {
       .insert({
         title,
         description,
-        file_url: audioFileName,
-        file_type: 'audio/mpeg',
-        file_size: audioBlob.size,
+        file_url: videoFileName,
+        file_type: 'video/mp4',
+        file_size: videoBlob.size,
         status: 'completed',
         user_id: user.id,
-        thumbnail_url: 'https://placehold.co/600x400/png', // Default thumbnail
+        thumbnail_url: videoUrl,
       })
       .select()
       .single();
@@ -117,7 +183,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true,
         export: exportData,
-        message: "Audio exported successfully" 
+        message: "Video exported successfully" 
       }),
       { 
         headers: { 
