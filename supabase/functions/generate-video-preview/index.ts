@@ -35,16 +35,16 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "061e0772ae9d5a2e3545f36b20918c9eb12a6c9e11a32739f0dd7881f4692d1b",
+        version: "3f0457e4619daac51203dedb472816fd4af51f3149fa7a9e0b5ffcf1b8172438",
         input: {
           prompt: script,
-          video_length: "14_frames_with_svd",
+          video_length: "14_frames_with_svd_xt",
           fps: 6,
           width: 1024,
           height: 576,
           num_inference_steps: 25,
           guidance_scale: 12.5,
-          negative_prompt: "bad quality, worse quality, low quality"
+          negative_prompt: "bad quality, worse quality, low quality, blurry, low resolution"
         },
       }),
     });
