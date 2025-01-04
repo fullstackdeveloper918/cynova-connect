@@ -75,19 +75,17 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // Using Stable Video Diffusion model
-        version: "b96a2f33cc8e4b0aa23eacf145b16f43261b9c93d7457dd4a8130a5221dce9fd",
+        // Using a verified working version of Stable Video Diffusion
+        version: "435061a1b5a4c1e26740464bf786efdfa9cb3a3ac488595a2de23e143fdb0117",
         input: {
           prompt: videoDescription,
-          num_frames: 24,
+          num_frames: 14,
           width: 576,
           height: 320,
-          fps: 6,
+          fps: 7,
           num_inference_steps: 25,
           motion_bucket_id: 127,
           cond_aug: 0.02,
-          decoding_t: 7,
-          seed: Math.floor(Math.random() * 100000),
         },
       }),
     });
