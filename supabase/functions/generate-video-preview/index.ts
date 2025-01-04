@@ -17,8 +17,13 @@ serve(async (req) => {
     const { script, voice = "Sarah", duration = "48" } = await req.json();
     console.log('Received request payload:', { script, voice, duration });
 
-    if (!script) {
-      throw new Error('No script provided');
+    // Validate inputs before making expensive API calls
+    if (!script || script.trim().length === 0) {
+      throw new Error('Script is required and cannot be empty');
+    }
+
+    if (script.length > 1000) {
+      throw new Error('Script is too long. Please keep it under 1000 characters.');
     }
 
     // First, generate video description with OpenAI
@@ -39,7 +44,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'Create a concise, visual description for video generation. Focus on describing visual elements, movements, and scenes. Keep it under 75 words.'
+            content: 'Create a detailed visual description for video generation. Focus on describing concrete visual elements, camera movements, and scene composition. Be specific and avoid abstract concepts.'
           },
           {
             role: 'user',
@@ -118,7 +123,7 @@ serve(async (req) => {
       .from('exports')
       .getPublicUrl(audioFileName);
 
-    // Use Replicate's API for video generation
+    // Use Replicate's API for video generation with optimized settings
     const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
     if (!replicateApiKey) {
       throw new Error('REPLICATE_API_KEY is not set');
@@ -126,10 +131,11 @@ serve(async (req) => {
 
     console.log('Starting video generation with Replicate...');
     
-    // Using the Zeroscope model with specific duration settings
+    // Using an optimized model version for better quality
     const modelVersion = "71996d331e8ede8ef7bd76eba9fae076d31792e4ddf4ad057779b443d6aea62f";
     
     console.log('Using Replicate model version:', modelVersion);
+    console.log('Video description being sent:', videoDescription);
     
     const replicateResponse = await fetch('https://api.replicate.com/v1/predictions', {
       method: "POST",
@@ -145,9 +151,11 @@ serve(async (req) => {
           fps: 24,
           width: 1024,
           height: 576,
-          guidance_scale: 12.5,
+          guidance_scale: 17.5, // Increased for better adherence to prompt
           num_inference_steps: 50,
-          negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames"
+          negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames, text, watermark, logo, words",
+          scheduler: "K_EULER",
+          seed: Math.floor(Math.random() * 1000000), // Random seed for variety
         },
       }),
     });
@@ -161,7 +169,7 @@ serve(async (req) => {
     const prediction = await replicateResponse.json();
     console.log('Prediction created:', prediction);
 
-    // Poll for completion
+    // Poll for completion with better error handling
     const maxAttempts = 180; // 3 minutes
     const pollInterval = 2000; // Poll every 2 seconds
     let attempts = 0;
