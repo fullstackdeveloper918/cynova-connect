@@ -35,6 +35,7 @@ const ChatGPTVideo = () => {
       });
       navigate("/login");
     }
+    return session;
   };
 
   const generateContent = async () => {
@@ -51,23 +52,20 @@ const ChatGPTVideo = () => {
     setProgress(25);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast({
-          title: "Authentication required",
-          description: "Please log in to access this feature.",
-          variant: "destructive",
-        });
-        navigate("/login");
-        return;
-      }
+      const session = await checkUser();
+      if (!session) return;
 
+      console.log("Calling generate-video-content function with prompt:", prompt);
       const { data, error } = await supabase.functions.invoke("generate-video-content", {
         body: { prompt, style: "engaging and professional" }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error from generate-video-content:", error);
+        throw error;
+      }
 
+      console.log("Generated content response:", data);
       setScript(data.script);
       setProgress(100);
       toast({
@@ -98,17 +96,10 @@ const ChatGPTVideo = () => {
 
     setIsPreviewLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast({
-          title: "Authentication required",
-          description: "Please log in to access this feature.",
-          variant: "destructive",
-        });
-        navigate("/login");
-        return;
-      }
+      const session = await checkUser();
+      if (!session) return;
 
+      console.log("Calling generate-video-preview with:", { script, voice: selectedVoice, duration: selectedDuration });
       const { data, error } = await supabase.functions.invoke("generate-video-preview", {
         body: { 
           script,
@@ -117,8 +108,12 @@ const ChatGPTVideo = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error from generate-video-preview:", error);
+        throw error;
+      }
 
+      console.log("Preview generation response:", data);
       setPreviewUrl(data.previewUrl);
       
       toast({
@@ -149,29 +144,50 @@ const ChatGPTVideo = () => {
     }
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast({
-          title: "Authentication required",
-          description: "Please log in to access this feature.",
-          variant: "destructive",
-        });
-        navigate("/login");
-        return;
+      const session = await checkUser();
+      if (!session) return;
+
+      // First create a project
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .insert({
+          user_id: session.user.id,
+          title: "ChatGPT Generated Video",
+          description: script.substring(0, 100) + "...",
+          type: "chatgpt_video", // Fixed: Using the correct enum value
+          thumbnail_url: previewUrl
+        })
+        .select()
+        .single();
+
+      if (projectError) {
+        console.error("Error creating project:", projectError);
+        throw projectError;
       }
 
-      const { data, error } = await supabase.functions.invoke("export-video", {
-        body: { 
-          script,
-          voice: selectedVoice,
-          previewUrl,
-          userId: session.user.id,
-          title: "ChatGPT Generated Video",
-          description: script.substring(0, 100) + "..."
-        }
-      });
+      console.log("Project created:", projectData);
 
-      if (error) throw error;
+      // Then create an export record
+      const { data: exportData, error: exportError } = await supabase
+        .from('exports')
+        .insert({
+          user_id: session.user.id,
+          project_id: projectData.id,
+          title: "ChatGPT Generated Video",
+          description: script.substring(0, 100) + "...",
+          file_url: previewUrl,
+          thumbnail_url: previewUrl,
+          status: 'completed'
+        })
+        .select()
+        .single();
+
+      if (exportError) {
+        console.error("Error creating export:", exportError);
+        throw exportError;
+      }
+
+      console.log("Export created:", exportData);
 
       toast({
         title: "Export successful",

@@ -35,11 +35,11 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a professional video script writer. Create engaging, ${style} scripts that are concise and visually descriptive.`
+            content: `You are a professional video script writer. Create engaging, ${style} scripts that are concise and visually descriptive. Break down the script into clear scenes that can be visualized.`
           },
           {
             role: 'user',
-            content: `Write a short video script about: ${prompt}. Keep it under 60 seconds when read aloud. Focus on visual descriptions that can be animated.`
+            content: `Write a short video script about: ${prompt}. Keep it under 60 seconds when read aloud. Format the response as a series of scenes, each with a clear visual description and narration text.`
           }
         ],
         temperature: 0.7,
@@ -47,13 +47,14 @@ serve(async (req) => {
       }),
     });
 
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('OpenAI API Error:', error);
+      throw new Error(error.error?.message || 'Failed to generate script');
+    }
+
     const data = await response.json();
     console.log('OpenAI API Response:', data);
-
-    if (!response.ok) {
-      console.error('OpenAI API Error:', data);
-      throw new Error(data.error?.message || 'Failed to generate script');
-    }
 
     const script = data.choices[0].message.content;
     console.log('Generated script:', script);
