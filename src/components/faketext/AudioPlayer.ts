@@ -8,6 +8,7 @@ export class AudioPlayer {
   }
 
   initialize(messages: { audioUrl?: string }[]) {
+    console.log('Initializing audio player with messages:', messages);
     // Clear existing audio elements
     this.audioElements.forEach(audio => {
       audio.pause();
@@ -19,7 +20,9 @@ export class AudioPlayer {
     // Initialize new audio elements
     messages.forEach((message, index) => {
       if (message.audioUrl) {
+        console.log(`Creating audio element for message ${index}`);
         const audio = new Audio(message.audioUrl);
+        audio.preload = 'auto'; // Preload audio
         this.audioElements.set(index, audio);
       }
     });
@@ -27,17 +30,22 @@ export class AudioPlayer {
 
   async playAudio(index: number): Promise<void> {
     const audio = this.audioElements.get(index);
-    if (!audio) return;
+    if (!audio) {
+      console.log(`No audio element found for index ${index}`);
+      return;
+    }
 
+    console.log(`Starting playback for audio ${index}`);
     return new Promise((resolve, reject) => {
       const handleEnded = () => {
+        console.log(`Audio ${index} playback completed`);
         audio.removeEventListener('ended', handleEnded);
         audio.removeEventListener('error', handleError);
         resolve();
       };
 
       const handleError = (error: Event) => {
-        console.error('Audio playback error:', error);
+        console.error(`Audio ${index} playback error:`, error);
         audio.removeEventListener('ended', handleEnded);
         audio.removeEventListener('error', handleError);
         reject(error);
@@ -46,11 +54,19 @@ export class AudioPlayer {
       audio.addEventListener('ended', handleEnded);
       audio.addEventListener('error', handleError);
 
-      audio.play().catch(handleError);
+      // Reset audio to beginning
+      audio.currentTime = 0;
+      
+      // Attempt to play
+      audio.play().catch(error => {
+        console.error(`Failed to start audio ${index}:`, error);
+        handleError(error);
+      });
     });
   }
 
   cleanup() {
+    console.log('Cleaning up audio player');
     this.audioElements.forEach(audio => {
       audio.pause();
       audio.currentTime = 0;

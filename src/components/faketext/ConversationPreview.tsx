@@ -21,6 +21,7 @@ export const ConversationPreview = ({
 
   useEffect(() => {
     const audioPlayer = audioPlayerRef.current;
+    console.log('Messages received:', messages);
 
     if (!messages.length) {
       setVisibleMessages([]);
@@ -33,23 +34,30 @@ export const ConversationPreview = ({
     audioPlayer.initialize(messages);
 
     const playMessageSequence = async (index: number) => {
-      if (index >= messages.length) {
+      if (index >= messages.length || !audioPlayer.getIsPlaying()) {
         audioPlayer.setIsPlaying(false);
         return;
       }
 
+      const currentMessage = messages[index];
+      console.log(`Playing message ${index}:`, currentMessage);
+
       // Show current message
-      setVisibleMessages(prev => [...prev, messages[index]]);
+      setVisibleMessages(prev => [...prev, currentMessage]);
 
-      try {
-        // Play audio if available
-        await audioPlayer.playAudio(index);
-      } catch (error) {
-        console.error('Failed to play audio for message:', index, error);
+      if (currentMessage.audioUrl) {
+        try {
+          console.log(`Playing audio for message ${index}`);
+          await audioPlayer.playAudio(index);
+          console.log(`Audio completed for message ${index}`);
+        } catch (error) {
+          console.error(`Failed to play audio for message ${index}:`, error);
+        }
+      } else {
+        console.log(`No audio URL for message ${index}`);
+        // Add a small delay even if there's no audio
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
-
-      // Add delay between messages
-      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Continue to next message
       await playMessageSequence(index + 1);
@@ -57,12 +65,14 @@ export const ConversationPreview = ({
 
     // Start the sequence
     if (messages.length > 0) {
+      console.log('Starting message sequence');
       audioPlayer.setIsPlaying(true);
       playMessageSequence(0);
     }
 
     // Cleanup
     return () => {
+      console.log('Cleaning up audio player');
       audioPlayer.cleanup();
     };
   }, [messages]);
