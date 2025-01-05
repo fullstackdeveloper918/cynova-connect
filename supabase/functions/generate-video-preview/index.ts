@@ -78,7 +78,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "85d775927d738f501d2b7fcc5f33d8566904f27d7b29960f1a8c0195220d1c7d",
+        version: "50d7ac33b67bc8f4a629b3d77d6f5f7c41861c3bb0bd1bd31cd954ef4c3458ae",
         input: {
           prompt: script,
           width: 768,
@@ -90,9 +90,9 @@ serve(async (req) => {
     });
 
     if (!videoResponse.ok) {
-      const errorText = await videoResponse.text();
-      console.error('Replicate API Error:', errorText);
-      throw new Error(`Replicate API error: ${errorText}`);
+      const errorData = await videoResponse.json();
+      console.error('Replicate API Error:', errorData);
+      throw new Error(`Replicate API error: ${JSON.stringify(errorData)}`);
     }
 
     const predictionData = await videoResponse.json();
