@@ -105,7 +105,14 @@ export const WouldYouRatherEditor = () => {
       <Card className="p-6">
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Preview</h2>
-          <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
+          <div 
+            className="mx-auto bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden"
+            style={{
+              width: '338px', // This is roughly 1080px / 3.2 to fit well in the UI
+              height: '600px', // This maintains the 9:16 aspect ratio of TikTok
+              maxHeight: '70vh'
+            }}
+          >
             <p className="text-gray-500">Video preview will appear here</p>
           </div>
         </div>

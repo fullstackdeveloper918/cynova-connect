@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useUser } from "./useUser";
 
 export interface Subscription {
   id: string;
   user_id: string;
   plan_name: string;
-  status: 'active' | 'canceled' | 'past_due';
+  status: "active" | "canceled" | "past_due";
   current_period_start: string;
   current_period_end: string;
   stripe_subscription_id: string | null;
@@ -15,27 +16,29 @@ export interface Subscription {
     max_duration_minutes: number;
     max_videos_per_month: number;
     max_exports_per_month: number;
-  } | null;
+  };
+  created_at: string;
+  updated_at: string;
 }
 
 export const useSubscription = () => {
-  return useQuery({
-    queryKey: ['subscription'],
-    queryFn: async (): Promise<Subscription | null> => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+  const { data: user } = useUser();
 
+  return useQuery({
+    queryKey: ["subscription", user?.id],
+    queryFn: async () => {
       const { data, error } = await supabase
-        .from('subscriptions')
-        .select('*')
+        .from("subscriptions")
+        .select("*")
+        .eq("user_id", user?.id)
         .single();
 
       if (error) {
-        console.error('Error fetching subscription:', error);
-        return null;
+        throw error;
       }
 
-      return data;
+      return data as Subscription;
     },
+    enabled: !!user?.id,
   });
 };
