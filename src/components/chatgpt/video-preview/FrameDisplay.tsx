@@ -57,27 +57,40 @@ export const FrameDisplay = ({
               className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
                 currentFrameIndex === index ? 'opacity-100' : 'opacity-0'
               }`}
-              style={{ zIndex: currentFrameIndex === index ? 1 : 0 }}
+              style={{ zIndex: 1 }}
             />
           ))}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/30 flex items-center justify-center">
-            <div className="text-white text-lg p-6 text-center max-w-lg">
+          
+          {/* Caption overlay with higher z-index */}
+          <div 
+            className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/30 flex items-center justify-center"
+            style={{ zIndex: 2 }}
+          >
+            <div className="text-white text-xl font-medium p-6 text-center max-w-lg">
               {currentCaption}
             </div>
           </div>
-        </div>
-      )}
-      <div className="absolute bottom-4 left-4 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded-full">
-        {isPlaying ? 'Click to pause' : 'Click to play'}
-      </div>
-      {audioRef.current && (
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-200">
+
+          {/* Controls overlay with highest z-index */}
           <div 
-            className="h-full bg-primary transition-all duration-100"
-            style={{ 
-              width: `${(currentTime / audioRef.current.duration) * 100}%` 
-            }}
-          />
+            className="absolute inset-0 flex flex-col justify-end p-4"
+            style={{ zIndex: 3 }}
+          >
+            <div className="text-white text-sm bg-black/50 px-3 py-1 rounded-full w-fit mb-4">
+              {isPlaying ? 'Click to pause' : 'Click to play'}
+            </div>
+            
+            {audioRef.current && (
+              <div className="w-full h-1 bg-gray-200/30 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary transition-all duration-100"
+                  style={{ 
+                    width: `${(currentTime / audioRef.current.duration) * 100}%` 
+                  }}
+                />
+              </div>
+            )}
+          </div>
         </div>
       )}
     </>
