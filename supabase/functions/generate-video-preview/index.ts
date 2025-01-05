@@ -25,37 +25,49 @@ serve(async (req) => {
 
     console.log('Starting video generation with Replicate...');
     
-    // Create prediction using Stable Video Diffusion model
-    const prediction = await fetch("https://api.replicate.com/v1/predictions", {
+    // Test the API directly first
+    const testResponse = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
         "Authorization": `Token ${replicateApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "435061a1b5a4c1e26740464bf786efdfa9cb3a3ac488595a2de23e143fdb0117",
+        version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
         input: {
-          prompt: script,
-          negative_prompt: "blurry, low quality, distorted",
-          num_frames: 24,
-          width: 576,
-          height: 320,
-          fps: 8,
-          scheduler: "DPMSolverMultistep",
-          num_inference_steps: 25,
-          guidance_scale: 7.5,
-          seed: Math.floor(Math.random() * 100000)
+          html: `
+            <div style="
+              background-color: #000;
+              color: #fff;
+              font-family: Arial;
+              padding: 20px;
+              width: 100%;
+              height: 100%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              text-align: center;
+            ">
+              <p style="font-size: 24px;">${script}</p>
+            </div>
+          `,
+          width: 1080,
+          height: 1920,
+          fps: 30,
+          duration: 10,
+          quality: "high",
+          format: "mp4",
         },
       }),
     });
 
-    if (!prediction.ok) {
-      const error = await prediction.text();
+    if (!testResponse.ok) {
+      const error = await testResponse.text();
       console.error('Replicate API Error:', error);
       throw new Error(`Replicate API error: ${error}`);
     }
 
-    const predictionData = await prediction.json();
+    const predictionData = await testResponse.json();
     console.log('Video generation started:', predictionData);
 
     // Poll for completion
