@@ -84,25 +84,21 @@ export const VideoSegments = ({ segments }: VideoSegmentsProps) => {
       });
 
       // Trigger the edge function to combine videos
-      const response = await fetch('/api/combine-videos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await supabase.functions.invoke('combine-videos', {
+        body: {
           segmentId: segmentData.id,
           gameplayUrl,
-        }),
+        },
       });
 
-      if (!response.ok) {
+      if (!response.error) {
+        toast({
+          title: "Success",
+          description: "Gameplay has been added to your segment.",
+        });
+      } else {
         throw new Error('Failed to combine videos');
       }
-
-      toast({
-        title: "Success",
-        description: "Gameplay has been added to your segment.",
-      });
     } catch (error) {
       console.error('Error adding gameplay:', error);
       toast({
