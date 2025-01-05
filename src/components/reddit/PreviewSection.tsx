@@ -2,6 +2,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { VideoResolution } from "./ResolutionSelector";
 import { RedditPost } from "./RedditPost";
 import { CaptionStyle } from "./CaptionStyles";
+import { TimedCaptions } from "./TimedCaptions";
+import { useRef } from "react";
 
 interface PreviewSectionProps {
   content: string;
@@ -18,6 +20,8 @@ export const PreviewSection = ({
   previewUrl,
   audioUrl
 }: PreviewSectionProps) => {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  
   const resolutionStyles = {
     shorts: {
       aspectRatio: "9/16",
@@ -36,7 +40,7 @@ export const PreviewSection = ({
   // Split content into title and comments
   const contentLines = content.split('\n\n').filter(Boolean);
   const title = contentLines[0];
-  const comments = contentLines.slice(1);
+  const comments = contentLines.slice(1).join(" ");
 
   const getCaptionStyle = () => {
     switch (selectedCaptionStyle) {
@@ -79,7 +83,6 @@ export const PreviewSection = ({
                   muted={!audioUrl}
                   className="w-full h-full object-cover"
                 >
-                  {audioUrl && <source src={audioUrl} type="audio/mpeg" />}
                   Your browser does not support the video tag.
                 </video>
               ) : (
@@ -88,6 +91,15 @@ export const PreviewSection = ({
                 </div>
               )}
             </div>
+
+            {/* Audio Element */}
+            {audioUrl && (
+              <audio
+                ref={audioRef}
+                src={audioUrl}
+                className="hidden"
+              />
+            )}
 
             {/* Content Overlay */}
             <div className="absolute inset-0 bg-black/40">
@@ -100,12 +112,16 @@ export const PreviewSection = ({
                 </div>
               )}
               
-              {/* Subtitles Overlay */}
-              <div className="absolute bottom-8 left-0 right-0 text-center">
-                <div className={`mx-4 ${getCaptionStyle()}`}>
-                  {comments[0] || "Subtitles will appear here"}
+              {/* Timed Captions */}
+              {audioUrl && comments && (
+                <div className="absolute bottom-8 left-0 right-0 text-center px-4">
+                  <TimedCaptions
+                    captions={comments}
+                    audioRef={audioRef}
+                    className={getCaptionStyle()}
+                  />
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Placeholder when no content */}
