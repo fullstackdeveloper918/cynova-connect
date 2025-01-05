@@ -75,26 +75,29 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       if (!audio.duration) return;
 
       const now = Date.now();
-      if (now - lastUpdateTime < 50) return; // Increased from 30ms to 50ms for smoother updates
+      if (now - lastUpdateTime < 100) return; // Increased debounce time for smoother transitions
       lastUpdateTime = now;
 
-      // Calculate proportional durations with a slight adjustment for better sync
-      const titleDuration = (titleChunks.length / allChunks.length) * audio.duration * 1.1; // Added 10% more time for title
+      // Calculate proportional durations with adjustments for better sync
+      const titleDuration = (titleChunks.length / allChunks.length) * audio.duration * 1.2; // Increased title duration by 20%
       const currentTime = audio.currentTime;
       
       let currentChunkIndex;
+      const syncOffset = 0.2; // Add a 200ms offset to show captions slightly earlier
+
       if (currentTime < titleDuration) {
         // We're in the title section
-        const titleProgress = currentTime / titleDuration;
+        const titleProgress = (currentTime + syncOffset) / titleDuration;
         currentChunkIndex = Math.floor(titleProgress * titleChunks.length);
       } else {
         // We're in the comments section
-        const commentProgress = (currentTime - titleDuration) / (audio.duration - titleDuration);
+        const remainingTime = audio.duration - titleDuration;
+        const commentProgress = (currentTime - titleDuration + syncOffset) / remainingTime;
         currentChunkIndex = titleChunks.length + Math.floor(commentProgress * commentChunks.length);
       }
       
-      // Add a small offset to improve synchronization
-      const adjustedIndex = Math.max(0, Math.min(currentChunkIndex - 1, allChunks.length - 1));
+      // Ensure the index stays within bounds and add a small delay for better sync
+      const adjustedIndex = Math.max(0, Math.min(Math.floor(currentChunkIndex), allChunks.length - 1));
       updateCaption(adjustedIndex);
     };
 
