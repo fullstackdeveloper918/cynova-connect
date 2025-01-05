@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/hooks/useUser";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { VideoPreview } from "../chatgpt/VideoPreview";
 
 export const WouldYouRatherEditor = () => {
   const { data: user, isLoading: userLoading } = useUser();
@@ -16,7 +17,8 @@ export const WouldYouRatherEditor = () => {
   const [optionB, setOptionB] = useState("");
   const [selectedVoice, setSelectedVoice] = useState("21m00Tcm4TlvDq8ikWAM");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<{ audioUrl: string } | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<{ audioUrl: string; videoUrl?: string } | null>(null);
+  const [script, setScript] = useState<string>("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +38,7 @@ export const WouldYouRatherEditor = () => {
     try {
       console.log("Generating video content...");
       
-      // Generate video content with narration
+      // Generate video content with narration and images
       const { data: videoData, error: videoError } = await supabase.functions.invoke(
         "generate-would-you-rather",
         {
@@ -50,7 +52,11 @@ export const WouldYouRatherEditor = () => {
 
       if (videoError) throw videoError;
 
-      setPreviewUrl(videoData);
+      setPreviewUrl({
+        audioUrl: videoData.audioUrl,
+        videoUrl: videoData.videoUrl
+      });
+      setScript(videoData.script);
 
       // Create project
       console.log("Creating project with user ID:", user.id);
@@ -163,24 +169,17 @@ export const WouldYouRatherEditor = () => {
       <Card className="p-6">
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Preview</h2>
-          <div 
-            className="mx-auto bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden"
-            style={{
-              width: '338px',
-              height: '600px',
-              maxHeight: '70vh'
-            }}
-          >
+          <div className="aspect-[9/16] w-full max-w-[450px] mx-auto">
             {previewUrl ? (
-              <div className="w-full h-full flex flex-col items-center justify-center p-4">
-                <p className="text-center mb-4">Audio Preview:</p>
-                <audio controls className="w-full mb-4">
-                  <source src={previewUrl.audioUrl} type="audio/mpeg" />
-                  Your browser does not support the audio element.
-                </audio>
-              </div>
+              <VideoPreview
+                script={script}
+                previewUrl={previewUrl}
+                selectedVoice={selectedVoice}
+              />
             ) : (
-              <p className="text-gray-500">Video preview will appear here</p>
+              <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+                <p className="text-gray-500">Video preview will appear here</p>
+              </div>
             )}
           </div>
         </div>
