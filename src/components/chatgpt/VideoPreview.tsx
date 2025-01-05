@@ -26,9 +26,20 @@ export const VideoPreview = ({
   const [frameUrls, setFrameUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Split script into sentences for captions
+  // Split script into sentences and then into smaller chunks
   const sentences = script?.split(/[.!?]+/).filter(Boolean).map(s => s.trim()) || [];
-  const sentenceDuration = audioRef.current ? audioRef.current.duration / sentences.length : 0;
+  const captionChunks = sentences.flatMap(sentence => 
+    sentence
+      .split(/\s+/)
+      .reduce((chunks: string[], word, i) => {
+        const chunkIndex = Math.floor(i / 4); // 4 words per chunk
+        if (!chunks[chunkIndex]) chunks[chunkIndex] = word;
+        else chunks[chunkIndex] += ` ${word}`;
+        return chunks;
+      }, [])
+  );
+  
+  const chunkDuration = audioRef.current ? audioRef.current.duration / captionChunks.length : 0;
 
   useEffect(() => {
     if (script && !frameUrls.length) {
@@ -74,10 +85,10 @@ export const VideoPreview = ({
         const time = audioRef.current?.currentTime || 0;
         setCurrentTime(time);
         
-        // Update current sentence based on time
-        const sentenceIndex = Math.floor(time / sentenceDuration);
-        if (sentences[sentenceIndex]) {
-          setCurrentCaption(sentences[sentenceIndex]);
+        // Update current caption chunk based on time
+        const chunkIndex = Math.floor(time / chunkDuration);
+        if (captionChunks[chunkIndex]) {
+          setCurrentCaption(captionChunks[chunkIndex]);
         }
 
         // Update current frame based on time progress
@@ -95,7 +106,7 @@ export const VideoPreview = ({
       const interval = setInterval(updateCaption, 100);
       return () => clearInterval(interval);
     }
-  }, [isPlaying, sentences, sentenceDuration, frameUrls.length]);
+  }, [isPlaying, captionChunks, chunkDuration, frameUrls.length]);
 
   const handlePlayPause = () => {
     if (audioRef.current) {
@@ -152,7 +163,7 @@ export const VideoPreview = ({
             )}
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/30 flex items-center justify-center">
               <div className="text-white text-lg p-6 text-center max-w-lg">
-                {currentCaption || sentences[0]}
+                {currentCaption || captionChunks[0]}
               </div>
             </div>
             <audio
