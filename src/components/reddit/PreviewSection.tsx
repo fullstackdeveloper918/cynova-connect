@@ -3,7 +3,7 @@ import { VideoResolution } from "./ResolutionSelector";
 import { RedditPost } from "./RedditPost";
 import { CaptionStyle } from "./CaptionStyles";
 import { TimedCaptions } from "./TimedCaptions";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface PreviewSectionProps {
   content: string;
@@ -24,18 +24,70 @@ export const PreviewSection = ({
 }: PreviewSectionProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   
   useEffect(() => {
     if (videoRef.current && audioRef.current && previewUrl) {
-      // Start playing both video and audio when they're loaded
-      const playMedia = () => {
-        videoRef.current?.play();
-        audioRef.current?.play();
+      console.log('Setting up media elements...');
+      
+      const video = videoRef.current;
+      const audio = audioRef.current;
+
+      // Reset when sources change
+      video.currentTime = 0;
+      audio.currentTime = 0;
+
+      const startPlayback = async () => {
+        try {
+          setIsPlaying(true);
+          await Promise.all([
+            video.play(),
+            audio.play()
+          ]);
+          console.log('Playback started successfully');
+        } catch (error) {
+          console.error('Playback error:', error);
+          setIsPlaying(false);
+        }
       };
 
-      videoRef.current.addEventListener('loadeddata', playMedia);
+      // Sync audio with video
+      const handleTimeUpdate = () => {
+        if (Math.abs(video.currentTime - audio.currentTime) > 0.1) {
+          audio.currentTime = video.currentTime;
+        }
+      };
+
+      // Handle video ending
+      const handleEnded = () => {
+        video.currentTime = 0;
+        audio.currentTime = 0;
+        startPlayback();
+      };
+
+      video.addEventListener('timeupdate', handleTimeUpdate);
+      video.addEventListener('ended', handleEnded);
+      
+      // Start playback when both video and audio are loaded
+      let videoLoaded = false;
+      let audioLoaded = false;
+
+      video.addEventListener('loadeddata', () => {
+        console.log('Video loaded');
+        videoLoaded = true;
+        if (audioLoaded) startPlayback();
+      });
+
+      audio.addEventListener('loadeddata', () => {
+        console.log('Audio loaded');
+        audioLoaded = true;
+        if (videoLoaded) startPlayback();
+      });
+
       return () => {
-        videoRef.current?.removeEventListener('loadeddata', playMedia);
+        video.removeEventListener('timeupdate', handleTimeUpdate);
+        video.removeEventListener('ended', handleEnded);
+        setIsPlaying(false);
       };
     }
   }, [previewUrl, audioUrl]);
@@ -98,8 +150,8 @@ export const PreviewSection = ({
                   ref={videoRef}
                   src={previewUrl}
                   loop
-                  muted={!audioUrl}
                   playsInline
+                  muted={!audioUrl}
                   className="w-full h-full object-cover"
                 >
                   Your browser does not support the video tag.
@@ -116,6 +168,7 @@ export const PreviewSection = ({
               <audio
                 ref={audioRef}
                 src={audioUrl}
+                loop
                 className="hidden"
               />
             )}

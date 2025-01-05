@@ -21,14 +21,16 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     setCurrentCaption("");
 
     const audio = audioRef.current;
-    const totalDuration = audio.duration;
-    const timePerSentence = totalDuration / sentences.length;
-
+    
     const handleTimeUpdate = () => {
+      if (!audio.duration) return;
+      
+      const timePerSentence = audio.duration / sentences.length;
       const currentTime = audio.currentTime;
       const index = Math.floor(currentTime / timePerSentence);
       
       if (index !== captionIndex && index < sentences.length) {
+        console.log('Updating caption to:', sentences[index]);
         setCaptionIndex(index);
         setCurrentCaption(sentences[index]);
       }
