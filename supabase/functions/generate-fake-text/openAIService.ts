@@ -8,34 +8,31 @@ export async function generateConversation(openAiKey: string, topic: string, pro
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gpt-4',
-      response_format: { type: "json_object" },
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
-          content: `You are a JSON generator that creates realistic iMessage conversations. You must return a valid JSON object with a "messages" array containing exactly ${targetMessageCount} messages that spans ${duration} seconds.
+          content: `Generate a realistic iMessage conversation about "${topic}" with exactly ${targetMessageCount} messages that spans ${duration} seconds.
 
-Your response must be a JSON object in this exact format:
-{
-  "messages": [
-    {
-      "content": "message text",
-      "isUser": boolean,
-      "timestamp": "HH:MM AM/PM"
-    }
-  ]
-}
+Return ONLY a JSON array of messages in this exact format, with no additional text:
+[
+  {
+    "content": "message text",
+    "isUser": true/false,
+    "timestamp": "HH:MM AM/PM"
+  }
+]
 
 Requirements:
-- Return ONLY valid JSON, no explanatory text
-- Keep messages natural and conversational
+- Messages must be natural and conversational
 - Alternate between isUser true/false
-- Space timestamps evenly across the duration
-- Keep messages under 10 words for better audio generation`
+- Space timestamps evenly across the ${duration} seconds
+- Keep messages under 10 words for better audio generation
+- Return ONLY the JSON array, no other text`
         },
         {
           role: 'user',
-          content: `Topic: ${topic}. Additional context: ${prompt}`
+          content: `Topic: ${topic}. Additional context: ${prompt}. Remember to return ONLY the JSON array.`
         }
       ],
       temperature: 0.7
@@ -55,23 +52,23 @@ Requirements:
     const content = data.choices[0].message.content;
     console.log('Response content:', content);
     
-    // Parse the JSON response
-    const parsedResponse = JSON.parse(content);
-    console.log('Parsed response:', parsedResponse);
+    // Parse the JSON array response
+    const messages = JSON.parse(content);
+    console.log('Parsed messages:', messages);
     
-    if (!parsedResponse.messages || !Array.isArray(parsedResponse.messages)) {
-      throw new Error('Response does not contain a messages array');
+    if (!Array.isArray(messages)) {
+      throw new Error('Response is not an array');
     }
     
     // Validate each message
-    parsedResponse.messages.forEach((msg: any, index: number) => {
+    messages.forEach((msg: any, index: number) => {
       if (!msg.content || typeof msg.isUser !== 'boolean' || !msg.timestamp) {
         throw new Error(`Invalid message format at index ${index}`);
       }
     });
     
-    console.log(`Successfully parsed ${parsedResponse.messages.length} messages`);
-    return { choices: [{ message: { content: JSON.stringify(parsedResponse.messages) } }] };
+    console.log(`Successfully parsed ${messages.length} messages`);
+    return { choices: [{ message: { content: JSON.stringify(messages) } }] };
   } catch (error) {
     console.error('Failed to parse OpenAI response:', error);
     console.error('Raw response content:', data.choices[0].message.content);
