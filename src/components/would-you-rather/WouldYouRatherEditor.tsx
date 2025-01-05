@@ -24,7 +24,7 @@ export const WouldYouRatherEditor = () => {
     e.preventDefault();
 
     // Check if user is authenticated
-    if (!user || userLoading) {
+    if (!user?.id || userLoading) {
       toast({
         title: "Authentication Required",
         description: "Please sign in to create a video",

@@ -5,7 +5,7 @@ import { FrameDisplay } from "./video-preview/FrameDisplay";
 import { EmptyState } from "./video-preview/EmptyState";
 
 interface PreviewUrls {
-  videoUrl: string;
+  videoUrl?: string; // Made optional
   audioUrl: string;
 }
 
