@@ -34,13 +34,13 @@ serve(async (req) => {
         body: JSON.stringify({
           text_prompts: [
             {
-              text: `Create a cinematic, photorealistic image that captures this scene: "${prompt}". Make it dramatic and visually striking, suitable for a social media video. Vertical format, 9:16 aspect ratio, high detail, dramatic lighting.`,
+              text: `Create a cinematic, photorealistic image that captures this scene: "${prompt}". Make it dramatic and visually striking, suitable for a social media video. Vertical format, high detail, dramatic lighting.`,
               weight: 1
             }
           ],
           cfg_scale: 7,
-          height: 1024,
-          width: 576, // Adjusted for 9:16 aspect ratio
+          height: 1344,
+          width: 768, // Using supported dimensions that maintain a vertical format (768x1344)
           samples: 1,
           steps: 50,
           style_preset: "cinematic"
@@ -54,7 +54,6 @@ serve(async (req) => {
       }
 
       const result = await response.json();
-      // The API returns base64 encoded images
       return `data:image/png;base64,${result.artifacts[0].base64}`;
     };
 
