@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Save, Loader2 } from "lucide-react";
 import { VideoResolution } from "./ResolutionSelector";
-import { VideoPreview } from "./VideoPreview";
 import { ContentInput } from "./ContentInput";
 import { VoiceSettings } from "./VoiceSettings";
 import { VideoSettings } from "./VideoSettings";
+import { PreviewSection } from "./PreviewSection";
 import { supabase } from "@/integrations/supabase/client";
 
 export const RedditVideoEditor = () => {
@@ -94,7 +94,7 @@ export const RedditVideoEditor = () => {
 
     setIsGenerating(true);
     try {
-      // Split content into title and comments (mock implementation)
+      // Split content into title and comments
       const title = content.split('\n')[0];
       const comments = content.split('\n').slice(1).join('\n');
 
@@ -149,33 +149,37 @@ export const RedditVideoEditor = () => {
         onBackgroundSelect={setSelectedBackground}
       />
 
+      {/* Preview Section */}
       {(content || previewUrl) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Preview</CardTitle>
-            <CardDescription>
-              Preview your video before generating the final version
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <VideoPreview url={previewUrl} content={content} />
-            <div className="mt-4 flex justify-end">
-              <Button
-                onClick={handleGenerate}
-                disabled={isGenerating}
-                className="gap-2"
-              >
-                {isGenerating ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                Generate Video
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <PreviewSection
+          content={content}
+          selectedResolution={selectedResolution}
+          previewUrl={previewUrl}
+        />
       )}
+
+      {/* Generate Button */}
+      <Card>
+        <CardContent className="pt-6">
+          <Button
+            onClick={handleGenerate}
+            disabled={isGenerating}
+            className="w-full gap-2"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Generating Video...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Generate Video
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 };
