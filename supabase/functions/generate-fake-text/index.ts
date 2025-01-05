@@ -22,7 +22,10 @@ serve(async (req) => {
       throw new Error('Missing required API keys');
     }
 
-    // Generate conversation using OpenAI with specific duration guidance
+    // Calculate approximate number of messages based on duration
+    // Assuming each message takes about 2-3 seconds to read
+    const targetMessageCount = Math.max(Math.floor(duration / 2.5), 5);
+
     console.log('Calling OpenAI API...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -31,15 +34,19 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
             content: `You are an expert at creating realistic iMessage conversations. Generate a natural conversation between two people about the given topic. 
-            The conversation should be paced to last exactly ${duration} seconds when read aloud at a natural speaking pace.
+            The conversation should have approximately ${targetMessageCount} messages to fill a ${duration}-second duration when read aloud.
             Format the response as a JSON array of messages, where each message has: content (string), isUser (boolean), and timestamp (string in format "h:mm PM").
-            Add natural pauses between messages by spacing out the timestamps appropriately within the ${duration} second duration.
-            Keep messages concise and natural - aim for 10-15 words per message maximum.`
+            Important guidelines:
+            - Keep each message very concise (5-10 words maximum)
+            - Space out timestamps naturally over the ${duration}-second duration
+            - Make the conversation flow naturally with quick back-and-forth exchanges
+            - Include natural reactions and short responses like "Really?", "No way!", "That's awesome!"
+            - Break longer thoughts into multiple shorter messages from the same person`
           },
           {
             role: 'user',
@@ -98,7 +105,6 @@ serve(async (req) => {
           };
         } catch (error) {
           console.error(`Error generating audio for message ${index}:`, error);
-          // If audio generation fails, throw the error to retry the whole message
           throw new Error(`Failed to generate audio for message ${index}: ${error.message}`);
         }
       })
