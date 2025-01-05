@@ -1,7 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VideoResolution } from "./ResolutionSelector";
 import { RedditPost } from "./RedditPost";
-import { RedditComment } from "./RedditComment";
 
 interface PreviewSectionProps {
   content: string;
@@ -54,20 +53,22 @@ export const PreviewSection = ({ content, selectedResolution, previewUrl }: Prev
               width: currentStyle.width,
             }}
           >
-            {/* Content Section (Top 2/3) */}
-            <div className="absolute inset-x-0 top-0 h-2/3 bg-[#1A1A1B] overflow-y-auto">
+            {/* Question Section (Top 2/3) */}
+            <div className="absolute inset-x-0 top-0 h-2/3 bg-[#1A1A1B] overflow-hidden">
               {content && (
                 <div className="p-4">
-                  <div className="max-w-2xl mx-auto space-y-4">
+                  <div className="max-w-2xl mx-auto">
                     {title && <RedditPost title={title} darkMode />}
-                    <div className="space-y-2">
-                      {comments.slice(0, 5).map((comment, index) => (
-                        <RedditComment key={index} content={comment} darkMode />
-                      ))}
-                    </div>
                   </div>
                 </div>
               )}
+              
+              {/* Subtitles Overlay */}
+              <div className="absolute bottom-4 left-0 right-0 text-center">
+                <div className="bg-black/60 text-white p-2 mx-4 rounded text-lg">
+                  {comments[0] || "Subtitles will appear here"}
+                </div>
+              </div>
             </div>
 
             {/* Background Video Section (Bottom 1/3) */}
