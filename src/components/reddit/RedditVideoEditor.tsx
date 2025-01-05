@@ -57,7 +57,7 @@ export const RedditVideoEditor = () => {
       const post = data[0].data.children[0].data;
       const comments = data[1].data.children
         .filter((comment: any) => !comment.data.stickied)
-        .slice(0, 3)
+        .slice(0, 5) // Get top 5 comments
         .map((comment: any) => comment.data.body)
         .join('\n\n');
 

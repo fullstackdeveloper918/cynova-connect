@@ -1,5 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VideoResolution } from "./ResolutionSelector";
+import { RedditPost } from "./RedditPost";
+import { RedditComment } from "./RedditComment";
 
 interface PreviewSectionProps {
   content: string;
@@ -26,6 +28,11 @@ export const PreviewSection = ({ content, selectedResolution, previewUrl }: Prev
 
   const currentStyle = resolutionStyles[selectedResolution];
 
+  // Split content into title and comments
+  const contentLines = content.split('\n\n').filter(Boolean);
+  const title = contentLines[0];
+  const comments = contentLines.slice(1);
+
   return (
     <Card>
       <CardHeader>
@@ -37,9 +44,15 @@ export const PreviewSection = ({ content, selectedResolution, previewUrl }: Prev
       <CardContent className="space-y-4">
         {/* Content Preview */}
         {content && (
-          <div className="rounded-lg bg-accent/20 p-4">
-            <h3 className="font-semibold mb-2">Content Preview:</h3>
-            <p className="text-muted-foreground whitespace-pre-wrap">{content}</p>
+          <div className="rounded-lg bg-[#DAE0E6] p-4">
+            <div className="max-w-2xl mx-auto space-y-4">
+              {title && <RedditPost title={title} />}
+              <div className="space-y-2">
+                {comments.map((comment, index) => (
+                  <RedditComment key={index} content={comment} />
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
