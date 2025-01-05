@@ -46,7 +46,6 @@ export const FakeTextGenerator = () => {
 
       if (error) throw error;
 
-      // Add audio URLs to messages if available
       const messagesWithAudio = data.messages.map((msg: Message) => ({
         ...msg,
         audioUrl: msg.audioUrl || null
@@ -81,11 +80,18 @@ export const FakeTextGenerator = () => {
 
     setExporting(true);
     try {
+      // Create a formatted script from the messages
+      const script = messages.map(msg => 
+        `${msg.isUser ? 'User' : 'Friend'}: ${msg.content}`
+      ).join('\n');
+
       const { data, error } = await supabase.functions.invoke('export-video', {
         body: {
           messages,
-          title: messages[0]?.content || "Conversation",
-          description: messages.map(m => m.content).join(" "),
+          title: `iMessage Conversation: ${messages[0]?.content.substring(0, 30)}...`,
+          description: script,
+          type: 'fake_text',
+          audioUrls: messages.map(msg => msg.audioUrl).filter(Boolean)
         },
       });
 
@@ -93,7 +99,7 @@ export const FakeTextGenerator = () => {
 
       toast({
         title: "Video exported!",
-        description: "Your video has been created and saved to your exports.",
+        description: "Your conversation video has been created and saved to your exports.",
       });
     } catch (error) {
       console.error('Error exporting video:', error);

@@ -1,8 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { generateAudioNarration } from "./audio.ts";
-import { generateVideo } from "./video.ts";
 import { uploadToStorage } from "./storage.ts";
 import { initSupabaseAdmin } from "./supabase.ts";
 
@@ -18,8 +16,8 @@ serve(async (req) => {
 
   try {
     console.log('Starting export-video function...');
-    const { messages, voiceId, title, description } = await req.json();
-    console.log('Received request:', { messagesCount: messages.length, voiceId, title });
+    const { messages, title, description, type, audioUrls } = await req.json();
+    console.log('Received request:', { messagesCount: messages.length, title, type });
 
     const supabaseAdmin = initSupabaseAdmin();
 
@@ -33,35 +31,96 @@ serve(async (req) => {
       throw new Error('Invalid authorization');
     }
 
-    // Convert messages to narration script
-    const script = messages.map((msg: any) => 
-      `${msg.isUser ? 'User' : 'Friend'}: ${msg.content}`
-    ).join('\n');
+    // Generate HTML for the iMessage conversation
+    const conversationHtml = messages.map((msg: any) => `
+      <div class="message ${msg.isUser ? 'user' : 'friend'}">
+        <div class="bubble">
+          ${msg.content}
+        </div>
+        <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+      </div>
+    `).join('');
 
-    // Generate audio narration
-    console.log('Generating audio narration...');
-    let audioData;
-    try {
-      audioData = await generateAudioNarration(script, voiceId);
-      console.log('Audio narration generated successfully');
-    } catch (error) {
-      console.error('Audio generation error:', error);
-      throw new Error(`Failed to generate audio narration: ${error.message}`);
+    const htmlTemplate = `
+      <div class="conversation" style="
+        background-color: #F5F5F5;
+        padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      ">
+        ${conversationHtml}
+      </div>
+    `;
+
+    // Generate video using Replicate
+    console.log('Starting video generation with Replicate...');
+    const response = await fetch("https://api.replicate.com/v1/predictions", {
+      method: "POST",
+      headers: {
+        Authorization: `Token ${Deno.env.get('REPLICATE_API_KEY')}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
+        input: {
+          html: htmlTemplate,
+          width: 1080,
+          height: 1920,
+          fps: 30,
+          duration: 10,
+          quality: "high",
+          format: "mp4",
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Replicate API error: ${await response.text()}`);
     }
 
-    // Start video generation
-    console.log('Starting video generation...');
-    let videoUrl;
-    try {
-      const prediction = await generateVideo(messages);
-      videoUrl = await pollVideoGeneration(prediction.id);
-      console.log('Video generated successfully');
-    } catch (error) {
-      console.error('Video generation error:', error);
-      throw new Error(`Failed to generate video: ${error.message}`);
+    const prediction = await response.json();
+    console.log('Video generation started. Prediction ID:', prediction.id);
+
+    // Poll for video completion
+    let videoUrl = null;
+    let attempts = 0;
+    const maxAttempts = 30;
+
+    while (attempts < maxAttempts && !videoUrl) {
+      console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`);
+      const pollResponse = await fetch(
+        `https://api.replicate.com/v1/predictions/${prediction.id}`,
+        {
+          headers: {
+            Authorization: `Token ${Deno.env.get('REPLICATE_API_KEY')}`,
+          },
+        }
+      );
+
+      if (!pollResponse.ok) {
+        throw new Error(`Failed to check prediction status: ${await pollResponse.text()}`);
+      }
+
+      const predictionStatus = await pollResponse.json();
+      console.log('Prediction status:', predictionStatus.status);
+
+      if (predictionStatus.status === 'succeeded') {
+        videoUrl = predictionStatus.output;
+        break;
+      } else if (predictionStatus.status === 'failed') {
+        throw new Error('Video generation failed');
+      }
+
+      attempts++;
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
-    // Download the generated video
+    if (!videoUrl) {
+      throw new Error('Video generation timed out');
+    }
+
+    console.log('Video generated successfully:', videoUrl);
+
+    // Download the video
     console.log('Downloading generated video...');
     const videoResponse = await fetch(videoUrl);
     if (!videoResponse.ok) {
@@ -69,30 +128,18 @@ serve(async (req) => {
     }
 
     const videoData = await videoResponse.arrayBuffer();
-
-    // Generate unique filenames
     const timestamp = Date.now();
-    const videoFileName = `video-${timestamp}.mp4`;
-    const audioFileName = `audio-${timestamp}.mp3`;
+    const videoFileName = `fake-text-${timestamp}.mp4`;
 
-    // Upload both files to Supabase Storage
-    console.log('Uploading files to storage...');
+    // Upload video to Supabase Storage
+    console.log('Uploading video to storage...');
     try {
-      await Promise.all([
-        uploadToStorage(supabaseAdmin, videoFileName, videoData, 'video/mp4'),
-        uploadToStorage(supabaseAdmin, audioFileName, audioData, 'audio/mpeg')
-      ]);
-      console.log('Files uploaded successfully');
+      await uploadToStorage(supabaseAdmin, videoFileName, videoData, 'video/mp4');
+      console.log('Video uploaded successfully');
     } catch (error) {
       console.error('Storage upload error:', error);
-      throw new Error(`Failed to upload files: ${error.message}`);
+      throw new Error(`Failed to upload video: ${error.message}`);
     }
-
-    // Get public URL
-    const { data: { publicUrl: videoPublicUrl } } = supabaseAdmin
-      .storage
-      .from('exports')
-      .getPublicUrl(videoFileName);
 
     // Create export record
     console.log('Creating export record...');
@@ -105,7 +152,7 @@ serve(async (req) => {
         file_url: videoFileName,
         file_type: 'video/mp4',
         file_size: videoData.byteLength,
-        thumbnail_url: videoPublicUrl,
+        thumbnail_url: videoUrl,
         status: 'completed'
       })
       .select()
@@ -146,40 +193,3 @@ serve(async (req) => {
     );
   }
 });
-
-// Poll for video generation completion
-const pollVideoGeneration = async (predictionId: string): Promise<string> => {
-  console.log('Polling for video generation completion...');
-  let attempts = 0;
-  const maxAttempts = 60;
-
-  while (attempts < maxAttempts) {
-    const response = await fetch(
-      `https://api.replicate.com/v1/predictions/${predictionId}`,
-      {
-        headers: {
-          Authorization: `Token ${Deno.env.get('REPLICATE_API_KEY')}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to check prediction status: ${await response.text()}`);
-    }
-
-    const prediction = await response.json();
-    console.log('Prediction status:', prediction.status);
-
-    if (prediction.status === 'succeeded') {
-      return prediction.output;
-    } else if (prediction.status === 'failed') {
-      throw new Error('Video generation failed');
-    }
-
-    attempts++;
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }
-
-  throw new Error('Video generation timed out');
-};
