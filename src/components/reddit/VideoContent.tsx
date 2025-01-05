@@ -1,4 +1,4 @@
-import { RefObject, useEffect, useRef, useState } from "react";
+import { RefObject, useEffect } from "react";
 
 interface VideoContentProps {
   previewUrl: string;
@@ -6,10 +6,7 @@ interface VideoContentProps {
   audioRef: RefObject<HTMLAudioElement>;
 }
 
-export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentProps) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-
+export const VideoContent = ({ audioUrl, audioRef }: VideoContentProps) => {
   useEffect(() => {
     if (audioRef.current && audioUrl) {
       console.log('Setting up audio playback with:', { audioUrl });
@@ -18,7 +15,6 @@ export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentPro
 
       // Reset when sources change
       audio.currentTime = 0;
-      setIsPlaying(false);
 
       const startPlayback = async () => {
         try {
@@ -32,14 +28,12 @@ export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentPro
           });
 
           console.log('Audio loaded, starting playback');
-          setIsPlaying(true);
           
           // Start playback
           await audio.play();
           console.log('Audio playback started successfully');
         } catch (error) {
           console.error('Audio playback error:', error);
-          setIsPlaying(false);
         }
       };
 
@@ -57,7 +51,6 @@ export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentPro
       
       return () => {
         audio.removeEventListener('ended', handleEnded);
-        setIsPlaying(false);
       };
     }
   }, [audioUrl, audioRef]);

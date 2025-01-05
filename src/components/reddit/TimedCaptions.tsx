@@ -9,6 +9,7 @@ interface TimedCaptionsProps {
 export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCaptionsProps) => {
   const [currentCaption, setCurrentCaption] = useState("");
   const [captionIndex, setCaptionIndex] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
 
   // Split captions into sentences
   const sentences = captions.split(/[.!?]+/).filter(Boolean).map(s => s.trim());
@@ -22,6 +23,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     // Reset when audio source changes
     setCaptionIndex(0);
     setCurrentCaption("");
+    setIsVisible(false);
 
     const audio = audioRef.current;
     
@@ -46,6 +48,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
         });
         setCaptionIndex(index);
         setCurrentCaption(sentences[index]);
+        setIsVisible(true);
       }
     };
 
@@ -54,25 +57,42 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       // Set initial caption
       if (sentences.length > 0) {
         setCurrentCaption(sentences[0]);
+        setIsVisible(true);
       }
+    };
+
+    const handlePause = () => {
+      console.log('Audio paused');
+      setIsVisible(false);
+    };
+
+    const handleEnded = () => {
+      console.log('Audio ended');
+      setIsVisible(false);
     };
 
     audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("play", handlePlay);
+    audio.addEventListener("pause", handlePause);
+    audio.addEventListener("ended", handleEnded);
     
     return () => {
       audio.removeEventListener("timeupdate", handleTimeUpdate);
       audio.removeEventListener("play", handlePlay);
+      audio.removeEventListener("pause", handlePause);
+      audio.removeEventListener("ended", handleEnded);
     };
   }, [audioRef, sentences, captionIndex]);
 
+  if (!isVisible || !currentCaption) {
+    return null;
+  }
+
   return (
     <div className={`transition-opacity duration-300 ${className}`}>
-      {currentCaption && (
-        <p className="animate-fade-in text-center">
-          {currentCaption}
-        </p>
-      )}
+      <p className="animate-fade-in text-center">
+        {currentCaption}
+      </p>
     </div>
   );
 };

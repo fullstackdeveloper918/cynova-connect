@@ -14,7 +14,7 @@ export const ContentOverlay = ({ title, comments, audioRef, captionStyle }: Cont
   console.log('Rendering ContentOverlay with:', { title, comments, captionStyle });
   
   return (
-    <div className="absolute inset-0 bg-black/40">
+    <div className="absolute inset-0 flex flex-col justify-between bg-black/40">
       {/* Title Section */}
       <div className="p-4">
         <div className="max-w-2xl mx-auto">
@@ -24,7 +24,7 @@ export const ContentOverlay = ({ title, comments, audioRef, captionStyle }: Cont
       
       {/* Timed Captions */}
       {comments && (
-        <div className="absolute bottom-8 left-0 right-0 text-center px-4">
+        <div className="mb-8 px-4">
           <TimedCaptions
             captions={comments}
             audioRef={audioRef}
