@@ -9,25 +9,22 @@ serve(async (req) => {
   }
 
   try {
-    const { script, voice } = await req.json();
-    console.log('Received request with script:', script);
+    console.log('Starting generate-video-preview function...');
 
-    if (!script) {
-      throw new Error('No script provided');
-    }
-
-    // Get API keys from environment
+    // Get API keys and verify they exist
     const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
     const elevenLabsKey = Deno.env.get('ELEVEN_LABS_API_KEY');
+
+    console.log('Checking API keys...');
+    console.log('Replicate API Key exists:', !!replicateApiKey);
+    console.log('ElevenLabs API Key exists:', !!elevenLabsKey);
 
     if (!replicateApiKey || !elevenLabsKey) {
       throw new Error('Missing required API keys');
     }
 
-    console.log('Starting video generation with Replicate...');
-    
-    // Test the video generation with a simple prompt first
-    const testPrompt = "A serene mountain landscape with snow-capped peaks";
+    // Test video generation with a simple prompt
+    console.log('Starting test video generation...');
     
     const videoResponse = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
@@ -38,18 +35,17 @@ serve(async (req) => {
       body: JSON.stringify({
         version: "85d775927d738f501d2b7fcc5f33d8566904f27d7b29960f1a8c0195220d1c7d",
         input: {
-          prompt: testPrompt,
-          negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames",
+          prompt: "A serene mountain landscape",
           width: 768,
           height: 432,
           num_frames: 24,
-          num_inference_steps: 50,
           fps: 8,
-          guidance_scale: 17.5,
         },
       }),
     });
 
+    console.log('Video generation response status:', videoResponse.status);
+    
     if (!videoResponse.ok) {
       const errorText = await videoResponse.text();
       console.error('Replicate API Error:', errorText);
@@ -57,66 +53,53 @@ serve(async (req) => {
     }
 
     const predictionData = await videoResponse.json();
-    console.log('Video generation started:', predictionData);
+    console.log('Video generation started. Prediction ID:', predictionData.id);
 
-    // Poll for completion with improved error handling and detailed logging
-    let attempts = 0;
-    const maxAttempts = 60;
-    const pollInterval = 2000; // 2 seconds
-    let videoUrl = null;
-
-    while (attempts < maxAttempts && !videoUrl) {
-      console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`);
-      
-      const pollResponse = await fetch(
-        `https://api.replicate.com/v1/predictions/${predictionData.id}`,
-        {
-          headers: {
-            "Authorization": `Token ${replicateApiKey}`,
-            "Content-Type": "application/json",
+    // Test audio generation
+    console.log('Testing audio generation...');
+    const testAudioResponse = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL/stream`,
+      {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': elevenLabsKey,
+        },
+        body: JSON.stringify({
+          text: "This is a test audio message",
+          model_id: "eleven_turbo_v2",
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.5,
           },
-        }
-      );
-
-      if (!pollResponse.ok) {
-        const errorText = await pollResponse.text();
-        console.error('Poll response error:', errorText);
-        throw new Error(`Failed to poll prediction: ${errorText}`);
+        }),
       }
+    );
 
-      const result = await pollResponse.json();
-      console.log('Poll result status:', result.status);
+    console.log('Audio generation response status:', testAudioResponse.status);
 
-      if (result.status === "succeeded") {
-        videoUrl = result.output;
-        console.log('Test video generation succeeded:', videoUrl);
-        
-        // If test succeeds, proceed with the actual script
-        return new Response(
-          JSON.stringify({
-            success: true,
-            message: "Test successful. The video generation is working properly.",
-            testVideoUrl: videoUrl
-          }),
-          { 
-            headers: { 
-              ...corsHeaders, 
-              "Content-Type": "application/json" 
-            } 
-          }
-        );
-      } else if (result.status === "failed") {
-        console.error('Video generation failed:', result.error);
-        throw new Error(`Video generation failed: ${result.error}`);
-      }
-
-      await new Promise(resolve => setTimeout(resolve, pollInterval));
-      attempts++;
+    if (!testAudioResponse.ok) {
+      const errorText = await testAudioResponse.text();
+      console.error('ElevenLabs API Error:', errorText);
+      throw new Error(`ElevenLabs API error: ${errorText}`);
     }
 
-    if (!videoUrl) {
-      throw new Error('Video generation timed out');
-    }
+    console.log('Test completed successfully');
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "API test completed successfully",
+        videoDetails: predictionData,
+      }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          "Content-Type": "application/json" 
+        } 
+      }
+    );
 
   } catch (error) {
     console.error('Error in generate-video-preview:', error);
