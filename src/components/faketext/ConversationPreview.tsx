@@ -83,7 +83,7 @@ export const ConversationPreview = ({
 
       <div className="space-y-4">
         <div
-          className={`rounded-lg p-4 space-y-4 border ${
+          className={`rounded-lg p-4 border h-[500px] overflow-hidden ${
             isDarkMode
               ? "bg-[#000000] border-gray-800"
               : "bg-[#F5F5F5] border-gray-200"
@@ -94,7 +94,9 @@ export const ConversationPreview = ({
               : "linear-gradient(to bottom, #ffffff, #f5f5f5)",
           }}
         >
-          <MessageList messages={visibleMessages} isDarkMode={isDarkMode} />
+          <div className="h-full overflow-y-auto">
+            <MessageList messages={visibleMessages} isDarkMode={isDarkMode} />
+          </div>
         </div>
       </div>
     </div>
