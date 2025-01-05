@@ -32,14 +32,16 @@ export const useVideoExport = () => {
         return;
       }
 
+      // Create a project first
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .insert({
           user_id: session.user.id,
-          title: "ChatGPT Generated Video",
-          description: script.substring(0, 100) + "...",
-          type: "chatgpt_video",
-          thumbnail_url: previewUrl.videoUrl
+          title: "iMessage Conversation",
+          description: script,
+          type: "fake_text",
+          thumbnail_url: previewUrl.videoUrl, // We'll use a frame from the video as thumbnail
+          video_url: previewUrl.videoUrl
         })
         .select()
         .single();
@@ -51,16 +53,19 @@ export const useVideoExport = () => {
 
       console.log("Project created:", projectData);
 
+      // Create the export record
       const { data: exportData, error: exportError } = await supabase
         .from('exports')
         .insert({
           user_id: session.user.id,
           project_id: projectData.id,
-          title: "ChatGPT Generated Video",
-          description: script.substring(0, 100) + "...",
+          title: "iMessage Conversation",
+          description: script,
           file_url: previewUrl.videoUrl,
           thumbnail_url: previewUrl.videoUrl,
-          status: 'completed'
+          file_type: "mp4",
+          status: 'completed',
+          file_size: 0 // This would need to be calculated from the actual video file
         })
         .select()
         .single();
