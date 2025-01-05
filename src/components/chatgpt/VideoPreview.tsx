@@ -1,6 +1,8 @@
 import { Video } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { FrameDisplay } from "./video-preview/FrameDisplay";
+import { EmptyState } from "./video-preview/EmptyState";
 
 interface PreviewUrls {
   videoUrl: string;
@@ -32,7 +34,7 @@ export const VideoPreview = ({
     sentence
       .split(/\s+/)
       .reduce((chunks: string[], word, i) => {
-        const chunkIndex = Math.floor(i / 4); // 4 words per chunk
+        const chunkIndex = Math.floor(i / 4);
         if (!chunks[chunkIndex]) chunks[chunkIndex] = word;
         else chunks[chunkIndex] += ` ${word}`;
         return chunks;
@@ -46,8 +48,7 @@ export const VideoPreview = ({
       const generateFrames = async () => {
         setIsLoading(true);
         try {
-          // Calculate number of frames based on audio duration (1 frame per 10 seconds)
-          const audioDuration = audioRef.current?.duration || 30; // default to 30 if not loaded
+          const audioDuration = audioRef.current?.duration || 30;
           const numberOfFrames = Math.max(1, Math.ceil(audioDuration / 10));
           
           console.log('Starting frame generation for script:', script);
@@ -56,7 +57,7 @@ export const VideoPreview = ({
           const { data, error } = await supabase.functions.invoke("generate-video-frames", {
             body: { 
               script,
-              numberOfFrames // Pass the calculated number of frames
+              numberOfFrames
             }
           });
 
@@ -94,13 +95,11 @@ export const VideoPreview = ({
         const time = audioRef.current?.currentTime || 0;
         setCurrentTime(time);
         
-        // Update current caption chunk based on time
         const chunkIndex = Math.floor(time / chunkDuration);
         if (captionChunks[chunkIndex]) {
           setCurrentCaption(captionChunks[chunkIndex]);
         }
 
-        // Update current frame based on time progress (1 frame per 10 seconds)
         if (frameUrls.length > 0) {
           const frameIndex = Math.min(
             Math.floor(time / 10),
@@ -154,52 +153,25 @@ export const VideoPreview = ({
       >
         {previewUrl ? (
           <>
-            {isLoading ? (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              </div>
-            ) : frameUrls.length > 0 ? (
-              <img
-                src={frameUrls[currentFrameIndex]}
-                alt={`Frame ${currentFrameIndex + 1}`}
-                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <p className="text-muted-foreground">Generating frames...</p>
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/30 flex items-center justify-center">
-              <div className="text-white text-lg p-6 text-center max-w-lg">
-                {currentCaption || captionChunks[0]}
-              </div>
-            </div>
+            <FrameDisplay
+              isLoading={isLoading}
+              frameUrls={frameUrls}
+              currentFrameIndex={currentFrameIndex}
+              currentCaption={currentCaption || captionChunks[0]}
+              isPlaying={isPlaying}
+              audioRef={audioRef}
+              currentTime={currentTime}
+              onClick={handlePlayPause}
+            />
             <audio
               ref={audioRef}
               src={previewUrl.audioUrl}
               className="hidden"
               onEnded={handleAudioEnded}
             />
-            <div className="absolute bottom-4 left-4 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded-full">
-              {isPlaying ? 'Click to pause' : 'Click to play'}
-            </div>
-            {/* Progress bar */}
-            {audioRef.current && (
-              <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-200">
-                <div 
-                  className="h-full bg-primary transition-all duration-100"
-                  style={{ 
-                    width: `${(currentTime / audioRef.current.duration) * 100}%` 
-                  }}
-                />
-              </div>
-            )}
           </>
         ) : (
-          <div className="text-center space-y-2 text-muted-foreground h-full flex items-center justify-center">
-            <Video className="mx-auto h-12 w-12 animate-pulse" />
-            <p>Click preview to generate your video</p>
-          </div>
+          <EmptyState />
         )}
       </div>
     </div>
