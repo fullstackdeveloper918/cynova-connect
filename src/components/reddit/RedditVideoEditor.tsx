@@ -145,10 +145,20 @@ export const RedditVideoEditor = () => {
 
     setIsGenerating(true);
     try {
+      // Get the current user's session
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      
+      if (authError || !session?.user?.id) {
+        throw new Error('Authentication required');
+      }
+
+      const userId = session.user.id;
+
       // Create a project and export record
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .insert({
+          user_id: userId,
           title: content.split('\n')[0] || "Reddit Video",
           description: content,
           type: "reddit_video",
@@ -164,6 +174,7 @@ export const RedditVideoEditor = () => {
       const { error: exportError } = await supabase
         .from('exports')
         .insert({
+          user_id: userId,
           project_id: projectData.id,
           title: content.split('\n')[0] || "Reddit Video",
           description: content,
