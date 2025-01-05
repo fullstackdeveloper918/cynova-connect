@@ -18,10 +18,10 @@ export const VideoSplitter = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [tempVideoId, setTempVideoId] = useState<string | null>(null);
 
   const handleVideoUpload = async (file: File) => {
     try {
-      // Get the current user
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
@@ -41,12 +41,14 @@ export const VideoSplitter = () => {
           original_filename: file.name,
           file_size: file.size,
           status: 'pending',
-          user_id: user.id // Add the user_id here
+          user_id: user.id
         })
         .select()
         .single();
 
       if (error) throw error;
+
+      setTempVideoId(data.id);
 
       toast({
         title: "Video uploaded successfully",
@@ -71,15 +73,23 @@ export const VideoSplitter = () => {
   };
 
   const handleSplitVideo = async () => {
-    if (!videoFile || segments.length === 0) return;
+    if (!videoFile || segments.length === 0 || !tempVideoId) return;
 
     setIsProcessing(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('Authentication required');
+      }
+
       const formData = new FormData();
       formData.append('video', videoFile);
       formData.append('segments', JSON.stringify(segments));
+      formData.append('userId', user.id);
+      formData.append('tempVideoId', tempVideoId);
 
-      const { data, error } = await supabase.functions.invoke('split-video', {
+      const { error } = await supabase.functions.invoke('split-video', {
         body: formData,
       });
 
@@ -89,6 +99,22 @@ export const VideoSplitter = () => {
         title: "Video split successfully",
         description: "Your video segments are being processed",
       });
+
+      // Fetch the processed segments
+      const { data: processedSegments, error: fetchError } = await supabase
+        .from('video_segments')
+        .select('*')
+        .eq('temp_video_id', tempVideoId);
+
+      if (fetchError) throw fetchError;
+
+      // Update the UI with processed segments
+      setSegments(processedSegments.map(s => ({
+        name: s.name,
+        start: s.start_time,
+        end: s.end_time
+      })));
+
     } catch (error) {
       console.error('Split error:', error);
       toast({

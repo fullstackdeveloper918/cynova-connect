@@ -5,6 +5,8 @@ interface VideoSegment {
   start: number;
   end: number;
   name: string;
+  status?: string;
+  file_url?: string;
 }
 
 interface VideoSegmentsProps {
@@ -28,6 +30,23 @@ export const VideoSegments = ({ segments }: VideoSegmentsProps) => {
               <div className="text-sm text-muted-foreground mt-1">
                 {segment.start.toFixed(2)}s - {segment.end.toFixed(2)}s
               </div>
+              {segment.status && (
+                <div className="text-sm mt-2">
+                  Status: {segment.status}
+                </div>
+              )}
+              {segment.file_url && (
+                <div className="mt-2">
+                  <a
+                    href={segment.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-500 hover:underline"
+                  >
+                    Download Segment
+                  </a>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}

@@ -179,6 +179,56 @@ export type Database = {
         }
         Relationships: []
       }
+      video_segments: {
+        Row: {
+          created_at: string | null
+          end_time: number
+          file_size: number | null
+          file_url: string | null
+          id: string
+          name: string
+          start_time: number
+          status: Database["public"]["Enums"]["segment_status"] | null
+          temp_video_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_time: number
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          name: string
+          start_time: number
+          status?: Database["public"]["Enums"]["segment_status"] | null
+          temp_video_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          end_time?: number
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          name?: string
+          start_time?: number
+          status?: Database["public"]["Enums"]["segment_status"] | null
+          temp_video_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_segments_temp_video_id_fkey"
+            columns: ["temp_video_id"]
+            isOneToOne: false
+            referencedRelation: "temp_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -198,6 +248,7 @@ export type Database = {
         | "voiceover_video"
         | "would_you_rather"
         | "quiz_video"
+      segment_status: "pending" | "processing" | "completed" | "failed"
       subscription_status: "active" | "canceled" | "past_due"
       video_processing_status: "pending" | "processing" | "completed" | "failed"
     }

@@ -14,9 +14,11 @@ serve(async (req) => {
   try {
     const formData = await req.formData();
     const video = formData.get('video') as File;
-    const segments = JSON.parse(formData.get('segments') as string);
+    const segmentsData = JSON.parse(formData.get('segments') as string);
+    const userId = formData.get('userId') as string;
+    const tempVideoId = formData.get('tempVideoId') as string;
 
-    if (!video || !segments) {
+    if (!video || !segmentsData || !userId || !tempVideoId) {
       throw new Error('Missing required fields');
     }
 
@@ -25,6 +27,8 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    console.log('Processing segments:', segmentsData);
 
     // Upload original video to storage
     const videoExt = video.name.split('.').pop();
@@ -38,14 +42,43 @@ serve(async (req) => {
       throw uploadError;
     }
 
-    // Process segments (in a real implementation, this would use FFmpeg)
-    // For now, we'll just simulate the processing
+    // Create segment records
+    for (const segment of segmentsData) {
+      const { error } = await supabase
+        .from('video_segments')
+        .insert({
+          temp_video_id: tempVideoId,
+          user_id: userId,
+          name: segment.name,
+          start_time: segment.start,
+          end_time: segment.end,
+          status: 'processing'
+        });
+
+      if (error) {
+        console.error('Error creating segment:', error);
+        throw error;
+      }
+    }
+
+    // In a real implementation, this would use FFmpeg to split the video
+    // For now, we'll simulate processing
     await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Update segments to completed
+    const { error: updateError } = await supabase
+      .from('video_segments')
+      .update({ status: 'completed' })
+      .eq('temp_video_id', tempVideoId);
+
+    if (updateError) {
+      throw updateError;
+    }
 
     return new Response(
       JSON.stringify({ 
         message: 'Video split successfully',
-        segments: segments.length 
+        segments: segmentsData.length 
       }),
       { 
         headers: { 
