@@ -10,6 +10,7 @@ import { VideoSettings } from "./VideoSettings";
 import { PreviewSection } from "./PreviewSection";
 import { CaptionStyle } from "./CaptionStyles";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 export const RedditVideoEditor = () => {
   const [redditUrl, setRedditUrl] = useState("");
@@ -23,6 +24,7 @@ export const RedditVideoEditor = () => {
   const [titleVoice, setTitleVoice] = useState("EXAVITQu4vr4xnSDxMaL");
   const [commentVoice, setCommentVoice] = useState("onwK4e9ZLuTAKqWW03F9");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const extractRedditPostId = (url: string) => {
     const matches = url.match(/comments\/([a-zA-Z0-9]+)/);
@@ -102,7 +104,6 @@ export const RedditVideoEditor = () => {
 
     setIsGenerating(true);
     try {
-      // Generate narration audio using ElevenLabs API
       const { data: audioData, error: audioError } = await supabase.functions.invoke("generate-video-preview", {
         body: { 
           script: content,
@@ -118,13 +119,74 @@ export const RedditVideoEditor = () => {
       
       toast({
         title: "Video Generated",
-        description: "Your video has been generated successfully.",
+        description: "Your video preview is ready to watch.",
       });
     } catch (error) {
       console.error('Generation error:', error);
       toast({
         title: "Generation Failed",
         description: "Failed to generate video. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleExport = async () => {
+    if (!previewUrl) {
+      toast({
+        title: "No Preview Available",
+        description: "Please generate a preview first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      // Create a project and export record
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .insert({
+          title: content.split('\n')[0] || "Reddit Video",
+          description: content,
+          type: "reddit_video",
+          thumbnail_url: previewUrl,
+          video_url: previewUrl,
+          status: 'completed'
+        })
+        .select()
+        .single();
+
+      if (projectError) throw projectError;
+
+      const { error: exportError } = await supabase
+        .from('exports')
+        .insert({
+          project_id: projectData.id,
+          title: content.split('\n')[0] || "Reddit Video",
+          description: content,
+          file_url: previewUrl,
+          thumbnail_url: previewUrl,
+          file_type: 'video/mp4',
+          status: 'completed'
+        });
+
+      if (exportError) throw exportError;
+
+      toast({
+        title: "Export Successful",
+        description: "Your video has been exported. Redirecting to exports page...",
+      });
+
+      // Navigate to exports page
+      navigate('/dashboard/exports');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export video. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -166,25 +228,26 @@ export const RedditVideoEditor = () => {
           selectedCaptionStyle={selectedCaptionStyle}
           previewUrl={previewUrl}
           audioUrl={audioUrl}
+          onExport={handleExport}
         />
       )}
 
       <Card>
         <CardContent className="pt-6">
           <Button
-            onClick={handleGenerate}
+            onClick={previewUrl ? handleExport : handleGenerate}
             disabled={isGenerating}
             className="w-full gap-2"
           >
             {isGenerating ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Generating Video...
+                {previewUrl ? 'Exporting...' : 'Generating...'}
               </>
             ) : (
               <>
                 <Save className="h-4 w-4" />
-                Generate Video
+                {previewUrl ? 'Export Video' : 'Generate Preview'}
               </>
             )}
           </Button>

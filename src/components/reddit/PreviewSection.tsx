@@ -3,7 +3,7 @@ import { VideoResolution } from "./ResolutionSelector";
 import { RedditPost } from "./RedditPost";
 import { CaptionStyle } from "./CaptionStyles";
 import { TimedCaptions } from "./TimedCaptions";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 interface PreviewSectionProps {
   content: string;
@@ -11,6 +11,7 @@ interface PreviewSectionProps {
   selectedCaptionStyle: CaptionStyle;
   previewUrl: string;
   audioUrl?: string;
+  onExport: () => void;
 }
 
 export const PreviewSection = ({ 
@@ -18,10 +19,27 @@ export const PreviewSection = ({
   selectedResolution, 
   selectedCaptionStyle,
   previewUrl,
-  audioUrl
+  audioUrl,
+  onExport
 }: PreviewSectionProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
+  useEffect(() => {
+    if (videoRef.current && audioRef.current && previewUrl) {
+      // Start playing both video and audio when they're loaded
+      const playMedia = () => {
+        videoRef.current?.play();
+        audioRef.current?.play();
+      };
+
+      videoRef.current.addEventListener('loadeddata', playMedia);
+      return () => {
+        videoRef.current?.removeEventListener('loadeddata', playMedia);
+      };
+    }
+  }, [previewUrl, audioUrl]);
+
   const resolutionStyles = {
     shorts: {
       aspectRatio: "9/16",
@@ -77,10 +95,11 @@ export const PreviewSection = ({
             <div className="absolute inset-0">
               {previewUrl ? (
                 <video
+                  ref={videoRef}
                   src={previewUrl}
-                  autoPlay
                   loop
                   muted={!audioUrl}
+                  playsInline
                   className="w-full h-full object-cover"
                 >
                   Your browser does not support the video tag.
