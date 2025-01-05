@@ -23,7 +23,6 @@ serve(async (req) => {
     }
 
     // Calculate approximate number of messages based on duration
-    // Assuming each message takes about 2-3 seconds to read
     const targetMessageCount = Math.max(Math.floor(duration / 2.5), 5);
 
     console.log('Calling OpenAI API...');
@@ -34,19 +33,30 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
             content: `You are an expert at creating realistic iMessage conversations. Generate a natural conversation between two people about the given topic. 
             The conversation should have approximately ${targetMessageCount} messages to fill a ${duration}-second duration when read aloud.
-            Format the response as a JSON array of messages, where each message has: content (string), isUser (boolean), and timestamp (string in format "h:mm PM").
-            Important guidelines:
+            
+            IMPORTANT: Your response must be a valid JSON array of message objects. Each message object must have these exact properties:
+            - "content": string (the message text)
+            - "isUser": boolean (alternating between true and false)
+            - "timestamp": string (in "h:mm PM" format)
+            
+            Guidelines for natural conversation:
             - Keep each message very concise (5-10 words maximum)
             - Space out timestamps naturally over the ${duration}-second duration
             - Make the conversation flow naturally with quick back-and-forth exchanges
             - Include natural reactions and short responses like "Really?", "No way!", "That's awesome!"
-            - Break longer thoughts into multiple shorter messages from the same person`
+            - Break longer thoughts into multiple shorter messages from the same person
+            
+            Example of expected format:
+            [
+              {"content": "Hey, what's up?", "isUser": true, "timestamp": "2:30 PM"},
+              {"content": "Not much, just got back from lunch", "isUser": false, "timestamp": "2:31 PM"}
+            ]`
           },
           {
             role: 'user',
@@ -64,7 +74,18 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const messages = JSON.parse(data.choices[0].message.content);
+    console.log('OpenAI response:', data.choices[0].message.content);
+
+    let messages;
+    try {
+      messages = JSON.parse(data.choices[0].message.content);
+      if (!Array.isArray(messages)) {
+        throw new Error('Response is not an array');
+      }
+    } catch (error) {
+      console.error('Failed to parse OpenAI response:', error);
+      throw new Error('Invalid conversation format received from OpenAI');
+    }
 
     // Generate audio for each message with better error handling
     console.log('Generating audio for messages...');
