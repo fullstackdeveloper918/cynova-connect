@@ -15,14 +15,17 @@ export const PreviewSection = ({ content, selectedResolution, previewUrl }: Prev
     youtube: {
       aspectRatio: "16/9",
       maxHeight: "500px",
+      width: "100%",
     },
     shorts: {
       aspectRatio: "9/16",
-      maxHeight: "600px",
+      maxHeight: "800px",
+      width: "450px", // This ensures proper mobile aspect ratio
     },
     tiktok: {
       aspectRatio: "9/16",
-      maxHeight: "600px",
+      maxHeight: "800px",
+      width: "450px", // This ensures proper mobile aspect ratio
     },
   };
 
@@ -57,26 +60,29 @@ export const PreviewSection = ({ content, selectedResolution, previewUrl }: Prev
         )}
 
         {/* Video Preview Container */}
-        <div 
-          className="relative w-full bg-black rounded-lg overflow-hidden mx-auto"
-          style={{
-            aspectRatio: currentStyle.aspectRatio,
-            maxHeight: currentStyle.maxHeight,
-          }}
-        >
-          {previewUrl ? (
-            <video
-              src={previewUrl}
-              controls
-              className="absolute inset-0 w-full h-full object-contain"
-            >
-              Your browser does not support the video tag.
-            </video>
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-white/50">
-              Video preview will appear here
-            </div>
-          )}
+        <div className="flex justify-center">
+          <div 
+            className="relative bg-black rounded-lg overflow-hidden"
+            style={{
+              aspectRatio: currentStyle.aspectRatio,
+              maxHeight: currentStyle.maxHeight,
+              width: currentStyle.width,
+            }}
+          >
+            {previewUrl ? (
+              <video
+                src={previewUrl}
+                controls
+                className="absolute inset-0 w-full h-full object-contain"
+              >
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-white/50">
+                Video preview will appear here
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Resolution Info */}
