@@ -1,4 +1,6 @@
 export async function generateConversation(openAiKey: string, topic: string, prompt: string, targetMessageCount: number, duration: number): Promise<any> {
+  console.log('Generating conversation with parameters:', { topic, targetMessageCount, duration });
+  
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -6,33 +8,43 @@ export async function generateConversation(openAiKey: string, topic: string, pro
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4',
       messages: [
         {
           role: 'system',
-          content: `You are a JSON generator that creates iMessage conversations. You must ONLY return a valid JSON array.
-          
-          Required format:
-          [
-            {
-              "content": "message text here",
-              "isUser": true,
-              "timestamp": "2:30 PM"
-            }
-          ]
-          
-          Rules:
-          1. Return ONLY the JSON array, no other text
-          2. Generate exactly ${targetMessageCount} messages
-          3. Keep messages under 10 words
-          4. Alternate isUser between true/false
-          5. Space timestamps over ${duration} seconds
-          6. Include quick reactions like "Really?", "No way!"
-          7. NEVER apologize or explain - just return the JSON`
+          content: `You are a JSON generator that creates realistic iMessage conversations. Generate a conversation with exactly ${targetMessageCount} messages that spans ${duration} seconds.
+
+Format each message as:
+{
+  "content": "message text",
+  "isUser": boolean,
+  "timestamp": "HH:MM AM/PM"
+}
+
+Requirements:
+- Return a valid JSON array of messages
+- Keep messages natural and conversational
+- Alternate between isUser true/false
+- Space timestamps evenly across the duration
+- Keep messages under 10 words for better audio generation
+
+Example valid response:
+[
+  {
+    "content": "Hey, what's up?",
+    "isUser": true,
+    "timestamp": "2:30 PM"
+  },
+  {
+    "content": "Just finished work, you?",
+    "isUser": false,
+    "timestamp": "2:31 PM"
+  }
+]`
         },
         {
           role: 'user',
-          content: `Topic: ${topic}. Context: ${prompt}`
+          content: `Topic: ${topic}. Additional context: ${prompt}`
         }
       ],
       temperature: 0.7,
@@ -49,5 +61,26 @@ export async function generateConversation(openAiKey: string, topic: string, pro
   const data = await response.json();
   console.log('Raw OpenAI response:', data.choices[0].message.content);
   
-  return data;
+  try {
+    // Parse and validate the response
+    const content = JSON.parse(data.choices[0].message.content);
+    const messages = content.messages || content;
+    
+    if (!Array.isArray(messages)) {
+      throw new Error('Response is not an array');
+    }
+    
+    messages.forEach((msg: any, index: number) => {
+      if (!msg.content || typeof msg.isUser !== 'boolean' || !msg.timestamp) {
+        throw new Error(`Invalid message format at index ${index}`);
+      }
+    });
+    
+    console.log(`Successfully parsed ${messages.length} messages`);
+    return data;
+  } catch (error) {
+    console.error('Failed to parse OpenAI response:', error);
+    console.error('Raw response content:', data.choices[0].message.content);
+    throw new Error(`Invalid conversation format: ${error.message}`);
+  }
 }
