@@ -10,8 +10,22 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
   const [currentCaption, setCurrentCaption] = useState("");
   const [isVisible, setIsVisible] = useState(false);
 
+  // Split content into title and comments
+  const [title, ...comments] = captions.split('\n\n');
+  const commentsText = comments.join('\n\n');
+
   // Split into smaller chunks of 4-5 words
-  const chunks = captions
+  const titleChunks = title
+    .trim()
+    .split(/\s+/)
+    .reduce((acc: string[], word, i) => {
+      const chunkIndex = Math.floor(i / 4);
+      if (!acc[chunkIndex]) acc[chunkIndex] = word;
+      else acc[chunkIndex] += ` ${word}`;
+      return acc;
+    }, []);
+
+  const commentChunks = commentsText
     .split(/[.!?]+/)
     .flatMap(sentence => 
       sentence
@@ -26,8 +40,11 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     )
     .filter(Boolean);
 
+  // Combine all chunks with proper timing allocation
+  const allChunks = [...titleChunks, ...commentChunks];
+
   useEffect(() => {
-    if (!audioRef.current || chunks.length === 0) {
+    if (!audioRef.current || allChunks.length === 0) {
       console.log('No audio reference or chunks available');
       return;
     }
@@ -37,17 +54,18 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     let lastUpdateTime = 0;
 
     const updateCaption = (index: number) => {
-      if (index >= 0 && index < chunks.length && index !== currentIndex) {
+      if (index >= 0 && index < allChunks.length && index !== currentIndex) {
         console.log('Updating caption:', {
           index,
           currentTime: audio.currentTime,
-          chunk: chunks[index],
-          totalChunks: chunks.length,
-          audioDuration: audio.duration
+          chunk: allChunks[index],
+          totalChunks: allChunks.length,
+          audioDuration: audio.duration,
+          isTitle: index < titleChunks.length
         });
         
         currentIndex = index;
-        setCurrentCaption(chunks[index]);
+        setCurrentCaption(allChunks[index]);
         setIsVisible(true);
       }
     };
@@ -56,12 +74,26 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       if (!audio.duration) return;
 
       const now = Date.now();
-      if (now - lastUpdateTime < 50) return; // Reduced throttle time for more frequent updates
+      if (now - lastUpdateTime < 50) return; // Throttle updates
       lastUpdateTime = now;
 
-      // Calculate chunk duration based on total audio duration
-      const chunkDuration = audio.duration / chunks.length;
-      const currentChunkIndex = Math.floor(audio.currentTime / chunkDuration);
+      // Allocate ~30% of total duration to title, rest to comments
+      const titleDuration = audio.duration * 0.3;
+      const commentsDuration = audio.duration * 0.7;
+      
+      // Calculate current position
+      const currentTime = audio.currentTime;
+      let currentChunkIndex;
+      
+      if (currentTime < titleDuration) {
+        // We're in the title section
+        const titleProgress = currentTime / titleDuration;
+        currentChunkIndex = Math.floor(titleProgress * titleChunks.length);
+      } else {
+        // We're in the comments section
+        const commentProgress = (currentTime - titleDuration) / commentsDuration;
+        currentChunkIndex = titleChunks.length + Math.floor(commentProgress * commentChunks.length);
+      }
       
       updateCaption(currentChunkIndex);
     };
@@ -94,7 +126,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("ended", handleEnded);
     };
-  }, [audioRef, chunks]);
+  }, [audioRef, allChunks, titleChunks.length]);
 
   return (
     <div className="absolute inset-0 flex items-center justify-center">
