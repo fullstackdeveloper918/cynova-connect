@@ -4,10 +4,7 @@ import { toast } from "@/components/ui/use-toast";
 
 interface ExportState {
   script: string;
-  previewUrl: {
-    videoUrl: string;
-    audioUrl: string;
-  } | null;
+  frames: string[];
 }
 
 export const useVideoExport = () => {
@@ -15,9 +12,9 @@ export const useVideoExport = () => {
 
   const exportVideo = async ({
     script,
-    previewUrl,
+    frames,
   }: ExportState) => {
-    if (!script || !previewUrl?.videoUrl) {
+    if (!script || !frames.length) {
       toast({
         title: "No preview available",
         description: "Please generate a preview before exporting.",
@@ -29,15 +26,19 @@ export const useVideoExport = () => {
     setIsExporting(true);
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
       // Create a project first
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .insert({
+          user_id: user.id,
           title: "ChatGPT Generated Video",
           description: script.substring(0, 100) + "...",
           type: "chatgpt_video",
-          thumbnail_url: previewUrl.videoUrl,
-          video_url: previewUrl.videoUrl,
+          thumbnail_url: frames[0],
+          video_url: frames[0],
           status: 'completed'
         })
         .select()
@@ -52,11 +53,12 @@ export const useVideoExport = () => {
       const { data: exportData, error: exportError } = await supabase
         .from('exports')
         .insert({
+          user_id: user.id,
           project_id: projectData.id,
           title: "ChatGPT Generated Video",
           description: script.substring(0, 100) + "...",
-          file_url: previewUrl.videoUrl,
-          thumbnail_url: previewUrl.videoUrl,
+          file_url: frames[0],
+          thumbnail_url: frames[0],
           file_type: 'video/mp4',
           status: 'completed'
         })
