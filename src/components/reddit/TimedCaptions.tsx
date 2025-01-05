@@ -39,6 +39,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     setIsVisible(true);
 
     const audio = audioRef.current;
+    let lastIndex = -1;  // Track last displayed index to prevent duplicate updates
     
     const handleTimeUpdate = () => {
       if (!audio.duration) return;
@@ -48,7 +49,8 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       const currentTime = audio.currentTime;
       const index = Math.floor(currentTime / timePerChunk);
       
-      if (index !== captionIndex && index < chunks.length) {
+      // Only update if index has changed and is valid
+      if (index !== lastIndex && index >= 0 && index < chunks.length) {
         console.log('Updating caption:', {
           index,
           chunk: chunks[index],
@@ -56,6 +58,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
           timePerChunk,
           audioDuration: audio.duration
         });
+        lastIndex = index;
         setCaptionIndex(index);
         setCurrentCaption(chunks[index]);
         setIsVisible(true);
@@ -69,14 +72,13 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
 
     const handlePause = () => {
       console.log('Audio paused');
-      // Keep captions visible when paused
       setIsVisible(true);
     };
 
     const handleEnded = () => {
       console.log('Audio ended');
-      // Keep last caption visible
       setIsVisible(true);
+      lastIndex = -1; // Reset last index when audio ends
     };
 
     audio.addEventListener("timeupdate", handleTimeUpdate);
@@ -90,7 +92,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("ended", handleEnded);
     };
-  }, [audioRef, chunks, captionIndex]);
+  }, [audioRef, chunks]);
 
   if (!currentCaption) {
     return null;
