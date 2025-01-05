@@ -31,11 +31,11 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a creative assistant that generates engaging "Would You Rather" questions. Generate ${questionCount} pairs of interesting, thought-provoking options that will spark discussion. Your response should be a valid JSON array of objects, each with optionA and optionB properties. Do not include any markdown formatting or additional text.`
+            content: `Generate exactly ${questionCount} "Would You Rather" questions. Each question should have two options. Return ONLY a JSON array of objects with 'optionA' and 'optionB' properties. No additional text or formatting.`
           },
           {
             role: 'user',
-            content: `Generate ${questionCount} would you rather questions. Return ONLY a JSON array.`
+            content: `Generate ${questionCount} would you rather questions.`
           }
         ],
         temperature: 0.7,
@@ -43,12 +43,17 @@ serve(async (req) => {
     });
 
     const data = await response.json();
+    
+    if (!data.choices?.[0]?.message?.content) {
+      console.error('Unexpected OpenAI response structure:', data);
+      throw new Error('Invalid response from OpenAI');
+    }
+
     const content = data.choices[0].message.content;
-    
     console.log('Raw OpenAI response:', content);
-    
+
     try {
-      // Clean the content string by removing any markdown formatting
+      // Remove any potential markdown or extra formatting
       const cleanContent = content.replace(/```json\n|\n```|```/g, '').trim();
       console.log('Cleaned content:', cleanContent);
       
@@ -58,11 +63,11 @@ serve(async (req) => {
         console.error('Response is not an array:', questions);
         throw new Error('Response is not an array');
       }
-      
+
       // Validate question format
       questions.forEach((q, index) => {
         if (!q.optionA || !q.optionB) {
-          console.error('Invalid question format:', q);
+          console.error(`Invalid question format at index ${index}:`, q);
           throw new Error(`Question ${index + 1} is missing required options`);
         }
       });
