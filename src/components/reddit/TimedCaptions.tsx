@@ -44,34 +44,20 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
 
   useEffect(() => {
     if (!audioRef.current) {
-      console.log('No audio reference available');
       return;
     }
 
     const audio = audioRef.current;
-    let currentIndex = -1;
     let lastUpdateTime = 0;
 
     const updateCaption = (index: number, isTitleSection: boolean) => {
-      if (index >= 0 && (
-        (isTitleSection && index < titleChunks.length) || 
-        (!isTitleSection && index < commentChunks.length)
-      )) {
-        const chunk = isTitleSection ? titleChunks[index] : commentChunks[index];
-        
-        console.log('Updating caption:', {
-          index,
-          currentTime: audio.currentTime,
-          chunk,
-          isTitleSection,
-          titleChunksLength: titleChunks.length,
-          commentChunksLength: commentChunks.length
-        });
-        
+      const chunks = isTitleSection ? titleChunks : commentChunks;
+      
+      if (index >= 0 && index < chunks.length) {
+        const chunk = chunks[index];
         setCurrentCaption(chunk);
         setIsVisible(true);
         setIsShowingTitle(isTitleSection);
-        currentIndex = index;
       }
     };
 
@@ -95,20 +81,16 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     };
 
     const handlePlay = () => {
-      console.log('Audio started playing');
       const isTitleAudio = audio.src.includes('title');
       updateCaption(0, isTitleAudio);
       setIsVisible(true);
     };
 
     const handlePause = () => {
-      console.log('Audio paused');
       setIsVisible(true);
     };
 
     const handleEnded = () => {
-      console.log('Audio ended');
-      currentIndex = -1;
       setIsVisible(false);
     };
 
