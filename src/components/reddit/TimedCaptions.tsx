@@ -8,7 +8,6 @@ interface TimedCaptionsProps {
 
 export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCaptionsProps) => {
   const [currentCaption, setCurrentCaption] = useState("");
-  const [captionIndex, setCaptionIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
 
   // Split into smaller chunks of 4-5 words
@@ -29,38 +28,32 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
 
   useEffect(() => {
     if (!audioRef.current || chunks.length === 0) {
-      console.log('No audio reference or chunks available for captions');
+      console.log('No audio reference or chunks available');
       return;
     }
 
-    // Reset when audio source changes
-    setCaptionIndex(0);
-    setCurrentCaption(chunks[0]);
-    setIsVisible(true);
-
     const audio = audioRef.current;
-    let lastIndex = -1;  // Track last displayed index to prevent duplicate updates
-    
+    let currentIndex = -1;
+
     const handleTimeUpdate = () => {
       if (!audio.duration) return;
-      
-      // Calculate time per chunk based on audio duration
+
+      // Calculate which chunk should be showing based on current time
       const timePerChunk = audio.duration / chunks.length;
-      const currentTime = audio.currentTime;
-      const index = Math.floor(currentTime / timePerChunk);
-      
-      // Only update if index has changed and is valid
-      if (index !== lastIndex && index >= 0 && index < chunks.length) {
+      const newIndex = Math.floor(audio.currentTime / timePerChunk);
+
+      // Only update if we're moving to a new chunk and it's valid
+      if (newIndex !== currentIndex && newIndex >= 0 && newIndex < chunks.length) {
         console.log('Updating caption:', {
-          index,
-          chunk: chunks[index],
-          currentTime,
+          newIndex,
+          currentTime: audio.currentTime,
+          chunk: chunks[newIndex],
           timePerChunk,
-          audioDuration: audio.duration
+          totalChunks: chunks.length
         });
-        lastIndex = index;
-        setCaptionIndex(index);
-        setCurrentCaption(chunks[index]);
+        
+        currentIndex = newIndex;
+        setCurrentCaption(chunks[newIndex]);
         setIsVisible(true);
       }
     };
@@ -77,22 +70,24 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
 
     const handleEnded = () => {
       console.log('Audio ended');
-      setIsVisible(true);
-      lastIndex = -1; // Reset last index when audio ends
+      currentIndex = -1; // Reset for next playback
+      setIsVisible(false);
     };
 
+    // Add all event listeners
     audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("play", handlePlay);
     audio.addEventListener("pause", handlePause);
     audio.addEventListener("ended", handleEnded);
-    
+
+    // Cleanup function
     return () => {
       audio.removeEventListener("timeupdate", handleTimeUpdate);
       audio.removeEventListener("play", handlePlay);
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("ended", handleEnded);
     };
-  }, [audioRef, chunks]);
+  }, [audioRef, chunks]); // Only re-run if audio ref or chunks change
 
   if (!currentCaption) {
     return null;
