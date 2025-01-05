@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { VideoUploader } from "./VideoUploader";
 import { VideoPreview } from "./VideoPreview";
 import { SplitControls } from "./SplitControls";
@@ -10,6 +10,8 @@ interface VideoSegment {
   start: number;
   end: number;
   name: string;
+  status?: string;
+  file_url?: string;
 }
 
 export const VideoSplitter = () => {
@@ -19,6 +21,45 @@ export const VideoSplitter = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [tempVideoId, setTempVideoId] = useState<string | null>(null);
+
+  // Add useEffect to poll for segment updates
+  useEffect(() => {
+    if (!tempVideoId) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const { data: updatedSegments, error } = await supabase
+          .from('video_segments')
+          .select('*')
+          .eq('temp_video_id', tempVideoId);
+
+        if (error) throw error;
+
+        if (updatedSegments) {
+          setSegments(updatedSegments.map(s => ({
+            name: s.name,
+            start: Number(s.start_time),
+            end: Number(s.end_time),
+            status: s.status,
+            file_url: s.file_url
+          })));
+
+          // Check if all segments are completed or failed
+          const allDone = updatedSegments.every(s => 
+            s.status === 'completed' || s.status === 'failed'
+          );
+
+          if (allDone) {
+            clearInterval(pollInterval);
+          }
+        }
+      } catch (error) {
+        console.error('Error polling segments:', error);
+      }
+    }, 2000); // Poll every 2 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [tempVideoId]);
 
   const handleVideoUpload = async (file: File) => {
     try {
@@ -65,7 +106,8 @@ export const VideoSplitter = () => {
   };
 
   const handleAddSegment = (start: number, end: number, name: string) => {
-    setSegments([...segments, { start, end, name }]);
+    const newSegment = { start, end, name, status: 'pending' };
+    setSegments([...segments, newSegment]);
     toast({
       title: "Segment added",
       description: `Added segment "${name}" from ${start}s to ${end}s`,
@@ -96,24 +138,9 @@ export const VideoSplitter = () => {
       if (error) throw error;
 
       toast({
-        title: "Video split successfully",
-        description: "Your video segments are being processed",
+        title: "Video split started",
+        description: "Your video segments are being processed. You'll see updates in real-time.",
       });
-
-      // Fetch the processed segments
-      const { data: processedSegments, error: fetchError } = await supabase
-        .from('video_segments')
-        .select('*')
-        .eq('temp_video_id', tempVideoId);
-
-      if (fetchError) throw fetchError;
-
-      // Update the UI with processed segments
-      setSegments(processedSegments.map(s => ({
-        name: s.name,
-        start: s.start_time,
-        end: s.end_time
-      })));
 
     } catch (error) {
       console.error('Split error:', error);
