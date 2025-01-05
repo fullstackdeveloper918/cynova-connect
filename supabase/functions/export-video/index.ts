@@ -17,7 +17,12 @@ serve(async (req) => {
   try {
     console.log('Starting export-video function...');
     const { messages, title, description, type, audioUrls } = await req.json();
-    console.log('Received request:', { messagesCount: messages.length, title, type });
+    console.log('Received request:', { 
+      messagesCount: messages.length, 
+      title, 
+      type,
+      audioUrlsCount: audioUrls?.length 
+    });
 
     const supabaseAdmin = initSupabaseAdmin();
 
@@ -31,11 +36,12 @@ serve(async (req) => {
       throw new Error('Invalid authorization');
     }
 
-    // Generate HTML for the iMessage conversation
-    const conversationHtml = messages.map((msg: any) => `
+    // Generate HTML for the iMessage conversation with audio elements
+    const conversationHtml = messages.map((msg: any, index: number) => `
       <div class="message ${msg.isUser ? 'user' : 'friend'}">
         <div class="bubble">
           ${msg.content}
+          ${msg.audioUrl ? `<audio src="${msg.audioUrl}" autoplay></audio>` : ''}
         </div>
         <div class="timestamp">${new Date().toLocaleTimeString()}</div>
       </div>
@@ -66,7 +72,7 @@ serve(async (req) => {
           width: 1080,
           height: 1920,
           fps: 30,
-          duration: 10,
+          duration: messages.length * 2, // Adjust duration based on message count
           quality: "high",
           format: "mp4",
         },

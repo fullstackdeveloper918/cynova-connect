@@ -43,28 +43,31 @@ export const ExportsGrid = () => {
 
   const handleDownload = async (exportItem: Export) => {
     try {
+      console.log('Starting download for:', exportItem);
       const publicUrl = getPublicUrl(exportItem.file_url);
       if (!publicUrl) {
         throw new Error('Could not generate download URL');
       }
 
+      console.log('Generated public URL:', publicUrl);
+      
       // Create a temporary anchor element to trigger the download
       const link = document.createElement('a');
       link.href = publicUrl;
-      link.download = exportItem.title;
+      link.download = `${exportItem.title}.mp4`; // Ensure .mp4 extension
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
       toast({
         title: "Download started",
-        description: "Your file will be downloaded shortly.",
+        description: "Your video will be downloaded shortly.",
       });
     } catch (error) {
       console.error('Download error:', error);
       toast({
         title: "Download failed",
-        description: "There was an error downloading your file. Please try again.",
+        description: "There was an error downloading your video. Please try again.",
         variant: "destructive",
       });
     }
@@ -102,12 +105,12 @@ export const ExportsGrid = () => {
           </p>
         </div>
         <span className="text-muted-foreground bg-accent/50 px-3 py-1 rounded-full">
-          {exports.length} exports
+          {exports?.length} exports
         </span>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {exports.map((exportItem, index) => (
+        {exports?.map((exportItem, index) => (
           <motion.div
             key={exportItem.id}
             initial={{ opacity: 0, y: 20 }}
