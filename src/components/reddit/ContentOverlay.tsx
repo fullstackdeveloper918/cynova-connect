@@ -11,6 +11,8 @@ interface ContentOverlayProps {
 }
 
 export const ContentOverlay = ({ title, comments, audioRef, captionStyle }: ContentOverlayProps) => {
+  console.log('Rendering ContentOverlay with:', { title, comments, captionStyle });
+  
   return (
     <div className="absolute inset-0 bg-black/40">
       {/* Title Section */}

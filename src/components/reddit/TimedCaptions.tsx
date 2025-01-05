@@ -15,7 +15,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
 
   useEffect(() => {
     if (!audioRef.current) {
-      console.log('No audio reference available');
+      console.log('No audio reference available for captions');
       return;
     }
 
@@ -41,7 +41,8 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
           index,
           sentence: sentences[index],
           currentTime,
-          timePerSentence
+          timePerSentence,
+          audioDuration: audio.duration
         });
         setCaptionIndex(index);
         setCurrentCaption(sentences[index]);
@@ -49,7 +50,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     };
 
     const handlePlay = () => {
-      console.log('Audio started playing');
+      console.log('Audio started playing, setting initial caption');
       // Set initial caption
       if (sentences.length > 0) {
         setCurrentCaption(sentences[0]);

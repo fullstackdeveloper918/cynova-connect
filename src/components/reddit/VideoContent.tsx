@@ -11,46 +11,34 @@ export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentPro
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
-    if (videoRef.current && audioRef.current && previewUrl) {
-      console.log('Setting up media elements with:', { previewUrl, audioUrl });
+    if (audioRef.current && audioUrl) {
+      console.log('Setting up audio playback with:', { audioUrl });
       
-      const video = videoRef.current;
       const audio = audioRef.current;
 
       // Reset when sources change
-      video.currentTime = 0;
       audio.currentTime = 0;
       setIsPlaying(false);
 
       const startPlayback = async () => {
         try {
-          // Set audio source if provided
-          if (audioUrl) {
-            audio.src = audioUrl;
-          }
+          // Set audio source
+          audio.src = audioUrl;
+          console.log('Audio source set:', audioUrl);
 
-          // Wait for both video and audio to load
-          await Promise.all([
-            new Promise((resolve) => {
-              video.addEventListener('loadeddata', resolve, { once: true });
-            }),
-            audioUrl
-              ? new Promise((resolve) => {
-                  audio.addEventListener('loadeddata', resolve, { once: true });
-                })
-              : Promise.resolve(),
-          ]);
+          // Wait for audio to load
+          await new Promise((resolve) => {
+            audio.addEventListener('loadeddata', resolve, { once: true });
+          });
 
-          console.log('Both video and audio loaded, starting playback');
+          console.log('Audio loaded, starting playback');
           setIsPlaying(true);
           
           // Start playback
-          await Promise.all([
-            video.play(),
-            audioUrl ? audio.play() : Promise.resolve()
-          ]);
+          await audio.play();
+          console.log('Audio playback started successfully');
         } catch (error) {
-          console.error('Playback error:', error);
+          console.error('Audio playback error:', error);
           setIsPlaying(false);
         }
       };
@@ -58,50 +46,28 @@ export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentPro
       // Start playback immediately
       startPlayback();
 
-      // Sync audio with video
-      const handleTimeUpdate = () => {
-        if (Math.abs(video.currentTime - audio.currentTime) > 0.1) {
-          console.log('Syncing audio time:', video.currentTime);
-          audio.currentTime = video.currentTime;
-        }
-      };
-
-      // Handle video ending
+      // Handle audio ending
       const handleEnded = () => {
-        console.log('Video ended, restarting');
-        video.currentTime = 0;
-        if (audioUrl) audio.currentTime = 0;
+        console.log('Audio ended, restarting');
+        audio.currentTime = 0;
         startPlayback();
       };
 
-      video.addEventListener('timeupdate', handleTimeUpdate);
-      video.addEventListener('ended', handleEnded);
+      audio.addEventListener('ended', handleEnded);
       
       return () => {
-        video.removeEventListener('timeupdate', handleTimeUpdate);
-        video.removeEventListener('ended', handleEnded);
+        audio.removeEventListener('ended', handleEnded);
         setIsPlaying(false);
       };
     }
-  }, [previewUrl, audioUrl, audioRef]);
+  }, [audioUrl, audioRef]);
 
   return (
     <>
-      <video
-        ref={videoRef}
-        src={previewUrl}
-        loop
-        playsInline
-        muted={!audioUrl}
-        className="w-full h-full object-cover"
-      >
-        Your browser does not support the video tag.
-      </video>
       {audioUrl && (
         <audio
           ref={audioRef}
           src={audioUrl}
-          loop
           className="hidden"
         />
       )}
