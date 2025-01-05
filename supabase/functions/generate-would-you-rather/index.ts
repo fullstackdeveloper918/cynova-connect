@@ -1,7 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { generateAudio } from "./audioService.ts";
-import { corsHeaders } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { HfInference } from 'https://esm.sh/@huggingface/inference@2.3.2'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -20,41 +24,23 @@ serve(async (req) => {
     // Generate script for narration
     const script = `Would you rather ${optionA}? Or would you rather ${optionB}? Comment below with your choice!`;
 
-    // Generate images for both options using Stability AI
-    console.log('Generating images using Stability AI...');
+    // Generate images using Hugging Face's FLUX model
+    console.log('Generating images using Hugging Face FLUX model...');
     
     const generateImage = async (prompt: string) => {
-      const response = await fetch('https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get('STABILITY_API_KEY')}`,
-        },
-        body: JSON.stringify({
-          text_prompts: [
-            {
-              text: `Create a cinematic, photorealistic image that captures this scene: "${prompt}". Make it dramatic and visually striking, suitable for a social media video. Vertical format, high detail, dramatic lighting.`,
-              weight: 1
-            }
-          ],
-          cfg_scale: 7,
-          height: 1344,
-          width: 768, // Using supported dimensions that maintain a vertical format (768x1344)
-          samples: 1,
-          steps: 50,
-          style_preset: "cinematic"
-        }),
-      });
+      const hf = new HfInference(Deno.env.get('HUGGING_FACE_ACCESS_TOKEN'))
+      
+      console.log('Generating image for prompt:', prompt);
+      
+      const image = await hf.textToImage({
+        inputs: `Create a cinematic, photorealistic image that captures this scene: "${prompt}". Make it dramatic and visually striking, suitable for a social media video. Vertical format, high detail, dramatic lighting.`,
+        model: 'black-forest-labs/FLUX.1-schnell',
+      })
 
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('Stability AI API Error:', error);
-        throw new Error(`Stability AI API error: ${error.message || 'Unknown error'}`);
-      }
-
-      const result = await response.json();
-      return `data:image/png;base64,${result.artifacts[0].base64}`;
+      // Convert blob to base64
+      const arrayBuffer = await image.arrayBuffer()
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+      return `data:image/png;base64,${base64}`;
     };
 
     // Generate images in parallel
@@ -72,7 +58,25 @@ serve(async (req) => {
     }
 
     console.log('Generating audio narration...');
-    const audioResponse = await generateAudio(script, voiceId, elevenLabsKey);
+    const audioResponse = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
+      {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': elevenLabsKey,
+        },
+        body: JSON.stringify({
+          text: script,
+          model_id: "eleven_turbo_v2",
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.5,
+          },
+        }),
+      }
+    );
     
     if (!audioResponse.ok) {
       const error = await audioResponse.text();
