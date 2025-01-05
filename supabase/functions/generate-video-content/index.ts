@@ -8,8 +8,10 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, style = "professional" } = await req.json();
+    const { prompt, style = "professional", minWords = 100, targetDuration = 30 } = await req.json();
     console.log('Generating video content for prompt:', prompt);
+    console.log('Target duration:', targetDuration, 'seconds');
+    console.log('Minimum words:', minWords);
 
     const openAiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAiKey) {
@@ -29,15 +31,21 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `Create a very short test script (1-2 sentences) for video testing purposes.`
+            content: `You are a professional video script writer. Create engaging, detailed scripts that take approximately ${targetDuration} seconds to narrate at a natural pace (approximately 150 words per minute). Include vivid visual descriptions that can be used to generate relevant images.`
           },
           {
             role: 'user',
-            content: `Write a minimal test script about: ${prompt}. Keep it under 10 seconds when read aloud.`
+            content: `Write a detailed, visually descriptive script about: ${prompt}. 
+            The script should:
+            - Be at least ${minWords} words
+            - Take ${targetDuration} seconds to narrate naturally
+            - Include clear visual scenes that can be illustrated
+            - Be engaging and ${style}
+            - Focus on descriptive, visual language`
           }
         ],
         temperature: 0.7,
-        max_tokens: 50, // Minimal tokens for testing
+        max_tokens: 500, // Increased for longer scripts
       }),
     });
 
@@ -50,6 +58,7 @@ serve(async (req) => {
     const data = await response.json();
     const script = data.choices[0].message.content.trim();
     console.log('Generated script:', script);
+    console.log('Script word count:', script.split(/\s+/).length);
 
     return new Response(
       JSON.stringify({ script }),

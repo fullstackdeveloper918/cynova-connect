@@ -38,15 +38,21 @@ serve(async (req) => {
       const relevantSentences = sentences.slice(startIndex, endIndex).join('. ');
       
       // Enhanced prompt engineering for more relevant images
-      const prompt = `Create a cinematic vertical video frame (9:16 aspect ratio) that vividly illustrates: "${relevantSentences}". 
-      Requirements:
-      - Photorealistic, high-quality imagery
-      - Strong visual storytelling that directly relates to the text
-      - Clear focal point and dramatic composition
-      - Professional lighting and atmosphere
-      - Vertical composition optimized for social media
-      - Rich in detail but not cluttered
-      - Emotional impact that matches the narrative tone`;
+      const prompt = `Create a high-quality, photorealistic vertical video frame (9:16 aspect ratio) that captures this scene: "${relevantSentences}".
+
+      Key requirements:
+      - Hyper-realistic, cinematic quality imagery
+      - Vertical composition optimized for mobile viewing
+      - Strong visual storytelling that directly illustrates the text
+      - Professional lighting and dramatic atmosphere
+      - Clear subject focus and emotional impact
+      - Rich details that match the narrative
+      - Natural, believable scene composition
+      - Vibrant, lifelike colors
+      - Proper perspective and scale
+      - Seamless integration of all elements
+
+      The image should look like a professional photograph or film still, not artificial or generated.`;
       
       framePrompts.push(prompt);
     }
