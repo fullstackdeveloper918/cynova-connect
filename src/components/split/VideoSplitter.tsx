@@ -5,6 +5,8 @@ import { SplitControls } from "./SplitControls";
 import { VideoSegments } from "./VideoSegments";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useCredits } from "@/hooks/useCredits";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface VideoSegment {
   start: number;
@@ -21,8 +23,10 @@ export const VideoSplitter = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [tempVideoId, setTempVideoId] = useState<string | null>(null);
+  
+  const { credits, useCredit } = useCredits();
+  const { data: subscription } = useSubscription();
 
-  // Add useEffect to poll for segment updates
   useEffect(() => {
     if (!tempVideoId) return;
 
@@ -74,6 +78,17 @@ export const VideoSplitter = () => {
         return;
       }
 
+      // Check plan limits
+      const maxDuration = subscription?.plan_limits?.max_duration_minutes || 30;
+      if (file.size > maxDuration * 60 * 1024 * 1024) { // Rough estimate: 1MB per second
+        toast({
+          title: "Video too long",
+          description: `Your plan allows videos up to ${maxDuration} minutes`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       setVideoFile(file);
       
       const { data, error } = await supabase
@@ -117,13 +132,27 @@ export const VideoSplitter = () => {
   const handleSplitVideo = async () => {
     if (!videoFile || segments.length === 0 || !tempVideoId) return;
 
+    // Check if user has enough credits
+    const creditsNeeded = segments.length;
+    if (!credits || credits.credits_balance < creditsNeeded) {
+      toast({
+        title: "Insufficient credits",
+        description: `You need ${creditsNeeded} credits to split this video. You have ${credits?.credits_balance || 0} credits.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('Authentication required');
-      }
+      if (!user) throw new Error('Authentication required');
+
+      // Use credits
+      await useCredit.mutateAsync({
+        amount: creditsNeeded,
+        description: `Split video into ${segments.length} segments`
+      });
 
       const formData = new FormData();
       formData.append('video', videoFile);

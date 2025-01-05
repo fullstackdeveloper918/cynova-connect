@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      credit_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string
+          id: string
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description: string
+          id?: string
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string
+          id?: string
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       exports: {
         Row: {
           created_at: string | null
@@ -101,12 +128,57 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_questions: {
+        Row: {
+          correct_answer: string
+          created_at: string | null
+          id: string
+          options: Json | null
+          project_id: string
+          question: string
+          question_type: Database["public"]["Enums"]["quiz_question_type"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          correct_answer: string
+          created_at?: string | null
+          id?: string
+          options?: Json | null
+          project_id: string
+          question: string
+          question_type: Database["public"]["Enums"]["quiz_question_type"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          correct_answer?: string
+          created_at?: string | null
+          id?: string
+          options?: Json | null
+          project_id?: string
+          question?: string
+          question_type?: Database["public"]["Enums"]["quiz_question_type"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           created_at: string | null
           current_period_end: string | null
           current_period_start: string | null
           id: string
+          plan_limits: Json | null
           plan_name: string
           status: Database["public"]["Enums"]["subscription_status"] | null
           stripe_customer_id: string | null
@@ -119,6 +191,7 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
+          plan_limits?: Json | null
           plan_name: string
           status?: Database["public"]["Enums"]["subscription_status"] | null
           stripe_customer_id?: string | null
@@ -131,6 +204,7 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
+          plan_limits?: Json | null
           plan_name?: string
           status?: Database["public"]["Enums"]["subscription_status"] | null
           stripe_customer_id?: string | null
@@ -176,6 +250,33 @@ export type Database = {
           original_filename?: string
           status?: Database["public"]["Enums"]["video_processing_status"] | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_credits: {
+        Row: {
+          created_at: string | null
+          credits_balance: number
+          id: string
+          last_reset_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          credits_balance?: number
+          id?: string
+          last_reset_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          credits_balance?: number
+          id?: string
+          last_reset_at?: string | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -238,12 +339,54 @@ export type Database = {
           },
         ]
       }
+      would_you_rather_questions: {
+        Row: {
+          created_at: string | null
+          id: string
+          option_a: string
+          option_b: string
+          project_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          option_a: string
+          option_b: string
+          project_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          option_a?: string
+          option_b?: string
+          project_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "would_you_rather_questions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       cleanup_expired_videos: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      reset_monthly_credits: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
@@ -257,6 +400,7 @@ export type Database = {
         | "voiceover_video"
         | "would_you_rather"
         | "quiz_video"
+      quiz_question_type: "multiple_choice" | "true_false"
       segment_status: "pending" | "processing" | "completed" | "failed"
       subscription_status: "active" | "canceled" | "past_due"
       video_processing_status: "pending" | "processing" | "completed" | "failed"
