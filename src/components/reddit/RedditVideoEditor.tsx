@@ -64,8 +64,9 @@ export const RedditVideoEditor = () => {
       const durationInMinutes = parseInt(selectedDuration) / 60;
       const targetCommentCount = Math.max(1, Math.round(commentsPerMinute * durationInMinutes));
       
+      // Filter and format comments
       const comments = data[1].data.children
-        .filter((comment: any) => !comment.data.stickied)
+        .filter((comment: any) => !comment.data.stickied && comment.data.body)
         .slice(0, targetCommentCount)
         .map((comment: any) => comment.data.body)
         .join('\n\n');
@@ -112,7 +113,7 @@ export const RedditVideoEditor = () => {
 
       if (audioError) throw audioError;
 
-      setPreviewUrl("/stock/minecraft-gameplay.mp4");
+      setPreviewUrl(audioData.previewUrl.videoUrl);
       setAudioUrl(audioData.previewUrl.audioUrl);
       
       toast({
