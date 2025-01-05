@@ -14,6 +14,7 @@ import Exports from "@/pages/Exports";
 import ChatGPTVideo from "@/pages/ChatGPTVideo";
 import FakeTextVideo from "@/pages/FakeTextVideo";
 import RedditVideo from "@/pages/RedditVideo";
+import SplitVideo from "@/pages/SplitVideo";
 
 export const routes = [
   {
@@ -66,12 +67,7 @@ export const routes = [
   },
   {
     path: "/dashboard/split",
-    element: (
-      <PlaceholderPage
-        title="Split Videos"
-        description="Easily split and trim your videos with precision."
-      />
-    ),
+    element: <SplitVideo />,
   },
   {
     path: "/dashboard/voiceover",

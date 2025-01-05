@@ -140,12 +140,54 @@ export type Database = {
         }
         Relationships: []
       }
+      temp_videos: {
+        Row: {
+          created_at: string | null
+          deleted_at: string | null
+          duration: number | null
+          expires_at: string | null
+          file_size: number | null
+          file_url: string | null
+          id: string
+          original_filename: string
+          status: Database["public"]["Enums"]["video_processing_status"] | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          deleted_at?: string | null
+          duration?: number | null
+          expires_at?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          original_filename: string
+          status?: Database["public"]["Enums"]["video_processing_status"] | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          deleted_at?: string | null
+          duration?: number | null
+          expires_at?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          original_filename?: string
+          status?: Database["public"]["Enums"]["video_processing_status"] | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cleanup_expired_videos: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       project_type:
@@ -157,6 +199,7 @@ export type Database = {
         | "would_you_rather"
         | "quiz_video"
       subscription_status: "active" | "canceled" | "past_due"
+      video_processing_status: "pending" | "processing" | "completed" | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
