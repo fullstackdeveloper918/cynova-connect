@@ -1,5 +1,6 @@
 import { Video } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PreviewUrls {
   videoUrl: string;
@@ -32,12 +33,14 @@ export const VideoPreview = ({
     if (script && !frameUrls.length) {
       const generateFrames = async () => {
         try {
+          console.log('Generating frames for script:', script);
           const { data, error } = await supabase.functions.invoke("generate-video-frames", {
             body: { script }
           });
 
           if (error) throw error;
           if (data.frameUrls) {
+            console.log('Received frame URLs:', data.frameUrls);
             setFrameUrls(data.frameUrls);
           }
         } catch (error) {
