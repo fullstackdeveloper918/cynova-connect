@@ -12,7 +12,7 @@ export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentPro
 
   useEffect(() => {
     if (videoRef.current && audioRef.current && previewUrl) {
-      console.log('Setting up media elements...');
+      console.log('Setting up media elements with:', { previewUrl, audioUrl });
       
       const video = videoRef.current;
       const audio = audioRef.current;
@@ -20,30 +20,55 @@ export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentPro
       // Reset when sources change
       video.currentTime = 0;
       audio.currentTime = 0;
+      setIsPlaying(false);
 
       const startPlayback = async () => {
         try {
+          // Set audio source if provided
+          if (audioUrl) {
+            audio.src = audioUrl;
+          }
+
+          // Wait for both video and audio to load
+          await Promise.all([
+            new Promise((resolve) => {
+              video.addEventListener('loadeddata', resolve, { once: true });
+            }),
+            audioUrl
+              ? new Promise((resolve) => {
+                  audio.addEventListener('loadeddata', resolve, { once: true });
+                })
+              : Promise.resolve(),
+          ]);
+
+          console.log('Both video and audio loaded, starting playback');
           setIsPlaying(true);
+          
+          // Start playback
           await Promise.all([
             video.play(),
             audioUrl ? audio.play() : Promise.resolve()
           ]);
-          console.log('Playback started successfully');
         } catch (error) {
           console.error('Playback error:', error);
           setIsPlaying(false);
         }
       };
 
+      // Start playback immediately
+      startPlayback();
+
       // Sync audio with video
       const handleTimeUpdate = () => {
         if (Math.abs(video.currentTime - audio.currentTime) > 0.1) {
+          console.log('Syncing audio time:', video.currentTime);
           audio.currentTime = video.currentTime;
         }
       };
 
       // Handle video ending
       const handleEnded = () => {
+        console.log('Video ended, restarting');
         video.currentTime = 0;
         if (audioUrl) audio.currentTime = 0;
         startPlayback();
@@ -52,24 +77,6 @@ export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentPro
       video.addEventListener('timeupdate', handleTimeUpdate);
       video.addEventListener('ended', handleEnded);
       
-      // Start playback when both video and audio are loaded
-      let videoLoaded = false;
-      let audioLoaded = !audioUrl;
-
-      video.addEventListener('loadeddata', () => {
-        console.log('Video loaded');
-        videoLoaded = true;
-        if (audioLoaded) startPlayback();
-      });
-
-      if (audioUrl) {
-        audio.addEventListener('loadeddata', () => {
-          console.log('Audio loaded');
-          audioLoaded = true;
-          if (videoLoaded) startPlayback();
-        });
-      }
-
       return () => {
         video.removeEventListener('timeupdate', handleTimeUpdate);
         video.removeEventListener('ended', handleEnded);

@@ -14,7 +14,10 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
   const sentences = captions.split(/[.!?]+/).filter(Boolean).map(s => s.trim());
 
   useEffect(() => {
-    if (!audioRef.current) return;
+    if (!audioRef.current) {
+      console.log('No audio reference available');
+      return;
+    }
 
     // Reset when audio source changes
     setCaptionIndex(0);
@@ -23,23 +26,42 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     const audio = audioRef.current;
     
     const handleTimeUpdate = () => {
-      if (!audio.duration) return;
+      if (!audio.duration) {
+        console.log('Audio duration not available yet');
+        return;
+      }
       
+      // Calculate time per sentence based on audio duration
       const timePerSentence = audio.duration / sentences.length;
       const currentTime = audio.currentTime;
       const index = Math.floor(currentTime / timePerSentence);
       
       if (index !== captionIndex && index < sentences.length) {
-        console.log('Updating caption to:', sentences[index]);
+        console.log('Updating caption:', {
+          index,
+          sentence: sentences[index],
+          currentTime,
+          timePerSentence
+        });
         setCaptionIndex(index);
         setCurrentCaption(sentences[index]);
       }
     };
 
+    const handlePlay = () => {
+      console.log('Audio started playing');
+      // Set initial caption
+      if (sentences.length > 0) {
+        setCurrentCaption(sentences[0]);
+      }
+    };
+
     audio.addEventListener("timeupdate", handleTimeUpdate);
+    audio.addEventListener("play", handlePlay);
     
     return () => {
       audio.removeEventListener("timeupdate", handleTimeUpdate);
+      audio.removeEventListener("play", handlePlay);
     };
   }, [audioRef, sentences, captionIndex]);
 

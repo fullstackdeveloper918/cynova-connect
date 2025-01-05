@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { generateAudio } from "./audioService.ts";
 import { corsHeaders } from "../_shared/cors.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
 serve(async (req) => {
   // Handle CORS
@@ -72,15 +71,18 @@ serve(async (req) => {
       .from('exports')
       .getPublicUrl(audioFileName);
 
-    console.log('Audio uploaded successfully, returning preview URLs...');
+    console.log('Audio uploaded successfully:', audioUrl);
 
-    // Return the URLs
+    // For now, we're using a template video. In a full implementation,
+    // you might want to generate or select a specific video based on the content
+    const videoUrl = "/stock/minecraft-gameplay.mp4";
+
     return new Response(
       JSON.stringify({
         success: true,
         previewUrl: {
-          videoUrl: "/stock/minecraft-gameplay.mp4", // Using template video
-          audioUrl: audioUrl
+          videoUrl,
+          audioUrl
         }
       }),
       { 
