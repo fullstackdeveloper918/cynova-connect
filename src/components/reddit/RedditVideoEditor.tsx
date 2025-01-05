@@ -17,9 +17,14 @@ export const RedditVideoEditor = () => {
   const [selectedResolution, setSelectedResolution] = useState<VideoResolution>("youtube");
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState("");
-  const [titleVoice, setTitleVoice] = useState("EXAVITQu4vr4xnSDxMaL"); // Sarah for questions
-  const [commentVoice, setCommentVoice] = useState("onwK4e9ZLuTAKqWW03F9"); // Daniel for answers
+  const [titleVoice, setTitleVoice] = useState("EXAVITQu4vr4xnSDxMaL");
+  const [commentVoice, setCommentVoice] = useState("onwK4e9ZLuTAKqWW03F9");
   const { toast } = useToast();
+
+  const extractRedditPostId = (url: string) => {
+    const matches = url.match(/comments\/([a-zA-Z0-9]+)/);
+    return matches ? matches[1] : null;
+  };
 
   const handleFetch = async () => {
     if (!redditUrl) {
@@ -31,16 +36,40 @@ export const RedditVideoEditor = () => {
       return;
     }
 
+    const postId = extractRedditPostId(redditUrl);
+    if (!postId) {
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid Reddit post URL",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsGenerating(true);
     try {
-      // TODO: Implement Reddit content fetching
-      const mockContent = "This is a mock Reddit post content for testing purposes.";
-      setContent(mockContent);
+      const response = await fetch(`https://www.reddit.com/comments/${postId}.json`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch Reddit content');
+      }
+
+      const data = await response.json();
+      const post = data[0].data.children[0].data;
+      const comments = data[1].data.children
+        .filter((comment: any) => !comment.data.stickied)
+        .slice(0, 3)
+        .map((comment: any) => comment.data.body)
+        .join('\n\n');
+
+      const formattedContent = `${post.title}\n\n${comments}`;
+      setContent(formattedContent);
+      
       toast({
         title: "Content Fetched",
         description: "Reddit content has been retrieved successfully.",
       });
     } catch (error) {
+      console.error('Error fetching Reddit content:', error);
       toast({
         title: "Error",
         description: "Failed to fetch Reddit content. Please try again.",
@@ -144,7 +173,6 @@ export const RedditVideoEditor = () => {
         onBackgroundSelect={setSelectedBackground}
       />
 
-      {/* Preview Section */}
       {(content || previewUrl) && (
         <PreviewSection
           content={content}
@@ -153,7 +181,6 @@ export const RedditVideoEditor = () => {
         />
       )}
 
-      {/* Generate Button */}
       <Card>
         <CardContent className="pt-6">
           <Button
