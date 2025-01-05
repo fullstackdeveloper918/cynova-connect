@@ -21,6 +21,18 @@ export const VideoSplitter = () => {
 
   const handleVideoUpload = async (file: File) => {
     try {
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to upload videos",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setVideoFile(file);
       
       const { data, error } = await supabase
@@ -28,7 +40,8 @@ export const VideoSplitter = () => {
         .insert({
           original_filename: file.name,
           file_size: file.size,
-          status: 'pending'
+          status: 'pending',
+          user_id: user.id // Add the user_id here
         })
         .select()
         .single();
