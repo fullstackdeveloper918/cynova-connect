@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VideoResolution } from "./ResolutionSelector";
 import { CaptionStyle } from "./CaptionStyles";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { VideoContent } from "./VideoContent";
 import { ContentOverlay } from "./ContentOverlay";
 import { Button } from "../ui/button";
