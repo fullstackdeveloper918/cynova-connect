@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Message } from "./types";
 import { MessageBubble } from "./MessageBubble";
 
@@ -7,6 +8,16 @@ interface MessageListProps {
 }
 
 export const MessageList = ({ messages, isDarkMode }: MessageListProps) => {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   return (
     <div className="space-y-4">
       <div
@@ -25,6 +36,7 @@ export const MessageList = ({ messages, isDarkMode }: MessageListProps) => {
           isDarkMode={isDarkMode}
         />
       ))}
+      <div ref={messagesEndRef} />
     </div>
   );
 };
