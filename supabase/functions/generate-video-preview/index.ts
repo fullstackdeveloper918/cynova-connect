@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
-import { generateAudio } from "./audioService.ts";
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -24,7 +23,7 @@ serve(async (req) => {
     // Generate audio with ElevenLabs
     console.log('Generating audio with ElevenLabs...');
     const audioResponse = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voice}/stream`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${voice}`,
       {
         method: 'POST',
         headers: {
@@ -49,9 +48,10 @@ serve(async (req) => {
       throw new Error(`ElevenLabs API error: ${errorText}`);
     }
 
-    const audioBlob = await audioResponse.blob();
-    const audioUrl = URL.createObjectURL(audioBlob);
-    console.log('Audio generated successfully:', audioUrl);
+    const audioBuffer = await audioResponse.arrayBuffer();
+    const audioBase64 = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
+    const audioUrl = `data:audio/mpeg;base64,${audioBase64}`;
+    console.log('Audio generated successfully');
 
     // Generate video with Replicate
     console.log('Generating video with Replicate...');

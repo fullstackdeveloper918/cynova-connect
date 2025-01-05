@@ -36,11 +36,7 @@ export const VideoPreview = ({
         audioRef.current.pause();
       } else {
         if (previewUrl?.videoUrl) {
-          // For array of frames, use the first one as video source
-          const videoSource = Array.isArray(previewUrl.videoUrl) 
-            ? previewUrl.videoUrl[0] 
-            : previewUrl.videoUrl;
-          videoRef.current.src = videoSource;
+          videoRef.current.src = previewUrl.videoUrl;
         }
         videoRef.current.play();
         audioRef.current.play();
