@@ -43,15 +43,14 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     .filter(Boolean);
 
   useEffect(() => {
-    if (!audioRef.current) {
-      return;
-    }
+    if (!audioRef.current) return;
 
     const audio = audioRef.current;
     let lastUpdateTime = 0;
 
-    const updateCaption = (index: number, isTitleSection: boolean) => {
+    const updateCaption = (progress: number, isTitleSection: boolean) => {
       const chunks = isTitleSection ? titleChunks : commentChunks;
+      const index = Math.floor(progress * chunks.length);
       
       if (index >= 0 && index < chunks.length) {
         const chunk = chunks[index];
@@ -65,24 +64,30 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       if (!audio.duration) return;
 
       const now = Date.now();
-      if (now - lastUpdateTime < 100) return;
+      if (now - lastUpdateTime < 100) return; // Throttle updates
       lastUpdateTime = now;
 
       const isTitleAudio = audio.src.includes('title');
-      const progress = audio.currentTime / audio.duration;
-      
-      if (isTitleAudio) {
-        const titleIndex = Math.floor(progress * titleChunks.length);
-        updateCaption(titleIndex, true);
-      } else {
-        const commentIndex = Math.floor(progress * commentChunks.length);
-        updateCaption(commentIndex, false);
+      if (!isTitleAudio && isShowingTitle) {
+        // If we're showing title but playing comment audio, hide title
+        setIsVisible(false);
+        setIsShowingTitle(false);
+        return;
       }
+
+      const progress = audio.currentTime / audio.duration;
+      updateCaption(progress, isTitleAudio);
     };
 
     const handlePlay = () => {
       const isTitleAudio = audio.src.includes('title');
-      updateCaption(0, isTitleAudio);
+      if (isTitleAudio) {
+        setIsShowingTitle(true);
+        updateCaption(0, true);
+      } else {
+        setIsShowingTitle(false);
+        updateCaption(0, false);
+      }
       setIsVisible(true);
     };
 
@@ -92,6 +97,9 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
 
     const handleEnded = () => {
       setIsVisible(false);
+      if (isShowingTitle) {
+        setIsShowingTitle(false);
+      }
     };
 
     audio.addEventListener("timeupdate", handleTimeUpdate);
@@ -105,7 +113,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("ended", handleEnded);
     };
-  }, [audioRef, titleChunks, commentChunks]);
+  }, [audioRef, titleChunks, commentChunks, isShowingTitle]);
 
   return (
     <div className="absolute inset-0 flex items-center justify-center">
