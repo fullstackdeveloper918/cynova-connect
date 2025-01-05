@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { decode as base64Decode } from "https://deno.land/std@0.182.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,57 +23,130 @@ serve(async (req) => {
       throw new Error('Missing required fields');
     }
 
+    console.log('Processing segments:', segmentsData);
+
     // Create Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Processing segments:', segmentsData);
-
     // Upload original video to storage
     const videoExt = video.name.split('.').pop();
     const videoPath = `${crypto.randomUUID()}.${videoExt}`;
-
-    const { error: uploadError } = await supabase.storage
+    
+    console.log('Uploading original video:', videoPath);
+    const { error: uploadError, data: uploadData } = await supabase.storage
       .from('exports')
       .upload(videoPath, video);
 
     if (uploadError) {
+      console.error('Upload error:', uploadError);
       throw uploadError;
     }
 
-    // Create segment records
+    // Get the public URL of the uploaded video
+    const { data: { publicUrl: originalVideoUrl } } = supabase.storage
+      .from('exports')
+      .getPublicUrl(videoPath);
+
+    console.log('Original video URL:', originalVideoUrl);
+
+    // Process each segment
     for (const segment of segmentsData) {
-      const { error } = await supabase
-        .from('video_segments')
-        .insert({
-          temp_video_id: tempVideoId,
-          user_id: userId,
-          name: segment.name,
-          start_time: segment.start,
-          end_time: segment.end,
-          status: 'processing'
+      try {
+        console.log('Processing segment:', segment.name);
+        
+        // Create segment record
+        const { data: segmentRecord, error: segmentError } = await supabase
+          .from('video_segments')
+          .insert({
+            temp_video_id: tempVideoId,
+            user_id: userId,
+            name: segment.name,
+            start_time: segment.start,
+            end_time: segment.end,
+            status: 'processing'
+          })
+          .select()
+          .single();
+
+        if (segmentError) {
+          console.error('Error creating segment record:', segmentError);
+          throw segmentError;
+        }
+
+        // Calculate duration
+        const duration = segment.end - segment.start;
+        
+        // Prepare FFmpeg command for vertical video (9:16 aspect ratio)
+        const ffmpegCmd = [
+          'ffmpeg',
+          '-i', originalVideoUrl,
+          '-ss', segment.start.toString(),
+          '-t', duration.toString(),
+          '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2',
+          '-c:v', 'libx264',
+          '-c:a', 'aac',
+          '-y',
+          `output_${segmentRecord.id}.mp4`
+        ];
+
+        // Execute FFmpeg command
+        const process = new Deno.Command(ffmpegCmd[0], {
+          args: ffmpegCmd.slice(1),
         });
 
-      if (error) {
-        console.error('Error creating segment:', error);
-        throw error;
+        const { success } = await process.output();
+
+        if (!success) {
+          throw new Error('FFmpeg processing failed');
+        }
+
+        // Read the processed file
+        const processedVideo = await Deno.readFile(`output_${segmentRecord.id}.mp4`);
+
+        // Upload processed segment
+        const segmentPath = `segments/${segmentRecord.id}.mp4`;
+        const { error: segmentUploadError } = await supabase.storage
+          .from('exports')
+          .upload(segmentPath, processedVideo);
+
+        if (segmentUploadError) {
+          throw segmentUploadError;
+        }
+
+        // Get public URL for the segment
+        const { data: { publicUrl: segmentUrl } } = supabase.storage
+          .from('exports')
+          .getPublicUrl(segmentPath);
+
+        // Update segment record with URL and completed status
+        const { error: updateError } = await supabase
+          .from('video_segments')
+          .update({ 
+            status: 'completed',
+            file_url: segmentUrl
+          })
+          .eq('id', segmentRecord.id);
+
+        if (updateError) {
+          throw updateError;
+        }
+
+        // Cleanup temporary file
+        await Deno.remove(`output_${segmentRecord.id}.mp4`);
+
+      } catch (error) {
+        console.error('Error processing segment:', error);
+        
+        // Update segment status to failed
+        await supabase
+          .from('video_segments')
+          .update({ status: 'failed' })
+          .eq('temp_video_id', tempVideoId)
+          .eq('name', segment.name);
       }
-    }
-
-    // In a real implementation, this would use FFmpeg to split the video
-    // For now, we'll simulate processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Update segments to completed
-    const { error: updateError } = await supabase
-      .from('video_segments')
-      .update({ status: 'completed' })
-      .eq('temp_video_id', tempVideoId);
-
-    if (updateError) {
-      throw updateError;
     }
 
     return new Response(
