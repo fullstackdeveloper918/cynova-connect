@@ -28,9 +28,9 @@ export const VideoPreview = ({
   const [frameUrls, setFrameUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Split script into smaller chunks for better readability
+  // Split script into smaller chunks for better readability and timing
   const words = script?.split(/\s+/) || [];
-  const WORDS_PER_CHUNK = 3;
+  const WORDS_PER_CHUNK = 4; // Adjusted for better pacing
   const captionChunks = words.reduce((chunks: string[], word, index) => {
     const chunkIndex = Math.floor(index / WORDS_PER_CHUNK);
     if (!chunks[chunkIndex]) {
@@ -47,7 +47,7 @@ export const VideoPreview = ({
         setIsLoading(true);
         try {
           const audioDuration = audioRef.current?.duration || 30;
-          const numberOfFrames = Math.max(1, Math.ceil(audioDuration / 10));
+          const numberOfFrames = Math.max(1, Math.ceil(audioDuration / 7.5));
           
           console.log('Starting frame generation for script:', script);
           console.log('Generating frames:', numberOfFrames);
@@ -91,30 +91,32 @@ export const VideoPreview = ({
     if (isPlaying && audioRef.current) {
       const updateCaption = () => {
         const time = audioRef.current?.currentTime || 0;
+        const duration = audioRef.current?.duration || 1;
         setCurrentTime(time);
         
         // Calculate which chunk should be shown based on current time
-        const audioDuration = audioRef.current?.duration || 0;
-        if (audioDuration > 0) {
-          const chunkIndex = Math.min(
-            Math.floor((time / audioDuration) * captionChunks.length),
-            captionChunks.length - 1
-          );
-          setCurrentCaption(captionChunks[chunkIndex]);
-        }
+        // Using duration to evenly space captions throughout the video
+        const progress = time / duration;
+        const chunkIndex = Math.min(
+          Math.floor(progress * captionChunks.length),
+          captionChunks.length - 1
+        );
+        
+        setCurrentCaption(captionChunks[chunkIndex]);
 
-        // Update frame index
+        // Update frame index based on time intervals
         if (frameUrls.length > 0) {
+          const frameInterval = duration / frameUrls.length;
           const frameIndex = Math.min(
-            Math.floor(time / 10),
+            Math.floor(time / frameInterval),
             frameUrls.length - 1
           );
-          console.log('Updating frame index:', frameIndex, 'Time:', time);
           setCurrentFrameIndex(frameIndex);
         }
       };
 
-      const interval = setInterval(updateCaption, 100);
+      // Update more frequently for smoother transitions
+      const interval = setInterval(updateCaption, 50);
       return () => clearInterval(interval);
     }
   }, [isPlaying, captionChunks, frameUrls.length]);
@@ -139,14 +141,7 @@ export const VideoPreview = ({
   };
 
   if (!script) {
-    return (
-      <div className="aspect-[9/16] w-full max-w-[450px] mx-auto rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50">
-        <div className="text-center space-y-2 text-muted-foreground">
-          <Video className="mx-auto h-12 w-12" />
-          <p>Generate a script to preview your video</p>
-        </div>
-      </div>
-    );
+    return <EmptyState />;
   }
 
   return (
