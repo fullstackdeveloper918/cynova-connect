@@ -33,11 +33,19 @@ export const WouldYouRatherEditor = () => {
           title: "Would You Rather Video",
           type: "would_you_rather",
           user_id: user.id,
+          description: `Would you rather ${optionA} OR ${optionB}?`
         })
         .select()
         .single();
 
-      if (projectError) throw projectError;
+      if (projectError) {
+        console.error("Project creation error:", projectError);
+        throw projectError;
+      }
+
+      if (!project) {
+        throw new Error("No project data returned");
+      }
 
       // Then create the would you rather question
       const { error: questionError } = await supabase
@@ -49,7 +57,10 @@ export const WouldYouRatherEditor = () => {
           option_b: optionB,
         });
 
-      if (questionError) throw questionError;
+      if (questionError) {
+        console.error("Question creation error:", questionError);
+        throw questionError;
+      }
 
       toast({
         title: "Success",
