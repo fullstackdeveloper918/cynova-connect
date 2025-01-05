@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/hooks/useUser";
 import { useNavigate } from "react-router-dom";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const WouldYouRatherEditor = () => {
   const { data: user, isLoading: userLoading } = useUser();
@@ -13,7 +14,9 @@ export const WouldYouRatherEditor = () => {
   const navigate = useNavigate();
   const [optionA, setOptionA] = useState("");
   const [optionB, setOptionB] = useState("");
+  const [selectedVoice, setSelectedVoice] = useState("21m00Tcm4TlvDq8ikWAM");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<{ audioUrl: string } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,9 +34,27 @@ export const WouldYouRatherEditor = () => {
 
     setIsSubmitting(true);
     try {
+      console.log("Generating video content...");
+      
+      // Generate video content with narration
+      const { data: videoData, error: videoError } = await supabase.functions.invoke(
+        "generate-would-you-rather",
+        {
+          body: {
+            optionA,
+            optionB,
+            voiceId: selectedVoice,
+          },
+        }
+      );
+
+      if (videoError) throw videoError;
+
+      setPreviewUrl(videoData);
+
+      // Create project
       console.log("Creating project with user ID:", user.id);
       
-      // First create a project
       const { data: project, error: projectError } = await supabase
         .from("projects")
         .insert({
@@ -57,7 +78,7 @@ export const WouldYouRatherEditor = () => {
 
       console.log("Project created successfully:", project);
 
-      // Then create the would you rather question
+      // Create the would you rather question
       const { error: questionError } = await supabase
         .from("would_you_rather_questions")
         .insert({
@@ -77,8 +98,6 @@ export const WouldYouRatherEditor = () => {
         description: "Your Would You Rather video has been created!",
       });
 
-      setOptionA("");
-      setOptionB("");
     } catch (error) {
       console.error("Error creating would you rather video:", error);
       toast({
@@ -117,6 +136,24 @@ export const WouldYouRatherEditor = () => {
                 required
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Voice</label>
+              <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a voice" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="21m00Tcm4TlvDq8ikWAM">Rachel (Female)</SelectItem>
+                  <SelectItem value="AZnzlk1XvdvUeBnXmlld">Domi (Female)</SelectItem>
+                  <SelectItem value="EXAVITQu4vr4xnSDxMaL">Bella (Female)</SelectItem>
+                  <SelectItem value="ErXwobaYiN019PkySvjV">Antoni (Male)</SelectItem>
+                  <SelectItem value="MF3mGyEYCl7XYWbV9V6O">Elli (Female)</SelectItem>
+                  <SelectItem value="TxGEqnHWrfWFTfGW9XjX">Josh (Male)</SelectItem>
+                  <SelectItem value="VR6AewLTigWG4xSOukaG">Arnold (Male)</SelectItem>
+                  <SelectItem value="pNInz6obpgDQGcFmaJgB">Adam (Male)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <Button type="submit" disabled={isSubmitting || userLoading}>
             {isSubmitting ? "Creating..." : "Create Video"}
@@ -134,7 +171,17 @@ export const WouldYouRatherEditor = () => {
               maxHeight: '70vh'
             }}
           >
-            <p className="text-gray-500">Video preview will appear here</p>
+            {previewUrl ? (
+              <div className="w-full h-full flex flex-col items-center justify-center p-4">
+                <p className="text-center mb-4">Audio Preview:</p>
+                <audio controls className="w-full mb-4">
+                  <source src={previewUrl.audioUrl} type="audio/mpeg" />
+                  Your browser does not support the audio element.
+                </audio>
+              </div>
+            ) : (
+              <p className="text-gray-500">Video preview will appear here</p>
+            )}
           </div>
         </div>
       </Card>
