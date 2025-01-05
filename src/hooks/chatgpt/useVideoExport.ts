@@ -11,7 +11,7 @@ interface ExportState {
 }
 
 export const useVideoExport = () => {
-  const { user: session } = useUser();
+  const { data: session } = useUser();
 
   const handleExport = async ({ script, previewUrl }: ExportState) => {
     if (!session) {
@@ -37,7 +37,7 @@ export const useVideoExport = () => {
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .insert({
-          user_id: session.user.id,
+          user_id: session.id,
           title: "ChatGPT Generated Video",
           description: script.substring(0, 100) + "...",
           type: "chatgpt_video",
@@ -55,7 +55,7 @@ export const useVideoExport = () => {
       const { data: exportData, error: exportError } = await supabase
         .from('exports')
         .insert({
-          user_id: session.user.id,
+          user_id: session.id,
           project_id: projectData.id,
           title: "ChatGPT Generated Video",
           description: script.substring(0, 100) + "...",
