@@ -88,11 +88,6 @@ export const ConversationPreview = ({
               ? "bg-[#000000] border-gray-800"
               : "bg-[#F5F5F5] border-gray-200"
           }`}
-          style={{
-            backgroundImage: isDarkMode
-              ? "linear-gradient(to bottom, #1a1a1a, #000000)"
-              : "linear-gradient(to bottom, #ffffff, #f5f5f5)",
-          }}
         >
           <div className="h-full overflow-y-auto">
             <MessageList messages={visibleMessages} isDarkMode={isDarkMode} />
