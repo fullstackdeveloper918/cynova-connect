@@ -14,17 +14,18 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
   const [title, ...comments] = captions.split('\n\n');
   const commentsText = comments.join('\n\n');
 
-  // Split into smaller chunks of 4-5 words
+  // Split title into smaller chunks (2-3 words for better timing)
   const titleChunks = title
     .trim()
     .split(/\s+/)
     .reduce((acc: string[], word, i) => {
-      const chunkIndex = Math.floor(i / 4);
+      const chunkIndex = Math.floor(i / 3); // Reduced chunk size for title
       if (!acc[chunkIndex]) acc[chunkIndex] = word;
       else acc[chunkIndex] += ` ${word}`;
       return acc;
     }, []);
 
+  // Split comments into chunks
   const commentChunks = commentsText
     .split(/[.!?]+/)
     .flatMap(sentence => 
@@ -40,7 +41,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     )
     .filter(Boolean);
 
-  // Combine all chunks with proper timing allocation
+  // Combine all chunks
   const allChunks = [...titleChunks, ...commentChunks];
 
   useEffect(() => {
@@ -74,12 +75,17 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       if (!audio.duration) return;
 
       const now = Date.now();
-      if (now - lastUpdateTime < 50) return; // Throttle updates
+      if (now - lastUpdateTime < 30) return; // Reduced throttle time for smoother updates
       lastUpdateTime = now;
 
-      // Allocate ~30% of total duration to title, rest to comments
-      const titleDuration = audio.duration * 0.3;
-      const commentsDuration = audio.duration * 0.7;
+      // Allocate timing based on content length
+      const titleTextLength = title.length;
+      const commentsTextLength = commentsText.length;
+      const totalLength = titleTextLength + commentsTextLength;
+      
+      // Calculate proportional durations
+      const titleDuration = (titleTextLength / totalLength) * audio.duration;
+      const commentsDuration = audio.duration - titleDuration;
       
       // Calculate current position
       const currentTime = audio.currentTime;
@@ -95,7 +101,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
         currentChunkIndex = titleChunks.length + Math.floor(commentProgress * commentChunks.length);
       }
       
-      updateCaption(currentChunkIndex);
+      updateCaption(Math.min(currentChunkIndex, allChunks.length - 1));
     };
 
     const handlePlay = () => {
@@ -126,7 +132,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("ended", handleEnded);
     };
-  }, [audioRef, allChunks, titleChunks.length]);
+  }, [audioRef, allChunks, titleChunks.length, title, commentsText]);
 
   return (
     <div className="absolute inset-0 flex items-center justify-center">
