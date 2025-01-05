@@ -5,27 +5,34 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/hooks/useUser";
+import { useNavigate } from "react-router-dom";
 
 export const WouldYouRatherEditor = () => {
-  const { data: user } = useUser();
+  const { data: user, isLoading: userLoading } = useUser();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [optionA, setOptionA] = useState("");
   const [optionB, setOptionB] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
+
+    // Check if user is authenticated
+    if (!user || userLoading) {
       toast({
-        title: "Error",
-        description: "You must be logged in to create a video",
+        title: "Authentication Required",
+        description: "Please sign in to create a video",
         variant: "destructive",
       });
+      navigate("/login");
       return;
     }
 
     setIsSubmitting(true);
     try {
+      console.log("Creating project with user ID:", user.id);
+      
       // First create a project
       const { data: project, error: projectError } = await supabase
         .from("projects")
@@ -33,7 +40,8 @@ export const WouldYouRatherEditor = () => {
           title: "Would You Rather Video",
           type: "would_you_rather",
           user_id: user.id,
-          description: `Would you rather ${optionA} OR ${optionB}?`
+          description: `Would you rather ${optionA} OR ${optionB}?`,
+          status: "draft"
         })
         .select()
         .single();
@@ -46,6 +54,8 @@ export const WouldYouRatherEditor = () => {
       if (!project) {
         throw new Error("No project data returned");
       }
+
+      console.log("Project created successfully:", project);
 
       // Then create the would you rather question
       const { error: questionError } = await supabase
@@ -108,7 +118,7 @@ export const WouldYouRatherEditor = () => {
               />
             </div>
           </div>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting || userLoading}>
             {isSubmitting ? "Creating..." : "Create Video"}
           </Button>
         </form>
@@ -119,8 +129,8 @@ export const WouldYouRatherEditor = () => {
           <div 
             className="mx-auto bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden"
             style={{
-              width: '338px', // This is roughly 1080px / 3.2 to fit well in the UI
-              height: '600px', // This maintains the 9:16 aspect ratio of TikTok
+              width: '338px',
+              height: '600px',
               maxHeight: '70vh'
             }}
           >
