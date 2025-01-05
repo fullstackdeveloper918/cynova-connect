@@ -98,7 +98,7 @@ export const RedditVideoEditor = () => {
       const title = content.split('\n')[0];
       const comments = content.split('\n').slice(1).join('\n');
 
-      // Generate audio for title and comments
+      // Generate audio for title and comments using the eleven_turbo_v2 model
       const titleAudio = await generateAudio(title, titleVoice);
       const commentsAudio = await generateAudio(comments, commentVoice);
 
