@@ -31,11 +31,11 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a creative assistant that generates engaging "Would You Rather" questions. Generate ${questionCount} pairs of interesting, thought-provoking options that will spark discussion. Format your response as a JSON array of objects with optionA and optionB properties.`
+            content: `You are a creative assistant that generates engaging "Would You Rather" questions. Generate ${questionCount} pairs of interesting, thought-provoking options that will spark discussion. Your response should be a valid JSON array of objects, each with optionA and optionB properties. Do not include any markdown formatting or additional text.`
           },
           {
             role: 'user',
-            content: `Generate ${questionCount} would you rather questions.`
+            content: `Generate ${questionCount} would you rather questions. Return ONLY a JSON array.`
           }
         ],
         temperature: 0.7,
@@ -45,10 +45,17 @@ serve(async (req) => {
     const data = await response.json();
     const content = data.choices[0].message.content;
     
+    console.log('Raw OpenAI response:', content);
+    
     try {
-      const questions = JSON.parse(content);
+      // Clean the content string by removing any markdown formatting
+      const cleanContent = content.replace(/```json\n|\n```|```/g, '').trim();
+      console.log('Cleaned content:', cleanContent);
+      
+      const questions = JSON.parse(cleanContent);
       
       if (!Array.isArray(questions)) {
+        console.error('Response is not an array:', questions);
         throw new Error('Response is not an array');
       }
       
