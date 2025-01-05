@@ -7,19 +7,18 @@ import { useVideoExport } from "./chatgpt/useVideoExport";
 export const useChatGPTVideo = () => {
   const state = useVideoState();
   const { checkUser } = useVideoAuth();
-  const { generateContent } = useVideoGeneration();
-  const { handlePreview } = useVideoPreview();
-  const { handleExport } = useVideoExport();
+  const { generateVideo } = useVideoGeneration();
+  const { previewFrames, currentFrame, setCurrentFrame, isPlaying, togglePlayback, resetPreview } = useVideoPreview();
+  const { exportVideo } = useVideoExport();
 
   const handleGenerateContent = async () => {
     const session = await checkUser();
     if (!session) return;
 
-    await generateContent({
+    await generateVideo({
       prompt: state.prompt,
-      setScript: state.setScript,
-      setIsGenerating: state.setIsGenerating,
-      setProgress: state.setProgress,
+      voice: state.selectedVoice,
+      duration: parseInt(state.selectedDuration)
     });
   };
 
@@ -27,19 +26,16 @@ export const useChatGPTVideo = () => {
     const session = await checkUser();
     if (!session) return;
 
-    await handlePreview({
-      script: state.script,
-      selectedVoice: state.selectedVoice,
-      selectedDuration: state.selectedDuration,
-      setPreviewUrl: state.setPreviewUrl,
-      setIsPreviewLoading: state.setIsPreviewLoading,
-    });
+    // Preview video logic using state.script and state.selectedVoice
+    console.log("Preview video with:", { script: state.script, voice: state.selectedVoice });
   };
 
   const handleExportVideo = async () => {
-    await handleExport({
+    if (!previewFrames.length) return;
+    
+    await exportVideo({
       script: state.script,
-      previewUrl: state.previewUrl,
+      frames: previewFrames
     });
   };
 
@@ -48,5 +44,11 @@ export const useChatGPTVideo = () => {
     generateContent: handleGenerateContent,
     handlePreview: handlePreviewVideo,
     handleExport: handleExportVideo,
+    previewFrames,
+    currentFrame,
+    setCurrentFrame,
+    isPlaying,
+    togglePlayback,
+    resetPreview
   };
 };

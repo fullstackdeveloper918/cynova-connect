@@ -1,5 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { VoiceSelector } from "../chatgpt/VoiceSelector";
+import { Card, CardContent } from "@/components/ui/card";
+import { VoiceSelector } from "@/components/chatgpt/VoiceSelector";
 
 interface VoiceSettingsProps {
   titleVoice: string;
@@ -16,25 +16,23 @@ export const VoiceSettings = ({
 }: VoiceSettingsProps) => {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Voice Settings</CardTitle>
-        <CardDescription>
-          Choose different voices for the title and comments
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="pt-6 space-y-4">
         <div>
-          <label className="text-sm font-medium mb-2 block">Title Voice</label>
+          <label className="text-sm font-medium mb-2 block">
+            Title Voice
+          </label>
           <VoiceSelector
-            selectedVoice={titleVoice}
-            onVoiceSelect={onTitleVoiceSelect}
+            value={titleVoice}
+            onChange={onTitleVoiceSelect}
           />
         </div>
         <div>
-          <label className="text-sm font-medium mb-2 block">Comment Voice</label>
+          <label className="text-sm font-medium mb-2 block">
+            Comments Voice
+          </label>
           <VoiceSelector
-            selectedVoice={commentVoice}
-            onVoiceSelect={onCommentVoiceSelect}
+            value={commentVoice}
+            onChange={onCommentVoiceSelect}
           />
         </div>
       </CardContent>
