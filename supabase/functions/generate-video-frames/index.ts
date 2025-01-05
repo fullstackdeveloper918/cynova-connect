@@ -2,6 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { OpenAI } from "https://esm.sh/openai@4.28.0";
 import { corsHeaders } from "../_shared/cors.ts";
 
+// Helper function to add delay
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -24,8 +27,8 @@ serve(async (req) => {
 
     const openai = new OpenAI({ apiKey: openAiKey });
 
-    // Generate at least 6 frames for a 30-second video (one every 5 seconds)
-    const minFrames = Math.max(6, numberOfFrames);
+    // Generate at least 4 frames for a 30-second video (one every 7.5 seconds)
+    const minFrames = Math.min(4, Math.max(numberOfFrames, 1));
     
     // Split script into meaningful sections
     const sentences = script.split(/[.!?]+/).filter(Boolean).map(s => s.trim());
@@ -37,48 +40,60 @@ serve(async (req) => {
       const endIndex = Math.min((i + 1) * sectionsPerFrame, sentences.length);
       const relevantSentences = sentences.slice(startIndex, endIndex).join('. ');
       
-      const prompt = `Create a photorealistic vertical image (9:16) of: "${relevantSentences}"
+      const prompt = `Create a cinematic, photorealistic image that captures this scene: "${relevantSentences}"
 
-      Essential requirements:
-      - Photorealistic style, like a high-end camera photo
-      - Vertical format optimized for mobile
-      - Focus on the main subject/action
-      - Natural lighting and composition
-      - Clear, sharp details
+      Requirements:
+      - Vertical format (9:16 aspect ratio)
+      - Photorealistic, cinematic quality
+      - Rich colors and dramatic lighting
+      - Clear focal point
       - No text or watermarks
-      - No artificial or generated look
-      - Simple, clean background
-      - Professional photography style`;
+      - Natural composition
+      - High detail and sharpness`;
       
       framePrompts.push(prompt);
     }
 
-    console.log('Generated prompts:', framePrompts);
+    console.log(`Preparing to generate ${framePrompts.length} frames`);
     
-    const frameUrls = await Promise.all(
-      framePrompts.map(async (prompt, index) => {
-        try {
-          console.log(`Generating frame ${index + 1} with prompt:`, prompt);
-          
-          const response = await openai.images.generate({
-            model: "dall-e-2",
-            prompt,
-            n: 1,
-            size: "1024x1024",
-            response_format: "b64_json"
-          });
-
-          const base64 = response.data[0].b64_json;
-          const dataUrl = `data:image/jpeg;base64,${base64}`;
-          
-          console.log(`Frame ${index + 1} generated successfully`);
-          return dataUrl;
-        } catch (error) {
-          console.error(`Error generating frame ${index + 1}:`, error);
-          throw error;
+    const frameUrls = [];
+    // Generate images sequentially with delay to respect rate limits
+    for (let i = 0; i < framePrompts.length; i++) {
+      try {
+        console.log(`Generating frame ${i + 1}/${framePrompts.length}`);
+        
+        // Add delay between requests to respect rate limits
+        if (i > 0) {
+          const delayMs = 12000; // 12 seconds delay between requests
+          console.log(`Waiting ${delayMs}ms before generating next frame...`);
+          await delay(delayMs);
         }
-      })
-    );
+
+        const response = await openai.images.generate({
+          model: "dall-e-2",
+          prompt: framePrompts[i],
+          n: 1,
+          size: "1024x1024",
+          response_format: "b64_json"
+        });
+
+        const base64 = response.data[0].b64_json;
+        const dataUrl = `data:image/jpeg;base64,${base64}`;
+        frameUrls.push(dataUrl);
+        
+        console.log(`Frame ${i + 1} generated successfully`);
+      } catch (error) {
+        console.error(`Error generating frame ${i + 1}:`, error);
+        // If we hit rate limit, wait longer before retrying
+        if (error.message?.includes('Rate limit exceeded')) {
+          console.log('Rate limit hit, waiting 60 seconds before retry...');
+          await delay(60000);
+          i--; // Retry this frame
+          continue;
+        }
+        throw error;
+      }
+    }
 
     return new Response(
       JSON.stringify({
