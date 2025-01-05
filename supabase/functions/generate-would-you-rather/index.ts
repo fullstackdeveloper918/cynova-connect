@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { HfInference } from 'https://esm.sh/@huggingface/inference@2.3.2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,23 +23,41 @@ serve(async (req) => {
     // Generate script for narration
     const script = `Would you rather ${optionA}? Or would you rather ${optionB}? Comment below with your choice!`;
 
-    // Generate images using Hugging Face's FLUX model
-    console.log('Generating images using Hugging Face FLUX model...');
+    // Generate images using Stability AI with optimized parameters
+    console.log('Generating images using Stability AI...');
     
     const generateImage = async (prompt: string) => {
-      const hf = new HfInference(Deno.env.get('HUGGING_FACE_ACCESS_TOKEN'))
-      
-      console.log('Generating image for prompt:', prompt);
-      
-      const image = await hf.textToImage({
-        inputs: `Create a cinematic, photorealistic image that captures this scene: "${prompt}". Make it dramatic and visually striking, suitable for a social media video. Vertical format, high detail, dramatic lighting.`,
-        model: 'black-forest-labs/FLUX.1-schnell',
-      })
+      const response = await fetch('https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('STABILITY_API_KEY')}`,
+        },
+        body: JSON.stringify({
+          text_prompts: [
+            {
+              text: `Create a cinematic, photorealistic image that captures this scene: "${prompt}". Make it dramatic and visually striking, suitable for a social media video. Vertical format, high detail, dramatic lighting.`,
+              weight: 1
+            }
+          ],
+          cfg_scale: 6.5, // Slightly reduced for faster generation
+          height: 1344,
+          width: 768,
+          samples: 1,
+          steps: 30, // Reduced from 50 for faster generation while maintaining quality
+          style_preset: "cinematic"
+        }),
+      });
 
-      // Convert blob to base64
-      const arrayBuffer = await image.arrayBuffer()
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
-      return `data:image/png;base64,${base64}`;
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Stability AI API Error:', error);
+        throw new Error(`Stability AI API error: ${error.message || 'Unknown error'}`);
+      }
+
+      const result = await response.json();
+      return `data:image/png;base64,${result.artifacts[0].base64}`;
     };
 
     // Generate images in parallel
