@@ -56,30 +56,37 @@ export const FrameDisplay = ({
         <div className="relative w-full h-full">
           {/* Split background with red top and blue bottom */}
           <div className="absolute inset-0 flex flex-col">
-            <div className="flex-1 bg-[#ea384c] flex items-center justify-center p-4">
+            <div className="flex-1 bg-[#ea384c] flex flex-col items-center justify-center p-4 space-y-4">
               <div className="text-white text-xl font-medium text-center max-w-lg">
                 {optionA}
               </div>
+              {/* Small image container for option A */}
+              <div className="w-32 h-32 relative overflow-hidden rounded-lg">
+                {frameUrls[currentFrameIndex] && (
+                  <img
+                    src={frameUrls[currentFrameIndex]}
+                    alt="Option A visualization"
+                    className="absolute inset-0 w-full h-full object-cover opacity-90"
+                  />
+                )}
+              </div>
             </div>
-            <div className="flex-1 bg-[#0EA5E9] flex items-center justify-center p-4">
+            <div className="flex-1 bg-[#0EA5E9] flex flex-col items-center justify-center p-4 space-y-4">
               <div className="text-white text-xl font-medium text-center max-w-lg">
                 {optionB}
               </div>
+              {/* Small image container for option B */}
+              <div className="w-32 h-32 relative overflow-hidden rounded-lg">
+                {frameUrls[currentFrameIndex] && (
+                  <img
+                    src={frameUrls[currentFrameIndex]}
+                    alt="Option B visualization"
+                    className="absolute inset-0 w-full h-full object-cover opacity-90"
+                  />
+                )}
+              </div>
             </div>
           </div>
-
-          {/* Frame images with reduced opacity */}
-          {frameUrls.map((url, index) => (
-            <img
-              key={`${index}-${currentFrameIndex === index}`}
-              src={url}
-              alt={`Frame ${index + 1}`}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-40 ${
-                currentFrameIndex === index ? 'opacity-40' : 'opacity-0'
-              }`}
-              style={{ zIndex: 1 }}
-            />
-          ))}
           
           {/* Controls overlay with highest z-index */}
           <div 
