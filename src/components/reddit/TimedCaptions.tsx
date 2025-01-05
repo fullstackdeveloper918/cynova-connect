@@ -11,18 +11,31 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
   const [captionIndex, setCaptionIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
 
-  // Split captions into sentences
-  const sentences = captions.split(/[.!?]+/).filter(Boolean).map(s => s.trim());
+  // Split into smaller chunks of 4-5 words
+  const chunks = captions
+    .split(/[.!?]+/)
+    .flatMap(sentence => 
+      sentence
+        .trim()
+        .split(/\s+/)
+        .reduce((acc: string[], word, i) => {
+          const chunkIndex = Math.floor(i / 4);
+          if (!acc[chunkIndex]) acc[chunkIndex] = word;
+          else acc[chunkIndex] += ` ${word}`;
+          return acc;
+        }, [])
+    )
+    .filter(Boolean);
 
   useEffect(() => {
-    if (!audioRef.current || sentences.length === 0) {
-      console.log('No audio reference or sentences available for captions');
+    if (!audioRef.current || chunks.length === 0) {
+      console.log('No audio reference or chunks available for captions');
       return;
     }
 
     // Reset when audio source changes
     setCaptionIndex(0);
-    setCurrentCaption(sentences[0]);
+    setCurrentCaption(chunks[0]);
     setIsVisible(true);
 
     const audio = audioRef.current;
@@ -30,21 +43,21 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     const handleTimeUpdate = () => {
       if (!audio.duration) return;
       
-      // Calculate time per sentence based on audio duration
-      const timePerSentence = audio.duration / sentences.length;
+      // Calculate time per chunk based on audio duration
+      const timePerChunk = audio.duration / chunks.length;
       const currentTime = audio.currentTime;
-      const index = Math.floor(currentTime / timePerSentence);
+      const index = Math.floor(currentTime / timePerChunk);
       
-      if (index !== captionIndex && index < sentences.length) {
+      if (index !== captionIndex && index < chunks.length) {
         console.log('Updating caption:', {
           index,
-          sentence: sentences[index],
+          chunk: chunks[index],
           currentTime,
-          timePerSentence,
+          timePerChunk,
           audioDuration: audio.duration
         });
         setCaptionIndex(index);
-        setCurrentCaption(sentences[index]);
+        setCurrentCaption(chunks[index]);
         setIsVisible(true);
       }
     };
@@ -77,7 +90,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("ended", handleEnded);
     };
-  }, [audioRef, sentences, captionIndex]);
+  }, [audioRef, chunks, captionIndex]);
 
   if (!currentCaption) {
     return null;
