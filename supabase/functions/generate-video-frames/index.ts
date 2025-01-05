@@ -34,12 +34,16 @@ serve(async (req) => {
       const endIndex = Math.min((i + 1) * sectionsPerFrame, sentences.length);
       const relevantSentences = sentences.slice(startIndex, endIndex).join('. ');
       
-      const prompt = `Create a vertical video frame that vividly illustrates this scene: "${relevantSentences}". 
+      // Enhanced prompt engineering for more relevant images
+      const prompt = `Create a cinematic vertical video frame (9:16 aspect ratio) that vividly illustrates: "${relevantSentences}". 
       Requirements:
-      - Vertical composition (9:16 aspect ratio)
-      - Clear focal point
-      - Suitable for social media video
-      - Simple, clear imagery that captures the main action`;
+      - Photorealistic, high-quality imagery
+      - Strong visual storytelling that directly relates to the text
+      - Clear focal point and dramatic composition
+      - Professional lighting and atmosphere
+      - Vertical composition optimized for social media
+      - Rich in detail but not cluttered
+      - Emotional impact that matches the narrative tone`;
       
       framePrompts.push(prompt);
     }
@@ -52,14 +56,13 @@ serve(async (req) => {
           console.log(`Starting generation for frame ${index + 1} with prompt:`, prompt);
           
           const response = await openai.images.generate({
-            model: "dall-e-2",  // Using DALL-E-2 instead of DALL-E-3
+            model: "dall-e-2",
             prompt,
             n: 1,
-            size: "1024x1024",  // DALL-E-2 doesn't support custom aspect ratios
-            response_format: "b64_json"  // Get base64 directly to avoid extra HTTP requests
+            size: "1024x1024",
+            response_format: "b64_json"
           });
 
-          // Convert base64 to data URL
           const base64 = response.data[0].b64_json;
           const dataUrl = `data:image/jpeg;base64,${base64}`;
           
