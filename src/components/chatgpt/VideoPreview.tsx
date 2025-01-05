@@ -24,6 +24,7 @@ export const VideoPreview = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
   const [frameUrls, setFrameUrls] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Split script into sentences for captions
   const sentences = script?.split(/[.!?]+/).filter(Boolean).map(s => s.trim()) || [];
@@ -32,6 +33,7 @@ export const VideoPreview = ({
   useEffect(() => {
     if (script && !frameUrls.length) {
       const generateFrames = async () => {
+        setIsLoading(true);
         try {
           console.log('Generating frames for script:', script);
           const { data, error } = await supabase.functions.invoke("generate-video-frames", {
@@ -49,6 +51,8 @@ export const VideoPreview = ({
           }
         } catch (error) {
           console.error('Error generating frames:', error);
+        } finally {
+          setIsLoading(false);
         }
       };
 
@@ -77,12 +81,14 @@ export const VideoPreview = ({
         }
 
         // Update current frame based on time progress
-        const progress = time / (audioRef.current?.duration || 1);
-        const frameIndex = Math.min(
-          Math.floor(progress * frameUrls.length),
-          frameUrls.length - 1
-        );
-        setCurrentFrameIndex(frameIndex);
+        if (frameUrls.length > 0) {
+          const progress = time / (audioRef.current?.duration || 1);
+          const frameIndex = Math.min(
+            Math.floor(progress * frameUrls.length),
+            frameUrls.length - 1
+          );
+          setCurrentFrameIndex(frameIndex);
+        }
       };
 
       const interval = setInterval(updateCaption, 100);
@@ -128,12 +134,20 @@ export const VideoPreview = ({
       >
         {previewUrl ? (
           <>
-            {frameUrls.length > 0 && (
+            {isLoading ? (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              </div>
+            ) : frameUrls.length > 0 ? (
               <img
                 src={frameUrls[currentFrameIndex]}
                 alt={`Frame ${currentFrameIndex + 1}`}
                 className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
               />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <p className="text-muted-foreground">Generating frames...</p>
+              </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/30 flex items-center justify-center">
               <div className="text-white text-lg p-6 text-center max-w-lg">

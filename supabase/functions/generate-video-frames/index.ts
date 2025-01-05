@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { OpenAI } from "https://esm.sh/openai@4.28.0";
 import { corsHeaders } from "../_shared/cors.ts";
 
@@ -28,8 +27,8 @@ serve(async (req) => {
 
     // Split script into meaningful sections for frame generation
     const sections = script.split(/[.!?]+/).filter(Boolean).map(s => s.trim());
-    const framePrompts = sections.slice(0, 4).map(section => 
-      `Create a vertical video frame (9:16 aspect ratio) for this scene: ${section}. Style: cinematic, high quality, photorealistic. The frame should work well as a TikTok or YouTube Shorts video.`
+    const framePrompts = sections.map(section => 
+      `Create a vertical video frame (9:16 aspect ratio) for this scene: "${section}". Style: cinematic, high quality, photorealistic. Make it suitable for TikTok/YouTube Shorts with vibrant colors and engaging composition.`
     );
 
     console.log('Starting frame generation with prompts:', framePrompts);
@@ -37,12 +36,12 @@ serve(async (req) => {
     const frameUrls = await Promise.all(
       framePrompts.map(async (prompt, index) => {
         try {
-          console.log(`Generating frame ${index + 1}...`);
+          console.log(`Generating frame ${index + 1} with prompt:`, prompt);
           const response = await openai.images.generate({
             model: "dall-e-3",
             prompt,
             n: 1,
-            size: "1024x1792", // Closest to 9:16 ratio available
+            size: "1024x1792",
             quality: "standard",
             style: "natural"
           });
