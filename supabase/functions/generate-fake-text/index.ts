@@ -17,7 +17,7 @@ async function generateAudioWithRetry(
   retryCount = 0
 ): Promise<ArrayBuffer> {
   try {
-    console.log(`Attempt ${retryCount + 1} to generate audio for message ${index}`);
+    console.log(`Generating audio for message ${index}, attempt ${retryCount + 1}`);
     const audioResponse = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
       {
@@ -40,10 +40,16 @@ async function generateAudioWithRetry(
 
     if (!audioResponse.ok) {
       const errorText = await audioResponse.text();
-      throw new Error(`ElevenLabs API error: ${errorText}`);
+      throw new Error(`ElevenLabs API error (${audioResponse.status}): ${errorText}`);
     }
 
-    return await audioResponse.arrayBuffer();
+    const audioBuffer = await audioResponse.arrayBuffer();
+    if (!audioBuffer || audioBuffer.byteLength === 0) {
+      throw new Error('Received empty audio buffer');
+    }
+
+    console.log(`Successfully generated audio for message ${index}`);
+    return audioBuffer;
   } catch (error) {
     console.error(`Error generating audio for message ${index}:`, error);
     
@@ -64,7 +70,7 @@ serve(async (req) => {
 
   try {
     const { prompt, topic, duration, voiceId } = await req.json();
-    console.log('Generating conversation:', { prompt, topic, duration, voiceId });
+    console.log('Received request:', { prompt, topic, duration, voiceId });
 
     const openAiKey = Deno.env.get('OPENAI_API_KEY');
     const elevenLabsKey = Deno.env.get('ELEVEN_LABS_API_KEY');
@@ -75,6 +81,7 @@ serve(async (req) => {
 
     // Calculate approximate number of messages based on duration
     const targetMessageCount = Math.max(Math.floor(duration / 2.5), 5);
+    console.log(`Target message count: ${targetMessageCount}`);
 
     console.log('Calling OpenAI API...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -125,7 +132,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log('OpenAI response:', data.choices[0].message.content);
+    console.log('OpenAI response received');
 
     let messages;
     try {
@@ -133,6 +140,7 @@ serve(async (req) => {
       if (!Array.isArray(messages)) {
         throw new Error('Response is not an array');
       }
+      console.log(`Successfully parsed ${messages.length} messages`);
     } catch (error) {
       console.error('Failed to parse OpenAI response:', error);
       throw new Error('Invalid conversation format received from OpenAI');
@@ -143,7 +151,7 @@ serve(async (req) => {
     const messagesWithAudio = await Promise.all(
       messages.map(async (message: any, index: number) => {
         try {
-          console.log(`Generating audio for message ${index}:`, message.content);
+          console.log(`Processing message ${index}:`, message.content);
           const audioBuffer = await generateAudioWithRetry(message.content, index, elevenLabsKey, voiceId);
           const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
           
@@ -158,6 +166,7 @@ serve(async (req) => {
       })
     );
 
+    console.log('Successfully generated all audio content');
     return new Response(
       JSON.stringify({ 
         messages: messagesWithAudio,
