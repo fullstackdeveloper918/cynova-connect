@@ -1,25 +1,24 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { OpenAI } from "https://deno.land/x/openai@v4.24.0/mod.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import { OpenAI } from "https://esm.sh/openai@4.28.0";
+import { corsHeaders } from "../_shared/cors.ts";
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { script } = await req.json();
-    console.log('Received script:', script);
-
+    
     if (!script) {
-      throw new Error('No script provided');
+      throw new Error('Script is required');
     }
 
+    console.log('Generating frames for script:', script);
+
+    // Initialize OpenAI
     const openAiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAiKey) {
       throw new Error('OPENAI_API_KEY is not set');
@@ -27,41 +26,42 @@ serve(async (req) => {
 
     const openai = new OpenAI({ apiKey: openAiKey });
 
-    // Split script into sections for frame generation
+    // Split script into meaningful sections for frame generation
     const sections = script.split(/[.!?]+/).filter(Boolean).map(s => s.trim());
     const framePrompts = sections.slice(0, 4).map(section => 
-      `Create a high quality, cinematic video frame for this scene: ${section}. Make it photorealistic and visually striking.`
+      `Create a vertical video frame (9:16 aspect ratio) for this scene: ${section}. Style: cinematic, high quality, photorealistic. The frame should work well as a TikTok or YouTube Shorts video.`
     );
 
-    console.log('Generating frames with DALL-E...');
-    console.log('Frame prompts:', framePrompts);
+    console.log('Starting frame generation with prompts:', framePrompts);
     
     const frameUrls = await Promise.all(
-      framePrompts.map(async (prompt) => {
+      framePrompts.map(async (prompt, index) => {
         try {
+          console.log(`Generating frame ${index + 1}...`);
           const response = await openai.images.generate({
             model: "dall-e-3",
-            prompt: prompt,
+            prompt,
             n: 1,
-            size: "1024x1024",
+            size: "1024x1792", // Closest to 9:16 ratio available
             quality: "standard",
             style: "natural"
           });
-          console.log('Generated frame URL:', response.data[0].url);
+          
+          console.log(`Frame ${index + 1} generated successfully:`, response.data[0].url);
           return response.data[0].url;
         } catch (error) {
-          console.error('Error generating frame:', error);
+          console.error(`Error generating frame ${index + 1}:`, error);
           throw error;
         }
       })
     );
 
-    console.log('Generated frame URLs:', frameUrls);
+    console.log('All frames generated successfully:', frameUrls);
 
     return new Response(
-      JSON.stringify({ 
-        frameUrls,
-        message: "Frames generated successfully" 
+      JSON.stringify({
+        success: true,
+        frameUrls
       }),
       { 
         headers: { 
@@ -72,12 +72,10 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in generate-video-frames function:', error);
-    
+    console.error('Error in generate-video-frames:', error);
     return new Response(
       JSON.stringify({ 
-        error: 'Failed to generate video frames',
-        details: error.message
+        error: error.message 
       }),
       { 
         status: 500,

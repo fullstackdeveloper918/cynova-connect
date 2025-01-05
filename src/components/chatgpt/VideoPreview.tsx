@@ -38,7 +38,11 @@ export const VideoPreview = ({
             body: { script }
           });
 
-          if (error) throw error;
+          if (error) {
+            console.error('Error from generate-video-frames:', error);
+            throw error;
+          }
+
           if (data.frameUrls) {
             console.log('Received frame URLs:', data.frameUrls);
             setFrameUrls(data.frameUrls);
@@ -107,7 +111,7 @@ export const VideoPreview = ({
 
   if (!script) {
     return (
-      <div className="aspect-video rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50">
+      <div className="aspect-[9/16] w-full max-w-[450px] mx-auto rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50">
         <div className="text-center space-y-2 text-muted-foreground">
           <Video className="mx-auto h-12 w-12" />
           <p>Generate a script to preview your video</p>
@@ -119,7 +123,7 @@ export const VideoPreview = ({
   return (
     <div className="space-y-4">
       <div 
-        className="w-full aspect-video rounded-lg bg-gray-50 overflow-hidden relative cursor-pointer group"
+        className="aspect-[9/16] w-full max-w-[450px] mx-auto rounded-lg bg-gray-50 overflow-hidden relative cursor-pointer group"
         onClick={handlePlayPause}
       >
         {previewUrl ? (
