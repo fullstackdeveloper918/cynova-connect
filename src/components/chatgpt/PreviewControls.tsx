@@ -1,53 +1,51 @@
 import { Button } from "@/components/ui/button";
-import { Play, Pause, RotateCcw } from "lucide-react";
-import { Slider } from "@/components/ui/slider";
+import { Play, Save, Loader2 } from "lucide-react";
 
 interface PreviewControlsProps {
-  currentFrame: number;
-  totalFrames: number;
-  isPlaying: boolean;
-  onFrameChange: (frame: number) => void;
-  onPlayPause: () => void;
-  onReset: () => void;
+  script: string;
+  previewUrl: { videoUrl: string; audioUrl: string; } | null;
+  onPreview: () => void;
+  onExport: () => void;
+  isPreviewLoading: boolean;
 }
 
 export const PreviewControls = ({
-  currentFrame,
-  totalFrames,
-  isPlaying,
-  onFrameChange,
-  onPlayPause,
-  onReset,
+  script,
+  previewUrl,
+  onPreview,
+  onExport,
+  isPreviewLoading,
 }: PreviewControlsProps) => {
+  if (!script) return null;
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={onPlayPause}
-        >
-          {isPlaying ? (
-            <Pause className="h-4 w-4" />
-          ) : (
-            <Play className="h-4 w-4" />
-          )}
-        </Button>
-        <Slider
-          value={[currentFrame]}
-          max={totalFrames - 1}
-          step={1}
-          onValueChange={([value]) => onFrameChange(value)}
-          className="flex-1"
-        />
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={onReset}
-        >
-          <RotateCcw className="h-4 w-4" />
-        </Button>
-      </div>
+    <div className="flex gap-4">
+      <Button 
+        className="flex-1" 
+        onClick={onPreview}
+        disabled={isPreviewLoading}
+      >
+        {isPreviewLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Generating...
+          </>
+        ) : (
+          <>
+            <Play className="mr-2 h-4 w-4" />
+            Preview
+          </>
+        )}
+      </Button>
+      <Button 
+        variant="secondary" 
+        className="flex-1" 
+        onClick={onExport}
+        disabled={!previewUrl}
+      >
+        <Save className="mr-2 h-4 w-4" />
+        Export
+      </Button>
     </div>
   );
 };

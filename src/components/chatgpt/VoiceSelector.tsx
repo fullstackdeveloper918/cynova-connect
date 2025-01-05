@@ -7,13 +7,13 @@ import {
 } from "@/components/ui/select";
 
 interface VoiceSelectorProps {
-  value: string;
-  onChange: (value: string) => void;
+  selectedVoice: string;
+  onVoiceSelect: (voice: string) => void;
 }
 
 export const VoiceSelector = ({
-  value,
-  onChange,
+  selectedVoice,
+  onVoiceSelect,
 }: VoiceSelectorProps) => {
   const voices = [
     { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah (Professional Female)" },
@@ -23,7 +23,7 @@ export const VoiceSelector = ({
   ];
 
   return (
-    <Select value={value} onValueChange={onChange}>
+    <Select value={selectedVoice} onValueChange={onVoiceSelect}>
       <SelectTrigger>
         <SelectValue placeholder="Select a voice" />
       </SelectTrigger>

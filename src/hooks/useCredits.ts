@@ -27,32 +27,13 @@ export const useCredits = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      // First try to get existing credits
-      const { data: existingCredits, error: fetchError } = await supabase
+      const { data, error } = await supabase
         .from('user_credits')
         .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+        .single();
 
-      if (!existingCredits && !fetchError) {
-        // If no credits exist, create initial credits
-        const { data: newCredits, error: createError } = await supabase
-          .from('user_credits')
-          .insert([
-            { 
-              user_id: user.id,
-              credits_balance: 50 // Default starting credits
-            }
-          ])
-          .select()
-          .single();
-
-        if (createError) throw createError;
-        return newCredits as UserCredits;
-      }
-
-      if (fetchError) throw fetchError;
-      return existingCredits as UserCredits;
+      if (error) throw error;
+      return data as UserCredits;
     },
   });
 
@@ -81,7 +62,6 @@ export const useCredits = () => {
       const { data: credits, error: creditsError } = await supabase
         .from('user_credits')
         .select('credits_balance')
-        .eq('user_id', user.id)
         .single();
 
       if (creditsError) throw creditsError;

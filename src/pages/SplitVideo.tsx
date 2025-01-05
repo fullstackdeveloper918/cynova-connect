@@ -1,17 +1,47 @@
-import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { VideoSplitter } from "@/components/split/VideoSplitter";
+import { CreditsDisplay } from "@/components/credits/CreditsDisplay";
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarHeader,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { SidebarNavigation } from "@/components/sidebar/SidebarNavigation";
 
 const SplitVideo = () => {
   return (
-    <DashboardLayout>
-      <div>
-        <h1 className="text-3xl font-bold mb-4">Split Videos</h1>
-        <p className="text-muted-foreground mb-8">
-          Easily split and trim your videos with precision.
-        </p>
-        <VideoSplitter />
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <Sidebar className="hidden md:block">
+          <SidebarHeader className="p-6">
+            <img
+              src="/logo.svg"
+              alt="Cynova Logo"
+              className="w-48 h-auto mx-auto"
+            />
+          </SidebarHeader>
+          <SidebarNavigation />
+        </Sidebar>
+
+        <main className="flex-1">
+          <div className="p-4 md:hidden">
+            <SidebarTrigger />
+          </div>
+          <div className="p-6">
+            <div className="max-w-7xl mx-auto space-y-6">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold">Split Videos</h1>
+                <p className="text-muted-foreground">
+                  Upload a video and split it into multiple segments
+                </p>
+              </div>
+              <CreditsDisplay />
+              <VideoSplitter />
+            </div>
+          </div>
+        </main>
       </div>
-    </DashboardLayout>
+    </SidebarProvider>
   );
 };
 

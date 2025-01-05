@@ -4,16 +4,16 @@ import { Progress } from "@/components/ui/progress";
 import { Wand2, Loader2 } from "lucide-react";
 
 interface PromptInputProps {
-  value: string;
-  onChange: (value: string) => void;
+  prompt: string;
+  onPromptChange: (prompt: string) => void;
   onGenerate: () => void;
   isGenerating: boolean;
   progress: number;
 }
 
 export const PromptInput = ({
-  value,
-  onChange,
+  prompt,
+  onPromptChange,
   onGenerate,
   isGenerating,
   progress,
@@ -22,13 +22,13 @@ export const PromptInput = ({
     <div className="space-y-4">
       <Textarea
         placeholder="Describe the video you want to create..."
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        value={prompt}
+        onChange={(e) => onPromptChange(e.target.value)}
         className="h-32"
       />
       <Button
         onClick={onGenerate}
-        disabled={isGenerating || !value}
+        disabled={isGenerating || !prompt}
         className="w-full"
       >
         {isGenerating ? (

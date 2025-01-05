@@ -1,45 +1,74 @@
-import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
+
+interface PreviewState {
+  script: string;
+  selectedVoice: string;
+  selectedDuration: string;
+  setPreviewUrl: (url: { videoUrl: string; audioUrl: string; } | null) => void;
+  setIsPreviewLoading: (isLoading: boolean) => void;
+}
 
 export const useVideoPreview = () => {
-  const [previewFrames, setPreviewFrames] = useState<string[]>([]);
-  const [currentFrame, setCurrentFrame] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-
-    if (isPlaying && previewFrames.length > 0) {
-      interval = setInterval(() => {
-        setCurrentFrame((prev) => {
-          if (prev >= previewFrames.length - 1) {
-            setIsPlaying(false);
-            return 0;
-          }
-          return prev + 1;
-        });
-      }, 1000 / 30); // 30 fps
+  const handlePreview = async ({
+    script,
+    selectedVoice,
+    selectedDuration,
+    setPreviewUrl,
+    setIsPreviewLoading,
+  }: PreviewState) => {
+    if (!script) {
+      toast({
+        title: "No script available",
+        description: "Please generate or enter a script first.",
+        variant: "destructive",
+      });
+      return;
     }
 
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isPlaying, previewFrames.length]);
+    setIsPreviewLoading(true);
+    try {
+      // For now, we'll just generate the audio and use a template video
+      const { data, error } = await supabase.functions.invoke("generate-video-preview", {
+        body: { 
+          script,
+          voice: selectedVoice,
+          duration: selectedDuration
+        }
+      });
 
-  const togglePlayback = () => {
-    setIsPlaying(!isPlaying);
+      if (error) {
+        console.error("Error from generate-video-preview:", error);
+        throw error;
+      }
+
+      console.log("Preview generation response:", data);
+      
+      if (data.previewUrl?.audioUrl) {
+        setPreviewUrl({
+          videoUrl: "/stock/minecraft-gameplay.mp4", // This is not used anymore but kept for compatibility
+          audioUrl: data.previewUrl.audioUrl
+        });
+        
+        toast({
+          title: "Preview generated",
+          description: "Your video preview is ready to watch.",
+        });
+      } else {
+        throw new Error("Preview generation failed");
+      }
+
+    } catch (error) {
+      console.error("Preview generation error:", error);
+      toast({
+        title: "Preview generation failed",
+        description: "There was an error generating your video preview. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPreviewLoading(false);
+    }
   };
 
-  const resetPreview = () => {
-    setCurrentFrame(0);
-    setIsPlaying(false);
-  };
-
-  return {
-    previewFrames,
-    currentFrame,
-    setCurrentFrame,
-    isPlaying,
-    togglePlayback,
-    resetPreview,
-  };
+  return { handlePreview };
 };
