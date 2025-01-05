@@ -31,6 +31,47 @@ export const RedditVideoEditor = () => {
     return matches ? matches[1] : null;
   };
 
+  const handleGenerate = async (contentToGenerate: string) => {
+    if (!contentToGenerate) {
+      toast({
+        title: "Missing Content",
+        description: "Please fetch or enter content first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const { data: audioData, error: audioError } = await supabase.functions.invoke("generate-video-preview", {
+        body: { 
+          script: contentToGenerate,
+          voice: commentVoice,
+          duration: selectedDuration
+        }
+      });
+
+      if (audioError) throw audioError;
+
+      setPreviewUrl(audioData.previewUrl.videoUrl);
+      setAudioUrl(audioData.previewUrl.audioUrl);
+      
+      toast({
+        title: "Video Generated",
+        description: "Your video preview is ready to watch.",
+      });
+    } catch (error) {
+      console.error('Generation error:', error);
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate video. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const handleFetch = async () => {
     if (!redditUrl) {
       toast({
@@ -62,7 +103,7 @@ export const RedditVideoEditor = () => {
       const post = data[0].data.children[0].data;
       
       // Calculate number of comments based on duration
-      const commentsPerMinute = 4; // Adjust this value to control pacing
+      const commentsPerMinute = 4;
       const durationInMinutes = parseInt(selectedDuration) / 60;
       const targetCommentCount = Math.max(1, Math.round(commentsPerMinute * durationInMinutes));
       
@@ -76,6 +117,9 @@ export const RedditVideoEditor = () => {
       const formattedContent = `${post.title}\n\n${comments}`;
       setContent(formattedContent);
       
+      // Automatically generate preview after fetching content
+      await handleGenerate(formattedContent);
+      
       toast({
         title: "Content Fetched",
         description: "Reddit content has been retrieved successfully.",
@@ -85,47 +129,6 @@ export const RedditVideoEditor = () => {
       toast({
         title: "Error",
         description: "Failed to fetch Reddit content. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleGenerate = async () => {
-    if (!content) {
-      toast({
-        title: "Missing Content",
-        description: "Please fetch or enter content first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsGenerating(true);
-    try {
-      const { data: audioData, error: audioError } = await supabase.functions.invoke("generate-video-preview", {
-        body: { 
-          script: content,
-          voice: commentVoice,
-          duration: selectedDuration
-        }
-      });
-
-      if (audioError) throw audioError;
-
-      setPreviewUrl(audioData.previewUrl.videoUrl);
-      setAudioUrl(audioData.previewUrl.audioUrl);
-      
-      toast({
-        title: "Video Generated",
-        description: "Your video preview is ready to watch.",
-      });
-    } catch (error) {
-      console.error('Generation error:', error);
-      toast({
-        title: "Generation Failed",
-        description: "Failed to generate video. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -246,7 +249,7 @@ export const RedditVideoEditor = () => {
       <Card>
         <CardContent className="pt-6">
           <Button
-            onClick={previewUrl ? handleExport : handleGenerate}
+            onClick={previewUrl ? handleExport : () => handleGenerate(content)}
             disabled={isGenerating}
             className="w-full gap-2"
           >
