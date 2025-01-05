@@ -30,7 +30,12 @@ export const useVideoGeneration = () => {
     try {
       console.log("Calling generate-video-content function with prompt:", prompt);
       const { data, error } = await supabase.functions.invoke("generate-video-content", {
-        body: { prompt, style: "engaging and professional" }
+        body: { 
+          prompt,
+          style: "engaging and professional",
+          minWords: 100, // Ensure script is long enough for 30 seconds
+          targetDuration: 30 // Target duration in seconds
+        }
       });
 
       if (error) {

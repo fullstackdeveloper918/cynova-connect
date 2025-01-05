@@ -24,12 +24,15 @@ serve(async (req) => {
 
     const openai = new OpenAI({ apiKey: openAiKey });
 
-    // Split script into meaningful sections
+    // Ensure we have at least 4 frames for a 30-second video (one every 7-8 seconds)
+    const minFrames = Math.max(4, numberOfFrames);
+    
+    // Split script into meaningful sections for each frame
     const sentences = script.split(/[.!?]+/).filter(Boolean).map(s => s.trim());
-    const sectionsPerFrame = Math.ceil(sentences.length / numberOfFrames);
+    const sectionsPerFrame = Math.ceil(sentences.length / minFrames);
     
     const framePrompts = [];
-    for (let i = 0; i < numberOfFrames; i++) {
+    for (let i = 0; i < minFrames; i++) {
       const startIndex = i * sectionsPerFrame;
       const endIndex = Math.min((i + 1) * sectionsPerFrame, sentences.length);
       const relevantSentences = sentences.slice(startIndex, endIndex).join('. ');
