@@ -22,7 +22,8 @@ export const generateVideo = async (
         duration: duration,
         quality: "high",
         format: "mp4",
-        wait_for_audio: true
+        wait_for_audio: true,
+        audio_start: 0
       },
     }),
   });
@@ -42,8 +43,8 @@ export const pollVideoGeneration = async (
 ): Promise<string> => {
   console.log('Polling for video completion...');
   let attempts = 0;
-  const maxAttempts = 60; // Increased max attempts for longer videos
-  const delayMs = 2000; // 2 second delay between attempts
+  const maxAttempts = 120; // Increased max attempts for longer videos
+  const delayMs = 3000; // 3 second delay between attempts
 
   while (attempts < maxAttempts) {
     console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`);
