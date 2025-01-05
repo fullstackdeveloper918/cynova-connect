@@ -21,6 +21,8 @@ export const RedditVideoEditor = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
+  const [titleAudioUrl, setTitleAudioUrl] = useState("");
+  const [commentAudioUrl, setCommentAudioUrl] = useState("");
   const [titleVoice, setTitleVoice] = useState("EXAVITQu4vr4xnSDxMaL"); // Sarah voice for title
   const [commentVoice, setCommentVoice] = useState("onwK4e9ZLuTAKqWW03F9"); // Daniel voice for comments
   const { toast } = useToast();
@@ -47,6 +49,7 @@ export const RedditVideoEditor = () => {
       const [title, ...comments] = contentToGenerate.split('\n\n');
       const commentsText = comments.join('\n\n');
 
+      console.log('Generating title audio with Sarah voice:', { title });
       // Generate audio for title with Sarah's voice
       const { data: titleAudioData, error: titleAudioError } = await supabase.functions.invoke("generate-video-preview", {
         body: { 
@@ -58,6 +61,7 @@ export const RedditVideoEditor = () => {
 
       if (titleAudioError) throw titleAudioError;
 
+      console.log('Generating comments audio with Daniel voice:', { commentsText });
       // Generate audio for comments with Daniel's voice
       const { data: commentAudioData, error: commentAudioError } = await supabase.functions.invoke("generate-video-preview", {
         body: { 
@@ -69,7 +73,9 @@ export const RedditVideoEditor = () => {
 
       if (commentAudioError) throw commentAudioError;
 
-      // Use the comment audio URL for preview (we'll handle title separately in TimedCaptions)
+      // Store both audio URLs
+      setTitleAudioUrl(titleAudioData.previewUrl.audioUrl);
+      setCommentAudioUrl(commentAudioData.previewUrl.audioUrl);
       setPreviewUrl(commentAudioData.previewUrl.videoUrl);
       setAudioUrl(commentAudioData.previewUrl.audioUrl);
       
@@ -258,7 +264,8 @@ export const RedditVideoEditor = () => {
           selectedResolution={selectedResolution}
           selectedCaptionStyle={selectedCaptionStyle}
           previewUrl={previewUrl}
-          audioUrl={audioUrl}
+          titleAudioUrl={titleAudioUrl}
+          commentAudioUrl={commentAudioUrl}
           onExport={handleExport}
         />
       )}

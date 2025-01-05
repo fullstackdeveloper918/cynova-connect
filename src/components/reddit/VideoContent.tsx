@@ -2,29 +2,50 @@ import { RefObject, useEffect, useRef } from "react";
 
 interface VideoContentProps {
   previewUrl: string;
-  audioUrl?: string;
+  titleAudioUrl?: string;
+  commentAudioUrl?: string;
   audioRef: RefObject<HTMLAudioElement>;
 }
 
-export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentProps) => {
+export const VideoContent = ({ previewUrl, titleAudioUrl, commentAudioUrl, audioRef }: VideoContentProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    if (audioRef.current && audioUrl) {
-      console.log('Setting up audio playback with:', { audioUrl });
+    if (audioRef.current && (titleAudioUrl || commentAudioUrl)) {
+      console.log('Setting up audio playback with:', { titleAudioUrl, commentAudioUrl });
       
       const audio = audioRef.current;
       audio.currentTime = 0;
-      audio.src = audioUrl;
 
-      const handleEnded = () => {
-        console.log('Audio ended');
+      // Set up title audio first
+      if (titleAudioUrl) {
+        audio.src = titleAudioUrl;
+      } else if (commentAudioUrl) {
+        audio.src = commentAudioUrl;
+      }
+
+      const handleTitleEnded = async () => {
+        console.log('Title audio ended, playing comments');
+        if (commentAudioUrl) {
+          audio.src = commentAudioUrl;
+          await audio.play();
+        }
+      };
+
+      const handleCommentEnded = () => {
+        console.log('Comments audio ended');
         if (videoRef.current) {
           videoRef.current.currentTime = 0;
         }
       };
 
-      audio.addEventListener('ended', handleEnded);
+      // If we have both title and comment audio
+      if (titleAudioUrl && commentAudioUrl) {
+        audio.addEventListener('ended', handleTitleEnded, { once: true });
+      } else {
+        // If we only have comment audio
+        audio.addEventListener('ended', handleCommentEnded);
+      }
       
       // Start playback
       Promise.all([
@@ -35,12 +56,13 @@ export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentPro
       });
       
       return () => {
-        audio.removeEventListener('ended', handleEnded);
+        audio.removeEventListener('ended', handleTitleEnded);
+        audio.removeEventListener('ended', handleCommentEnded);
         audio.pause();
         audio.src = '';
       };
     }
-  }, [audioUrl, audioRef]);
+  }, [titleAudioUrl, commentAudioUrl, audioRef]);
 
   return (
     <div className="relative w-full h-full">
@@ -53,10 +75,9 @@ export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentPro
         playsInline
         autoPlay
       />
-      {audioUrl && (
+      {(titleAudioUrl || commentAudioUrl) && (
         <audio
           ref={audioRef}
-          src={audioUrl}
           className="hidden"
         />
       )}

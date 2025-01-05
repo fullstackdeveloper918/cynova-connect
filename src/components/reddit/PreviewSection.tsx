@@ -13,7 +13,8 @@ interface PreviewSectionProps {
   selectedResolution: VideoResolution;
   selectedCaptionStyle: CaptionStyle;
   previewUrl: string;
-  audioUrl?: string;
+  titleAudioUrl?: string;
+  commentAudioUrl?: string;
   onExport: () => void;
 }
 
@@ -22,7 +23,8 @@ export const PreviewSection = ({
   selectedResolution, 
   selectedCaptionStyle,
   previewUrl,
-  audioUrl,
+  titleAudioUrl,
+  commentAudioUrl,
   onExport
 }: PreviewSectionProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -94,7 +96,8 @@ export const PreviewSection = ({
             <div className="absolute inset-0">
               <VideoContent 
                 previewUrl={selectedBackground} 
-                audioUrl={audioUrl}
+                titleAudioUrl={titleAudioUrl}
+                commentAudioUrl={commentAudioUrl}
                 audioRef={audioRef}
               />
             </div>
@@ -119,7 +122,7 @@ export const PreviewSection = ({
         </div>
 
         {/* Preview Links */}
-        {(previewUrl || audioUrl) && (
+        {(previewUrl || titleAudioUrl || commentAudioUrl) && (
           <div className="space-y-2 p-4 bg-accent/20 rounded-lg">
             <h3 className="font-medium mb-2">Generated Files:</h3>
             {previewUrl && (
@@ -130,11 +133,19 @@ export const PreviewSection = ({
                 </Button>
               </div>
             )}
-            {audioUrl && (
+            {titleAudioUrl && (
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Audio URL:</span>
-                <Button variant="link" size="sm" onClick={() => window.open(audioUrl, '_blank')}>
-                  View Audio <ExternalLink className="ml-2 h-4 w-4" />
+                <span className="text-sm text-muted-foreground">Title Audio URL:</span>
+                <Button variant="link" size="sm" onClick={() => window.open(titleAudioUrl, '_blank')}>
+                  View Title Audio <ExternalLink className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            {commentAudioUrl && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Comment Audio URL:</span>
+                <Button variant="link" size="sm" onClick={() => window.open(commentAudioUrl, '_blank')}>
+                  View Comment Audio <ExternalLink className="ml-2 h-4 w-4" />
                 </Button>
               </div>
             )}
