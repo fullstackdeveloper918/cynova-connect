@@ -1,5 +1,5 @@
 import { Video } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface FrameDisplayProps {
   isLoading: boolean;
@@ -23,6 +23,8 @@ export const FrameDisplay = ({
   onClick,
 }: FrameDisplayProps) => {
   const imageRefs = useRef<HTMLImageElement[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [timer, setTimer] = useState(2);
 
   // Preload images
   useEffect(() => {
@@ -32,6 +34,27 @@ export const FrameDisplay = ({
       imageRefs.current[index] = img;
     });
   }, [frameUrls]);
+
+  // Timer effect
+  useEffect(() => {
+    if (isPlaying && timer > 0) {
+      const interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+
+      return () => clearInterval(interval);
+    } else if (timer === 0) {
+      setShowResults(true);
+    }
+  }, [isPlaying, timer]);
+
+  // Reset timer when video is restarted
+  useEffect(() => {
+    if (!isPlaying) {
+      setTimer(2);
+      setShowResults(false);
+    }
+  }, [isPlaying]);
 
   if (!frameUrls.length) {
     return (
@@ -61,7 +84,7 @@ export const FrameDisplay = ({
                 {optionA}
               </div>
               {/* Small image container for option A */}
-              <div className="w-32 h-32 relative overflow-hidden rounded-lg">
+              <div className="w-24 h-24 relative overflow-hidden rounded-lg">
                 {frameUrls[currentFrameIndex] && (
                   <img
                     src={frameUrls[currentFrameIndex]}
@@ -76,7 +99,7 @@ export const FrameDisplay = ({
                 {optionB}
               </div>
               {/* Small image container for option B */}
-              <div className="w-32 h-32 relative overflow-hidden rounded-lg">
+              <div className="w-24 h-24 relative overflow-hidden rounded-lg">
                 {frameUrls[currentFrameIndex] && (
                   <img
                     src={frameUrls[currentFrameIndex]}
@@ -87,6 +110,34 @@ export const FrameDisplay = ({
               </div>
             </div>
           </div>
+          
+          {/* Timer overlay */}
+          {isPlaying && timer > 0 && (
+            <div 
+              className="absolute inset-0 flex items-center justify-center bg-black/50"
+              style={{ zIndex: 2 }}
+            >
+              <div className="text-white text-6xl font-bold animate-pulse">
+                {timer}
+              </div>
+            </div>
+          )}
+
+          {/* Results overlay */}
+          {showResults && (
+            <div 
+              className="absolute inset-0 flex items-center justify-center bg-black/50"
+              style={{ zIndex: 2 }}
+            >
+              <div className="text-white text-4xl font-bold text-center space-y-4">
+                <div>Results</div>
+                <div className="text-2xl">
+                  Option A: 65%<br />
+                  Option B: 35%
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Controls overlay with highest z-index */}
           <div 
