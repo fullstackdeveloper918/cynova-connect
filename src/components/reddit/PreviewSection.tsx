@@ -11,11 +11,6 @@ interface PreviewSectionProps {
 export const PreviewSection = ({ content, selectedResolution, previewUrl }: PreviewSectionProps) => {
   // Define aspect ratios and max heights for different resolutions
   const resolutionStyles = {
-    youtube: {
-      aspectRatio: "16/9",
-      maxHeight: "500px",
-      width: "100%",
-    },
     shorts: {
       aspectRatio: "9/16",
       maxHeight: "800px",
@@ -102,7 +97,7 @@ export const PreviewSection = ({ content, selectedResolution, previewUrl }: Prev
 
         {/* Resolution Info */}
         <div className="text-sm text-muted-foreground text-center">
-          {selectedResolution === "youtube" ? "1920x1080" : "1080x1920"}
+          1080x1920
         </div>
       </CardContent>
     </Card>
