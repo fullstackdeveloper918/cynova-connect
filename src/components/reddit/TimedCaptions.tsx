@@ -36,41 +36,39 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     let currentIndex = -1;
     let lastUpdateTime = 0;
 
+    const updateCaption = (index: number) => {
+      if (index >= 0 && index < chunks.length && index !== currentIndex) {
+        console.log('Updating caption:', {
+          index,
+          currentTime: audio.currentTime,
+          chunk: chunks[index],
+          totalChunks: chunks.length,
+        });
+        
+        currentIndex = index;
+        setCurrentCaption(chunks[index]);
+        setIsVisible(true);
+      }
+    };
+
     const handleTimeUpdate = () => {
       if (!audio.duration) return;
 
       const now = Date.now();
-      // Only update every 100ms to prevent too frequent updates
       if (now - lastUpdateTime < 100) return;
       lastUpdateTime = now;
 
-      // Calculate chunk duration based on total audio duration
-      const chunkDuration = audio.duration / chunks.length;
-      const newIndex = Math.floor(audio.currentTime / chunkDuration);
-
-      // Only update if moving to a new chunk and it's valid
-      if (newIndex !== currentIndex && newIndex >= 0 && newIndex < chunks.length) {
-        console.log('Updating caption:', {
-          newIndex,
-          currentTime: audio.currentTime,
-          chunk: chunks[newIndex],
-          chunkDuration,
-          totalChunks: chunks.length,
-          audioDuration: audio.duration
-        });
-        
-        currentIndex = newIndex;
-        setCurrentCaption(chunks[newIndex]);
-        setIsVisible(true);
-      }
+      // Calculate the current chunk based on audio progress
+      const progress = audio.currentTime / audio.duration;
+      const newIndex = Math.floor(progress * chunks.length);
+      
+      updateCaption(newIndex);
     };
 
     const handlePlay = () => {
       console.log('Audio started playing');
       setIsVisible(true);
-      // Start with first caption
-      setCurrentCaption(chunks[0]);
-      currentIndex = 0;
+      updateCaption(0);
     };
 
     const handlePause = () => {
@@ -84,13 +82,11 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       setIsVisible(false);
     };
 
-    // Add all event listeners
     audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("play", handlePlay);
     audio.addEventListener("pause", handlePause);
     audio.addEventListener("ended", handleEnded);
 
-    // Cleanup function
     return () => {
       audio.removeEventListener("timeupdate", handleTimeUpdate);
       audio.removeEventListener("play", handlePlay);
@@ -99,16 +95,12 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     };
   }, [audioRef, chunks]);
 
-  if (!currentCaption) {
-    return null;
-  }
-
   return (
-    <div className="flex justify-center items-center w-full">
+    <div className="absolute inset-0 flex items-center justify-center">
       <div 
         className={`transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'} ${className}`}
       >
-        <p className="text-center max-w-3xl mx-auto">
+        <p className="text-center max-w-3xl mx-auto px-4">
           {currentCaption}
         </p>
       </div>
