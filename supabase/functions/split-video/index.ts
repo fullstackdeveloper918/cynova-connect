@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
-import { decode as base64Decode } from "https://deno.land/std@0.182.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,6 +7,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -32,13 +32,13 @@ serve(async (req) => {
     );
 
     // Upload original video to storage
-    const videoExt = video.name.split('.').pop();
-    const videoPath = `${crypto.randomUUID()}.${videoExt}`;
+    const videoBuffer = await video.arrayBuffer();
+    const videoPath = `temp/${tempVideoId}/${crypto.randomUUID()}.mp4`;
     
     console.log('Uploading original video:', videoPath);
-    const { error: uploadError, data: uploadData } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('exports')
-      .upload(videoPath, video);
+      .upload(videoPath, videoBuffer);
 
     if (uploadError) {
       console.error('Upload error:', uploadError);
@@ -79,6 +79,10 @@ serve(async (req) => {
         // Calculate duration
         const duration = segment.end - segment.start;
         
+        // Create a temporary file for the segment
+        const segmentPath = `segments/${segmentRecord.id}.mp4`;
+        const outputPath = `temp_${segmentRecord.id}.mp4`;
+
         // Prepare FFmpeg command for vertical video (9:16 aspect ratio)
         const ffmpegCmd = [
           'ffmpeg',
@@ -87,27 +91,32 @@ serve(async (req) => {
           '-t', duration.toString(),
           '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2',
           '-c:v', 'libx264',
+          '-preset', 'fast',
           '-c:a', 'aac',
           '-y',
-          `output_${segmentRecord.id}.mp4`
+          outputPath
         ];
 
+        console.log('Running FFmpeg command:', ffmpegCmd.join(' '));
+
         // Execute FFmpeg command
-        const process = new Deno.Command(ffmpegCmd[0], {
+        const process = new Deno.Command('ffmpeg', {
           args: ffmpegCmd.slice(1),
         });
 
-        const { success } = await process.output();
+        const { code, stdout, stderr } = await process.output();
 
-        if (!success) {
+        if (code !== 0) {
+          console.error('FFmpeg error:', new TextDecoder().decode(stderr));
           throw new Error('FFmpeg processing failed');
         }
 
+        console.log('FFmpeg output:', new TextDecoder().decode(stdout));
+
         // Read the processed file
-        const processedVideo = await Deno.readFile(`output_${segmentRecord.id}.mp4`);
+        const processedVideo = await Deno.readFile(outputPath);
 
         // Upload processed segment
-        const segmentPath = `segments/${segmentRecord.id}.mp4`;
         const { error: segmentUploadError } = await supabase.storage
           .from('exports')
           .upload(segmentPath, processedVideo);
@@ -134,8 +143,12 @@ serve(async (req) => {
           throw updateError;
         }
 
-        // Cleanup temporary file
-        await Deno.remove(`output_${segmentRecord.id}.mp4`);
+        // Cleanup temporary files
+        try {
+          await Deno.remove(outputPath);
+        } catch (error) {
+          console.error('Error cleaning up temporary file:', error);
+        }
 
       } catch (error) {
         console.error('Error processing segment:', error);
@@ -148,6 +161,11 @@ serve(async (req) => {
           .eq('name', segment.name);
       }
     }
+
+    // Cleanup original video
+    await supabase.storage
+      .from('exports')
+      .remove([videoPath]);
 
     return new Response(
       JSON.stringify({ 
