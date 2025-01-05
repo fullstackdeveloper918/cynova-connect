@@ -8,6 +8,7 @@ import { useUser } from "@/hooks/useUser";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoPreview } from "../chatgpt/VideoPreview";
+import { Loader2, Wand2 } from "lucide-react";
 
 export const WouldYouRatherEditor = () => {
   const { data: user, isLoading: userLoading } = useUser();
@@ -17,13 +18,42 @@ export const WouldYouRatherEditor = () => {
   const [optionB, setOptionB] = useState("");
   const [selectedVoice, setSelectedVoice] = useState("21m00Tcm4TlvDq8ikWAM");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<{ audioUrl: string; videoUrl?: string } | null>(null);
   const [script, setScript] = useState<string>("");
+
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "generate-would-you-rather-questions",
+        { body: {} }
+      );
+
+      if (error) throw error;
+
+      setOptionA(data.optionA);
+      setOptionB(data.optionB);
+
+      toast({
+        title: "Questions Generated",
+        description: "Feel free to edit them or use them as is!",
+      });
+    } catch (error) {
+      console.error('Error generating questions:', error);
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate questions. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check if user is authenticated
     if (!user?.id || userLoading) {
       toast({
         title: "Authentication Required",
@@ -38,7 +68,6 @@ export const WouldYouRatherEditor = () => {
     try {
       console.log("Generating video content...");
       
-      // Generate video content with narration and images
       const { data: videoData, error: videoError } = await supabase.functions.invoke(
         "generate-would-you-rather",
         {
@@ -58,7 +87,6 @@ export const WouldYouRatherEditor = () => {
       });
       setScript(videoData.script);
 
-      // Create project
       console.log("Creating project with user ID:", user.id);
       
       const { data: project, error: projectError } = await supabase
@@ -84,7 +112,6 @@ export const WouldYouRatherEditor = () => {
 
       console.log("Project created successfully:", project);
 
-      // Create the would you rather question
       const { error: questionError } = await supabase
         .from("would_you_rather_questions")
         .insert({
@@ -121,7 +148,27 @@ export const WouldYouRatherEditor = () => {
       <Card className="p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Options</h2>
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Options</h2>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleGenerate}
+                disabled={isGenerating}
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="mr-2 h-4 w-4" />
+                    Generate Options
+                  </>
+                )}
+              </Button>
+            </div>
             <div>
               <label className="block text-sm font-medium mb-2">
                 Would you rather...
