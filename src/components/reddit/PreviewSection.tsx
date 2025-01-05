@@ -45,20 +45,6 @@ export const PreviewSection = ({ content, selectedResolution, previewUrl }: Prev
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Content Preview */}
-        {content && (
-          <div className="rounded-lg bg-[#DAE0E6] p-4">
-            <div className="max-w-2xl mx-auto space-y-4">
-              {title && <RedditPost title={title} />}
-              <div className="space-y-2">
-                {comments.map((comment, index) => (
-                  <RedditComment key={index} content={comment} />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Video Preview Container */}
         <div className="flex justify-center">
           <div 
@@ -69,15 +55,40 @@ export const PreviewSection = ({ content, selectedResolution, previewUrl }: Prev
               width: currentStyle.width,
             }}
           >
-            {previewUrl ? (
+            {/* Background Video */}
+            {previewUrl && (
               <video
                 src={previewUrl}
-                controls
-                className="absolute inset-0 w-full h-full object-contain"
+                autoPlay
+                loop
+                muted
+                className="absolute inset-0 w-full h-full object-cover"
               >
                 Your browser does not support the video tag.
               </video>
-            ) : (
+            )}
+
+            {/* Content Overlay */}
+            {content && (
+              <div className="absolute inset-0 flex flex-col">
+                {/* Reddit Content */}
+                <div className="flex-1 overflow-y-auto bg-gradient-to-b from-black/60 to-transparent p-4">
+                  <div className="max-w-2xl mx-auto space-y-4">
+                    {title && <RedditPost title={title} />}
+                    <div className="space-y-2">
+                      {comments.slice(0, 5).map((comment, index) => (
+                        <RedditComment key={index} content={comment} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                {/* Bottom Gradient Overlay */}
+                <div className="h-24 bg-gradient-to-t from-black/60 to-transparent" />
+              </div>
+            )}
+
+            {/* Placeholder when no content */}
+            {!previewUrl && !content && (
               <div className="absolute inset-0 flex items-center justify-center text-white/50">
                 Video preview will appear here
               </div>
