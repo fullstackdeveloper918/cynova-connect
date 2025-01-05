@@ -27,16 +27,18 @@ serve(async (req) => {
 
     // Split script into meaningful sections for frame generation
     const sections = script.split(/[.!?]+/).filter(Boolean).map(s => s.trim());
+    console.log('Split script into sections:', sections);
+
     const framePrompts = sections.map(section => 
       `Create a vertical video frame (9:16 aspect ratio) for this scene: "${section}". Style: cinematic, high quality, photorealistic. Make it suitable for TikTok/YouTube Shorts with vibrant colors and engaging composition.`
     );
 
-    console.log('Starting frame generation with prompts:', framePrompts);
+    console.log('Generated prompts:', framePrompts);
     
     const frameUrls = await Promise.all(
       framePrompts.map(async (prompt, index) => {
         try {
-          console.log(`Generating frame ${index + 1} with prompt:`, prompt);
+          console.log(`Starting generation for frame ${index + 1} with prompt:`, prompt);
           const response = await openai.images.generate({
             model: "dall-e-3",
             prompt,
@@ -55,7 +57,7 @@ serve(async (req) => {
       })
     );
 
-    console.log('All frames generated successfully:', frameUrls);
+    console.log('All frames generated successfully. Total frames:', frameUrls.length);
 
     return new Response(
       JSON.stringify({

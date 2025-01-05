@@ -35,7 +35,7 @@ export const VideoPreview = ({
       const generateFrames = async () => {
         setIsLoading(true);
         try {
-          console.log('Generating frames for script:', script);
+          console.log('Starting frame generation for script:', script);
           const { data, error } = await supabase.functions.invoke("generate-video-frames", {
             body: { script }
           });
@@ -87,6 +87,7 @@ export const VideoPreview = ({
             Math.floor(progress * frameUrls.length),
             frameUrls.length - 1
           );
+          console.log('Updating frame index:', frameIndex, 'Progress:', progress);
           setCurrentFrameIndex(frameIndex);
         }
       };
