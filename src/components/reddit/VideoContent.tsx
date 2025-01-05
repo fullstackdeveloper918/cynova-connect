@@ -1,4 +1,4 @@
-import { RefObject, useEffect, useState } from "react";
+import { RefObject, useEffect, useState, useRef } from "react";
 import { Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -10,6 +10,7 @@ interface VideoContentProps {
 
 export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (audioRef.current && audioUrl) {
@@ -31,7 +32,10 @@ export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentPro
           if (isPlaying) {
             console.log('Audio loaded, starting playback');
             await audio.play();
-            console.log('Audio playback started successfully');
+            if (videoRef.current) {
+              videoRef.current.play();
+            }
+            console.log('Audio and video playback started successfully');
           }
         } catch (error) {
           console.error('Audio playback error:', error);
@@ -43,6 +47,9 @@ export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentPro
       const handleEnded = () => {
         console.log('Audio ended, restarting');
         audio.currentTime = 0;
+        if (videoRef.current) {
+          videoRef.current.currentTime = 0;
+        }
         startPlayback();
       };
 
@@ -57,28 +64,33 @@ export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentPro
   }, [audioUrl, audioRef, isPlaying]);
 
   const togglePlayback = async () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        try {
-          await audioRef.current.play();
-        } catch (error) {
-          console.error('Playback error:', error);
+    if (audioRef.current && videoRef.current) {
+      try {
+        if (isPlaying) {
+          audioRef.current.pause();
+          videoRef.current.pause();
+        } else {
+          await Promise.all([
+            audioRef.current.play(),
+            videoRef.current.play()
+          ]);
         }
+        setIsPlaying(!isPlaying);
+        console.log('Playback toggled:', !isPlaying);
+      } catch (error) {
+        console.error('Playback error:', error);
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
   return (
     <div className="relative w-full h-full">
       <video
+        ref={videoRef}
         src={previewUrl}
         className="w-full h-full object-cover"
         loop
         muted
-        autoPlay={isPlaying}
         playsInline
       />
       {audioUrl && (
