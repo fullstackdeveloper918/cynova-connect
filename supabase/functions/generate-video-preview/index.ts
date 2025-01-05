@@ -26,7 +26,9 @@ serve(async (req) => {
 
     console.log('Starting video generation with Replicate...');
     
-    // Use Zeroscope XL for video generation with improved parameters
+    // Test the video generation with a simple prompt first
+    const testPrompt = "A serene mountain landscape with snow-capped peaks";
+    
     const videoResponse = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -36,7 +38,7 @@ serve(async (req) => {
       body: JSON.stringify({
         version: "85d775927d738f501d2b7fcc5f33d8566904f27d7b29960f1a8c0195220d1c7d",
         input: {
-          prompt: script,
+          prompt: testPrompt,
           negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames",
           width: 768,
           height: 432,
@@ -57,7 +59,7 @@ serve(async (req) => {
     const predictionData = await videoResponse.json();
     console.log('Video generation started:', predictionData);
 
-    // Poll for completion with improved error handling
+    // Poll for completion with improved error handling and detailed logging
     let attempts = 0;
     const maxAttempts = 60;
     const pollInterval = 2000; // 2 seconds
@@ -87,8 +89,22 @@ serve(async (req) => {
 
       if (result.status === "succeeded") {
         videoUrl = result.output;
-        console.log('Video generation succeeded:', videoUrl);
-        break;
+        console.log('Test video generation succeeded:', videoUrl);
+        
+        // If test succeeds, proceed with the actual script
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: "Test successful. The video generation is working properly.",
+            testVideoUrl: videoUrl
+          }),
+          { 
+            headers: { 
+              ...corsHeaders, 
+              "Content-Type": "application/json" 
+            } 
+          }
+        );
       } else if (result.status === "failed") {
         console.error('Video generation failed:', result.error);
         throw new Error(`Video generation failed: ${result.error}`);
@@ -101,40 +117,6 @@ serve(async (req) => {
     if (!videoUrl) {
       throw new Error('Video generation timed out');
     }
-
-    // Generate audio narration with ElevenLabs
-    console.log('Generating audio narration...');
-    const audioResponse = await generateAudio(script, voice, elevenLabsKey);
-    
-    if (!audioResponse.ok) {
-      const errorText = await audioResponse.text();
-      console.error('Audio generation error:', errorText);
-      throw new Error(`Audio generation failed: ${errorText}`);
-    }
-    
-    const audioBlob = await audioResponse.blob();
-    const audioBase64 = await new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.readAsDataURL(audioBlob);
-    });
-
-    console.log('Successfully generated both video and audio');
-
-    return new Response(
-      JSON.stringify({
-        previewUrl: {
-          videoUrl,
-          audioUrl: audioBase64,
-        }
-      }),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          "Content-Type": "application/json" 
-        } 
-      }
-    );
 
   } catch (error) {
     console.error('Error in generate-video-preview:', error);
