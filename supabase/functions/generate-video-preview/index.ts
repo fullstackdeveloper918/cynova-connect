@@ -25,49 +25,35 @@ serve(async (req) => {
 
     console.log('Starting video generation with Replicate...');
     
-    // Test the API directly first
-    const testResponse = await fetch("https://api.replicate.com/v1/predictions", {
+    // Use Zeroscope XL for video generation
+    const videoResponse = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
         "Authorization": `Token ${replicateApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
+        version: "85d775927d738f501d2b7fcc5f33d8566904f27d7b29960f1a8c0195220d1c7d",
         input: {
-          html: `
-            <div style="
-              background-color: #000;
-              color: #fff;
-              font-family: Arial;
-              padding: 20px;
-              width: 100%;
-              height: 100%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              text-align: center;
-            ">
-              <p style="font-size: 24px;">${script}</p>
-            </div>
-          `,
-          width: 1080,
-          height: 1920,
-          fps: 30,
-          duration: 10,
-          quality: "high",
-          format: "mp4",
+          prompt: script,
+          num_frames: 24,
+          fps: 8,
+          width: 576,
+          height: 320,
+          guidance_scale: 12.5,
+          num_inference_steps: 50,
+          negative_prompt: "blurry, low quality, low resolution, bad quality, ugly, duplicate frames"
         },
       }),
     });
 
-    if (!testResponse.ok) {
-      const error = await testResponse.text();
+    if (!videoResponse.ok) {
+      const error = await videoResponse.text();
       console.error('Replicate API Error:', error);
       throw new Error(`Replicate API error: ${error}`);
     }
 
-    const predictionData = await testResponse.json();
+    const predictionData = await videoResponse.json();
     console.log('Video generation started:', predictionData);
 
     // Poll for completion
