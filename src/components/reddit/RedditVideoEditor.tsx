@@ -15,6 +15,7 @@ import { ResolutionSelector, type VideoResolution } from "./ResolutionSelector";
 import { SpeechToText } from "./SpeechToText";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Save } from "lucide-react";
+import { VoiceSelector } from "../chatgpt/VoiceSelector";
 
 export const RedditVideoEditor = () => {
   const [redditUrl, setRedditUrl] = useState("");
@@ -23,6 +24,8 @@ export const RedditVideoEditor = () => {
   const [selectedResolution, setSelectedResolution] = useState<VideoResolution>("youtube");
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState("");
+  const [titleVoice, setTitleVoice] = useState("EXAVITQu4vr4xnSDxMaL"); // Sarah for questions
+  const [commentVoice, setCommentVoice] = useState("onwK4e9ZLuTAKqWW03F9"); // Daniel for answers
   const { toast } = useToast();
 
   const handleFetch = async () => {
@@ -67,7 +70,11 @@ export const RedditVideoEditor = () => {
 
     setIsGenerating(true);
     try {
-      // TODO: Implement video generation
+      // TODO: Implement video generation with narration
+      // This would involve:
+      // 1. Splitting content into title and comments
+      // 2. Generating audio for each part with different voices
+      // 3. Combining audio with background video
       await new Promise((resolve) => setTimeout(resolve, 2000));
       setPreviewUrl(selectedBackground);
       toast({
@@ -127,6 +134,31 @@ export const RedditVideoEditor = () => {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               className="min-h-[200px]"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Voice Settings</CardTitle>
+          <CardDescription>
+            Choose different voices for the title and comments
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="text-sm font-medium mb-2 block">Title Voice</label>
+            <VoiceSelector
+              selectedVoice={titleVoice}
+              onVoiceSelect={setTitleVoice}
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium mb-2 block">Comment Voice</label>
+            <VoiceSelector
+              selectedVoice={commentVoice}
+              onVoiceSelect={setCommentVoice}
             />
           </div>
         </CardContent>
