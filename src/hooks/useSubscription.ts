@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 export interface PlanLimits {
   max_videos_per_month: number;
@@ -40,13 +41,20 @@ export const useSubscription = () => {
       if (!data) return null;
 
       // Parse the JSON plan_limits field
+      const planLimits = data.plan_limits as { 
+        max_videos_per_month: string | number;
+        max_exports_per_month: string | number;
+        max_duration_minutes: string | number;
+        features: string[];
+      } | null;
+
       return {
         ...data,
-        plan_limits: data.plan_limits ? {
-          max_videos_per_month: Number(data.plan_limits.max_videos_per_month),
-          max_exports_per_month: Number(data.plan_limits.max_exports_per_month),
-          max_duration_minutes: Number(data.plan_limits.max_duration_minutes),
-          features: data.plan_limits.features as string[]
+        plan_limits: planLimits ? {
+          max_videos_per_month: Number(planLimits.max_videos_per_month),
+          max_exports_per_month: Number(planLimits.max_exports_per_month),
+          max_duration_minutes: Number(planLimits.max_duration_minutes),
+          features: planLimits.features
         } : null
       } as Subscription;
     },
