@@ -1,8 +1,10 @@
 import { Card, CardContent } from "../ui/card";
-import { Scissors, Download, Loader2 } from "lucide-react";
+import { Scissors, Download, Loader2, Play } from "lucide-react";
 import { Button } from "../ui/button";
-import { toast } from "../ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { GameplaySelector } from "./GameplaySelector";
+import { useState } from "react";
 
 interface VideoSegment {
   start: number;
@@ -10,6 +12,9 @@ interface VideoSegment {
   name: string;
   status?: string;
   file_url?: string;
+  gameplay_url?: string;
+  combined_url?: string;
+  is_combined?: boolean;
 }
 
 interface VideoSegmentsProps {
@@ -17,11 +22,16 @@ interface VideoSegmentsProps {
 }
 
 export const VideoSegments = ({ segments }: VideoSegmentsProps) => {
+  const [selectedSegment, setSelectedSegment] = useState<string | null>(null);
+
   if (segments.length === 0) return null;
 
   const handleDownload = async (segment: VideoSegment) => {
     try {
-      if (!segment.file_url) {
+      // Prefer combined URL if available
+      const downloadUrl = segment.combined_url || segment.file_url;
+      
+      if (!downloadUrl) {
         toast({
           title: "Segment not ready",
           description: "Please wait for the segment to finish processing.",
@@ -29,11 +39,6 @@ export const VideoSegments = ({ segments }: VideoSegmentsProps) => {
         });
         return;
       }
-
-      // If it's already a full URL, use it directly
-      const downloadUrl = segment.file_url.startsWith('http') 
-        ? segment.file_url 
-        : supabase.storage.from('exports').getPublicUrl(segment.file_url).data.publicUrl;
 
       // Create a temporary anchor element to trigger the download
       const link = document.createElement('a');
@@ -54,6 +59,59 @@ export const VideoSegments = ({ segments }: VideoSegmentsProps) => {
         description: "There was an error downloading your segment. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleGameplaySelect = async (segmentName: string, gameplayUrl: string) => {
+    setSelectedSegment(segmentName);
+    
+    try {
+      const { data: segmentData, error: segmentError } = await supabase
+        .from('video_segments')
+        .update({
+          gameplay_url: gameplayUrl,
+          status: 'processing'
+        })
+        .eq('name', segmentName)
+        .select()
+        .single();
+
+      if (segmentError) throw segmentError;
+
+      toast({
+        title: "Processing video",
+        description: "Combining gameplay with your segment. This may take a moment.",
+      });
+
+      // Trigger the edge function to combine videos
+      const response = await fetch('/api/combine-videos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          segmentId: segmentData.id,
+          gameplayUrl,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to combine videos');
+      }
+
+      toast({
+        title: "Success",
+        description: "Gameplay has been added to your segment.",
+      });
+    } catch (error) {
+      console.error('Error adding gameplay:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add gameplay to segment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSelectedSegment(null);
     }
   };
 
@@ -96,7 +154,7 @@ export const VideoSegments = ({ segments }: VideoSegmentsProps) => {
                   {segment.status === 'failed' && 'Failed'}
                   {!segment.status && 'Pending'}
                 </div>
-                {segment.status === 'completed' && segment.file_url && (
+                {segment.status === 'completed' && (segment.file_url || segment.combined_url) && (
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -108,6 +166,16 @@ export const VideoSegments = ({ segments }: VideoSegmentsProps) => {
                   </Button>
                 )}
               </div>
+
+              {/* Gameplay Selection */}
+              {segment.status === 'completed' && !segment.is_combined && (
+                <div className="mt-4">
+                  <GameplaySelector
+                    onSelect={(url) => handleGameplaySelect(segment.name, url)}
+                    selectedUrl={segment.gameplay_url}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}

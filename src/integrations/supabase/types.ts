@@ -181,11 +181,14 @@ export type Database = {
       }
       video_segments: {
         Row: {
+          combined_url: string | null
           created_at: string | null
           end_time: number
           file_size: number | null
           file_url: string | null
+          gameplay_url: string | null
           id: string
+          is_combined: boolean | null
           name: string
           start_time: number
           status: Database["public"]["Enums"]["segment_status"] | null
@@ -194,11 +197,14 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          combined_url?: string | null
           created_at?: string | null
           end_time: number
           file_size?: number | null
           file_url?: string | null
+          gameplay_url?: string | null
           id?: string
+          is_combined?: boolean | null
           name: string
           start_time: number
           status?: Database["public"]["Enums"]["segment_status"] | null
@@ -207,11 +213,14 @@ export type Database = {
           user_id: string
         }
         Update: {
+          combined_url?: string | null
           created_at?: string | null
           end_time?: number
           file_size?: number | null
           file_url?: string | null
+          gameplay_url?: string | null
           id?: string
+          is_combined?: boolean | null
           name?: string
           start_time?: number
           status?: Database["public"]["Enums"]["segment_status"] | null
