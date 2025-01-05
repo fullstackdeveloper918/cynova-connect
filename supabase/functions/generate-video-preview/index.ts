@@ -70,6 +70,7 @@ serve(async (req) => {
     console.log('Audio processed successfully');
 
     // Generate video with Replicate
+    // Using Stable Video Diffusion model for video generation
     console.log('Generating video with Replicate...');
     const videoResponse = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
@@ -78,13 +79,16 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "50d7ac33b67bc8f4a629b3d77d6f5f7c41861c3bb0bd1bd31cd954ef4c3458ae",
+        version: "061e0772e3c5887e755a2b8d885d9dab44e55dcc28830be4e0f98e5d2c1d4c2a",
         input: {
           prompt: script,
-          width: 768,
-          height: 432,
-          num_frames: parseInt(duration) || 24,
+          num_frames: 24,
+          width: 1024,
+          height: 576,
           fps: 8,
+          num_inference_steps: 25,
+          motion_bucket_id: 127,
+          guidance_scale: 12.5
         },
       }),
     });
