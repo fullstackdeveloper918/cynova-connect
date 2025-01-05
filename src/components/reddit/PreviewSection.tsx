@@ -70,19 +70,25 @@ export const PreviewSection = ({
         description: "Preparing your video...",
       });
 
+      // Fetch the video as an array buffer to preserve binary data
       const response = await fetch(previewUrl);
       if (!response.ok) throw new Error('Download failed');
       
-      const blob = await response.blob();
-      // Ensure proper MIME type for MP4
-      const videoBlob = new Blob([blob], { type: 'video/mp4' });
+      const arrayBuffer = await response.arrayBuffer();
+      const videoBlob = new Blob([arrayBuffer], { type: 'video/mp4' });
       const url = window.URL.createObjectURL(videoBlob);
       
       // Create and trigger download
       const link = document.createElement('a');
       link.href = url;
-      // Ensure .mp4 extension
-      link.download = `${title.slice(0, 30).replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
+      // Clean filename and ensure .mp4 extension
+      const cleanTitle = title
+        .slice(0, 30)
+        .replace(/[^a-z0-9]/gi, '_')
+        .toLowerCase();
+      link.download = `${cleanTitle}_video.mp4`;
+      
+      // Append link, click, and cleanup
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
