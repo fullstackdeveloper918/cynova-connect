@@ -6,6 +6,57 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
+
+async function generateAudioWithRetry(
+  message: string, 
+  index: number, 
+  elevenLabsKey: string, 
+  voiceId: string, 
+  retryCount = 0
+): Promise<ArrayBuffer> {
+  try {
+    console.log(`Attempt ${retryCount + 1} to generate audio for message ${index}`);
+    const audioResponse = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+      {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': elevenLabsKey,
+        },
+        body: JSON.stringify({
+          text: message,
+          model_id: "eleven_monolingual_v1",
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.5,
+          },
+        }),
+      }
+    );
+
+    if (!audioResponse.ok) {
+      const errorText = await audioResponse.text();
+      throw new Error(`ElevenLabs API error: ${errorText}`);
+    }
+
+    return await audioResponse.arrayBuffer();
+  } catch (error) {
+    console.error(`Error generating audio for message ${index}:`, error);
+    
+    if (retryCount < MAX_RETRIES) {
+      console.log(`Retrying audio generation for message ${index} after ${RETRY_DELAY}ms`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      return generateAudioWithRetry(message, index, elevenLabsKey, voiceId, retryCount + 1);
+    }
+    
+    throw new Error(`Failed to generate audio after ${MAX_RETRIES} attempts: ${error.message}`);
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -33,7 +84,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
@@ -87,37 +138,13 @@ serve(async (req) => {
       throw new Error('Invalid conversation format received from OpenAI');
     }
 
-    // Generate audio for each message with better error handling
+    // Generate audio for each message with better error handling and retries
     console.log('Generating audio for messages...');
     const messagesWithAudio = await Promise.all(
       messages.map(async (message: any, index: number) => {
         try {
           console.log(`Generating audio for message ${index}:`, message.content);
-          const audioResponse = await fetch(
-            `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
-            {
-              method: 'POST',
-              headers: {
-                'Accept': 'audio/mpeg',
-                'Content-Type': 'application/json',
-                'xi-api-key': elevenLabsKey,
-              },
-              body: JSON.stringify({
-                text: message.content,
-                model_id: "eleven_monolingual_v1",
-                voice_settings: {
-                  stability: 0.5,
-                  similarity_boost: 0.5,
-                },
-              }),
-            }
-          );
-
-          if (!audioResponse.ok) {
-            throw new Error(`Failed to generate audio for message ${index}`);
-          }
-
-          const audioBuffer = await audioResponse.arrayBuffer();
+          const audioBuffer = await generateAudioWithRetry(message.content, index, elevenLabsKey, voiceId);
           const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
           
           return { 
@@ -125,7 +152,7 @@ serve(async (req) => {
             audioUrl: `data:audio/mpeg;base64,${base64Audio}` 
           };
         } catch (error) {
-          console.error(`Error generating audio for message ${index}:`, error);
+          console.error(`Error in audio generation for message ${index}:`, error);
           throw new Error(`Failed to generate audio for message ${index}: ${error.message}`);
         }
       })
