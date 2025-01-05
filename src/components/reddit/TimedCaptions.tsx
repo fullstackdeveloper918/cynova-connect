@@ -55,23 +55,21 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     let currentIndex = -1;
     let lastUpdateTime = 0;
 
-    const updateCaption = (index: number) => {
+    const updateCaption = (index: number, isTitleSection: boolean) => {
       if (index >= 0 && index < allChunks.length && index !== currentIndex) {
-        const isTitleChunk = index < titleChunks.length;
-        
         console.log('Updating caption:', {
           index,
           currentTime: audio.currentTime,
           chunk: allChunks[index],
           totalChunks: allChunks.length,
           audioDuration: audio.duration,
-          isTitle: isTitleChunk
+          isTitle: isTitleSection
         });
         
         currentIndex = index;
         setCurrentCaption(allChunks[index]);
         setIsVisible(true);
-        setIsShowingTitle(isTitleChunk);
+        setIsShowingTitle(isTitleSection);
       }
     };
 
@@ -82,36 +80,28 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       if (now - lastUpdateTime < 100) return;
       lastUpdateTime = now;
 
-      // Calculate proportional durations with adjustments for better sync
-      const titleDuration = (titleChunks.length / allChunks.length) * audio.duration * 1.2;
-      const currentTime = audio.currentTime;
-      
-      let currentChunkIndex;
-      const syncOffset = 0.2;
-
       // Check if we're playing the title audio or comments audio
       const src = audio.src;
       const isTitleAudio = src.includes('title');
       
-      if (isTitleAudio || currentTime < titleDuration) {
-        // We're in the title section
-        const titleProgress = (currentTime + syncOffset) / titleDuration;
-        currentChunkIndex = Math.floor(titleProgress * titleChunks.length);
+      if (isTitleAudio) {
+        // We're playing the title audio
+        const progress = (audio.currentTime / audio.duration);
+        const titleIndex = Math.floor(progress * titleChunks.length);
+        updateCaption(titleIndex, true);
       } else {
-        // We're in the comments section
-        const remainingTime = audio.duration - titleDuration;
-        const commentProgress = (currentTime - titleDuration + syncOffset) / remainingTime;
-        currentChunkIndex = titleChunks.length + Math.floor(commentProgress * commentChunks.length);
+        // We're playing the comments audio
+        const progress = (audio.currentTime / audio.duration);
+        const commentIndex = Math.floor(progress * commentChunks.length);
+        updateCaption(titleChunks.length + commentIndex, false);
       }
-      
-      const adjustedIndex = Math.max(0, Math.min(Math.floor(currentChunkIndex), allChunks.length - 1));
-      updateCaption(adjustedIndex);
     };
 
     const handlePlay = () => {
       console.log('Audio started playing');
       setIsVisible(true);
-      updateCaption(0);
+      const isTitleAudio = audio.src.includes('title');
+      updateCaption(0, isTitleAudio);
     };
 
     const handlePause = () => {
@@ -136,7 +126,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("ended", handleEnded);
     };
-  }, [audioRef, allChunks, titleChunks.length]);
+  }, [audioRef, allChunks, titleChunks.length, commentChunks.length]);
 
   return (
     <div className="absolute inset-0 flex items-center justify-center">
