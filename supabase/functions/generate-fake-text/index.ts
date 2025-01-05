@@ -1,11 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
 
@@ -64,6 +59,11 @@ async function generateAudioWithRetry(
 }
 
 serve(async (req) => {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -98,19 +98,21 @@ serve(async (req) => {
             content: `You are an expert at creating realistic iMessage conversations. Generate a natural conversation between two people about the given topic. 
             The conversation should have approximately ${targetMessageCount} messages to fill a ${duration}-second duration when read aloud.
             
-            IMPORTANT: Your response must be a valid JSON array of message objects. Each message object must have these exact properties:
-            - "content": string (the message text)
-            - "isUser": boolean (alternating between true and false)
-            - "timestamp": string (in "h:mm PM" format)
+            You MUST return ONLY a valid JSON array of message objects. Each message object MUST have these exact properties:
+            {
+              "content": "the message text",
+              "isUser": true or false,
+              "timestamp": "h:mm PM format"
+            }
             
-            Guidelines for natural conversation:
-            - Keep each message very concise (5-10 words maximum)
-            - Space out timestamps naturally over the ${duration}-second duration
-            - Make the conversation flow naturally with quick back-and-forth exchanges
-            - Include natural reactions and short responses like "Really?", "No way!", "That's awesome!"
-            - Break longer thoughts into multiple shorter messages from the same person
+            Guidelines:
+            - Keep messages concise (5-10 words maximum)
+            - Space timestamps naturally over ${duration} seconds
+            - Make conversation flow naturally with quick exchanges
+            - Include reactions like "Really?", "No way!", "That's awesome!"
+            - Break longer thoughts into multiple shorter messages
             
-            Example of expected format:
+            Example of valid response format:
             [
               {"content": "Hey, what's up?", "isUser": true, "timestamp": "2:30 PM"},
               {"content": "Not much, just got back from lunch", "isUser": false, "timestamp": "2:31 PM"}
@@ -121,7 +123,7 @@ serve(async (req) => {
             content: `Create a conversation about: ${topic}. Additional context: ${prompt}`
           }
         ],
-        temperature: 0.8,
+        temperature: 0.7,
       }),
     });
 
@@ -132,18 +134,29 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log('OpenAI response received');
+    console.log('OpenAI response received:', data.choices[0].message.content);
 
     let messages;
     try {
       messages = JSON.parse(data.choices[0].message.content);
+      
+      // Validate the response format
       if (!Array.isArray(messages)) {
         throw new Error('Response is not an array');
       }
+      
+      // Validate each message object
+      messages.forEach((msg, index) => {
+        if (!msg.content || typeof msg.isUser !== 'boolean' || !msg.timestamp) {
+          throw new Error(`Invalid message format at index ${index}`);
+        }
+      });
+      
       console.log(`Successfully parsed ${messages.length} messages`);
     } catch (error) {
       console.error('Failed to parse OpenAI response:', error);
-      throw new Error('Invalid conversation format received from OpenAI');
+      console.error('Raw response:', data.choices[0].message.content);
+      throw new Error(`Invalid conversation format: ${error.message}`);
     }
 
     // Generate audio for each message with better error handling and retries
