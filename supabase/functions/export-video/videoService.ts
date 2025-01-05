@@ -1,10 +1,11 @@
-// Generate video using Replicate
 export const generateVideo = async (
   replicateApiKey: string,
   htmlTemplate: string,
   duration: number
 ) => {
   console.log('Starting video generation with Replicate...');
+  console.log('Video duration:', duration);
+
   const response = await fetch("https://api.replicate.com/v1/predictions", {
     method: "POST",
     headers: {
@@ -18,28 +19,31 @@ export const generateVideo = async (
         width: 1080,
         height: 1920,
         fps: 30,
-        duration,
+        duration: duration,
         quality: "high",
         format: "mp4",
+        wait_for_audio: true
       },
     }),
   });
 
   if (!response.ok) {
-    throw new Error(`Replicate API error: ${await response.text()}`);
+    const errorText = await response.text();
+    console.error('Replicate API error:', errorText);
+    throw new Error(`Replicate API error: ${errorText}`);
   }
 
   return await response.json();
 };
 
-// Poll for video completion
 export const pollVideoGeneration = async (
   replicateApiKey: string,
   predictionId: string
 ): Promise<string> => {
   console.log('Polling for video completion...');
   let attempts = 0;
-  const maxAttempts = 30;
+  const maxAttempts = 60; // Increased max attempts for longer videos
+  const delayMs = 2000; // 2 second delay between attempts
 
   while (attempts < maxAttempts) {
     console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`);
@@ -48,6 +52,7 @@ export const pollVideoGeneration = async (
       {
         headers: {
           Authorization: `Token ${replicateApiKey}`,
+          "Content-Type": "application/json",
         },
       }
     );
@@ -60,13 +65,15 @@ export const pollVideoGeneration = async (
     console.log('Prediction status:', prediction.status);
 
     if (prediction.status === 'succeeded') {
+      console.log('Video generation completed successfully');
       return prediction.output;
     } else if (prediction.status === 'failed') {
-      throw new Error('Video generation failed');
+      console.error('Video generation failed:', prediction.error);
+      throw new Error('Video generation failed: ' + prediction.error);
     }
 
     attempts++;
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, delayMs));
   }
 
   throw new Error('Video generation timed out');

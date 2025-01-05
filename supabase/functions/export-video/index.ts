@@ -17,12 +17,11 @@ serve(async (req) => {
 
   try {
     console.log('Starting export-video function...');
-    const { messages, title, description, type, audioUrls } = await req.json();
+    const { messages, title, description, type } = await req.json();
     console.log('Received request:', { 
       messagesCount: messages.length, 
       title, 
       type,
-      audioUrlsCount: audioUrls?.length 
     });
 
     const supabaseAdmin = initSupabaseAdmin();
@@ -42,11 +41,19 @@ serve(async (req) => {
       throw new Error('Invalid authorization');
     }
 
+    // Calculate video duration based on message count and audio duration
+    const estimatedDurationPerMessage = 3; // seconds per message
+    const totalDuration = Math.max(messages.length * estimatedDurationPerMessage, 10);
+    console.log('Calculated video duration:', totalDuration);
+
     // Generate HTML and create video
     const htmlTemplate = generateConversationHtml(messages);
-    const prediction = await generateVideo(replicateApiKey, htmlTemplate, messages.length * 2);
-    const videoUrl = await pollVideoGeneration(replicateApiKey, prediction.id);
+    console.log('Generated HTML template');
 
+    const prediction = await generateVideo(replicateApiKey, htmlTemplate, totalDuration);
+    console.log('Started video generation:', prediction.id);
+
+    const videoUrl = await pollVideoGeneration(replicateApiKey, prediction.id);
     if (!videoUrl) {
       throw new Error('Failed to generate video URL');
     }
