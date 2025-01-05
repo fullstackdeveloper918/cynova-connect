@@ -9,13 +9,14 @@ serve(async (req) => {
   }
 
   try {
-    const { script } = await req.json();
+    const { script, numberOfFrames } = await req.json();
     
     if (!script) {
       throw new Error('Script is required');
     }
 
     console.log('Generating frames for script:', script);
+    console.log('Number of frames to generate:', numberOfFrames);
 
     // Initialize OpenAI
     const openAiKey = Deno.env.get('OPENAI_API_KEY');
@@ -25,13 +26,19 @@ serve(async (req) => {
 
     const openai = new OpenAI({ apiKey: openAiKey });
 
-    // Split script into meaningful sections for frame generation
-    const sections = script.split(/[.!?]+/).filter(Boolean).map(s => s.trim());
-    console.log('Split script into sections:', sections);
-
-    const framePrompts = sections.map(section => 
-      `Create a vertical video frame (9:16 aspect ratio) for this scene: "${section}". Style: cinematic, high quality, photorealistic. Make it suitable for TikTok/YouTube Shorts with vibrant colors and engaging composition.`
-    );
+    // Split script into sections based on the number of frames needed
+    const sentences = script.split(/[.!?]+/).filter(Boolean).map(s => s.trim());
+    const sectionsPerFrame = Math.ceil(sentences.length / numberOfFrames);
+    
+    const framePrompts = [];
+    for (let i = 0; i < numberOfFrames; i++) {
+      const startIndex = i * sectionsPerFrame;
+      const endIndex = Math.min((i + 1) * sectionsPerFrame, sentences.length);
+      const relevantSentences = sentences.slice(startIndex, endIndex).join('. ');
+      
+      const prompt = `Create a vertical video frame (9:16 aspect ratio) for this scene: "${relevantSentences}". Style: cinematic, high quality, photorealistic. Make it suitable for TikTok/YouTube Shorts with vibrant colors and engaging composition.`;
+      framePrompts.push(prompt);
+    }
 
     console.log('Generated prompts:', framePrompts);
     

@@ -46,9 +46,18 @@ export const VideoPreview = ({
       const generateFrames = async () => {
         setIsLoading(true);
         try {
+          // Calculate number of frames based on audio duration (1 frame per 10 seconds)
+          const audioDuration = audioRef.current?.duration || 30; // default to 30 if not loaded
+          const numberOfFrames = Math.max(1, Math.ceil(audioDuration / 10));
+          
           console.log('Starting frame generation for script:', script);
+          console.log('Generating frames:', numberOfFrames);
+          
           const { data, error } = await supabase.functions.invoke("generate-video-frames", {
-            body: { script }
+            body: { 
+              script,
+              numberOfFrames // Pass the calculated number of frames
+            }
           });
 
           if (error) {
@@ -91,14 +100,13 @@ export const VideoPreview = ({
           setCurrentCaption(captionChunks[chunkIndex]);
         }
 
-        // Update current frame based on time progress
+        // Update current frame based on time progress (1 frame per 10 seconds)
         if (frameUrls.length > 0) {
-          const progress = time / (audioRef.current?.duration || 1);
           const frameIndex = Math.min(
-            Math.floor(progress * frameUrls.length),
+            Math.floor(time / 10),
             frameUrls.length - 1
           );
-          console.log('Updating frame index:', frameIndex, 'Progress:', progress);
+          console.log('Updating frame index:', frameIndex, 'Time:', time);
           setCurrentFrameIndex(frameIndex);
         }
       };
