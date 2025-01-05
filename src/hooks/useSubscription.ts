@@ -10,6 +10,12 @@ export interface Subscription {
   current_period_end: string;
   stripe_subscription_id: string | null;
   stripe_customer_id: string | null;
+  plan_limits: {
+    max_videos_per_month: number;
+    max_exports_per_month: number;
+    max_duration_minutes: number;
+    features: string[];
+  } | null;
 }
 
 export const useSubscription = () => {
@@ -22,7 +28,7 @@ export const useSubscription = () => {
       const { data, error } = await supabase
         .from('subscriptions')
         .select('*')
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching subscription:', error);
