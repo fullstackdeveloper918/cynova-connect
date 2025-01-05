@@ -41,6 +41,11 @@ export const FrameDisplay = ({
     );
   }
 
+  // Split the caption into option A and option B
+  const options = currentCaption.split(" OR ");
+  const optionA = options[0]?.replace("Would you rather ", "");
+  const optionB = options[1]?.replace("?", "");
+
   return (
     <>
       {isLoading ? (
@@ -49,28 +54,33 @@ export const FrameDisplay = ({
         </div>
       ) : (
         <div className="relative w-full h-full">
+          {/* Split background with red top and blue bottom */}
+          <div className="absolute inset-0 flex flex-col">
+            <div className="flex-1 bg-[#ea384c] flex items-center justify-center p-4">
+              <div className="text-white text-xl font-medium text-center max-w-lg">
+                {optionA}
+              </div>
+            </div>
+            <div className="flex-1 bg-[#0EA5E9] flex items-center justify-center p-4">
+              <div className="text-white text-xl font-medium text-center max-w-lg">
+                {optionB}
+              </div>
+            </div>
+          </div>
+
+          {/* Frame images with reduced opacity */}
           {frameUrls.map((url, index) => (
             <img
               key={`${index}-${currentFrameIndex === index}`}
               src={url}
               alt={`Frame ${index + 1}`}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-                currentFrameIndex === index ? 'opacity-100' : 'opacity-0'
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-40 ${
+                currentFrameIndex === index ? 'opacity-40' : 'opacity-0'
               }`}
               style={{ zIndex: 1 }}
             />
           ))}
           
-          {/* Caption overlay with higher z-index */}
-          <div 
-            className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/30 flex items-center justify-center"
-            style={{ zIndex: 2 }}
-          >
-            <div className="text-white text-xl font-medium p-6 text-center max-w-lg">
-              {currentCaption}
-            </div>
-          </div>
-
           {/* Controls overlay with highest z-index */}
           <div 
             className="absolute inset-0 flex flex-col justify-end p-4"
