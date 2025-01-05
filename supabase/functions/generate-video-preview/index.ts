@@ -1,6 +1,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
+// Function to chunk array buffer conversion
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const chunk_size = 8192; // Process 8KB at a time
+  const uint8Array = new Uint8Array(buffer);
+  let binary = '';
+  
+  for (let i = 0; i < uint8Array.length; i += chunk_size) {
+    const chunk = uint8Array.slice(i, i + chunk_size);
+    binary += String.fromCharCode.apply(null, chunk as unknown as number[]);
+  }
+  
+  return btoa(binary);
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -48,10 +62,12 @@ serve(async (req) => {
       throw new Error(`ElevenLabs API error: ${errorText}`);
     }
 
+    // Process audio data in chunks
+    console.log('Processing audio data...');
     const audioBuffer = await audioResponse.arrayBuffer();
-    const audioBase64 = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
+    const audioBase64 = arrayBufferToBase64(audioBuffer);
     const audioUrl = `data:audio/mpeg;base64,${audioBase64}`;
-    console.log('Audio generated successfully');
+    console.log('Audio processed successfully');
 
     // Generate video with Replicate
     console.log('Generating video with Replicate...');
