@@ -20,12 +20,12 @@ export const PreviewSection = ({ content, selectedResolution, previewUrl }: Prev
     shorts: {
       aspectRatio: "9/16",
       maxHeight: "800px",
-      width: "450px", // This ensures proper mobile aspect ratio
+      width: "450px",
     },
     tiktok: {
       aspectRatio: "9/16",
       maxHeight: "800px",
-      width: "450px", // This ensures proper mobile aspect ratio
+      width: "450px",
     },
   };
 
@@ -45,7 +45,6 @@ export const PreviewSection = ({ content, selectedResolution, previewUrl }: Prev
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Video Preview Container */}
         <div className="flex justify-center">
           <div 
             className="relative bg-black rounded-lg overflow-hidden"
@@ -55,42 +54,45 @@ export const PreviewSection = ({ content, selectedResolution, previewUrl }: Prev
               width: currentStyle.width,
             }}
           >
-            {/* Background Video */}
-            {previewUrl && (
-              <video
-                src={previewUrl}
-                autoPlay
-                loop
-                muted
-                className="absolute inset-0 w-full h-full object-cover"
-              >
-                Your browser does not support the video tag.
-              </video>
-            )}
-
-            {/* Content Overlay */}
-            {content && (
-              <div className="absolute inset-0 flex flex-col">
-                {/* Reddit Content */}
-                <div className="flex-1 overflow-y-auto bg-gradient-to-b from-black/60 to-transparent p-4">
+            {/* Content Section (Top 2/3) */}
+            <div className="absolute inset-x-0 top-0 h-2/3 bg-[#1A1A1B] overflow-y-auto">
+              {content && (
+                <div className="p-4">
                   <div className="max-w-2xl mx-auto space-y-4">
-                    {title && <RedditPost title={title} />}
+                    {title && <RedditPost title={title} darkMode />}
                     <div className="space-y-2">
                       {comments.slice(0, 5).map((comment, index) => (
-                        <RedditComment key={index} content={comment} />
+                        <RedditComment key={index} content={comment} darkMode />
                       ))}
                     </div>
                   </div>
                 </div>
-                {/* Bottom Gradient Overlay */}
-                <div className="h-24 bg-gradient-to-t from-black/60 to-transparent" />
-              </div>
-            )}
+              )}
+            </div>
+
+            {/* Background Video Section (Bottom 1/3) */}
+            <div className="absolute inset-x-0 bottom-0 h-1/3">
+              {previewUrl ? (
+                <video
+                  src={previewUrl}
+                  autoPlay
+                  loop
+                  muted
+                  className="w-full h-full object-cover"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <div className="w-full h-full bg-gray-900 flex items-center justify-center text-white/50">
+                  Background video will appear here
+                </div>
+              )}
+            </div>
 
             {/* Placeholder when no content */}
-            {!previewUrl && !content && (
+            {!content && !previewUrl && (
               <div className="absolute inset-0 flex items-center justify-center text-white/50">
-                Video preview will appear here
+                Content and video preview will appear here
               </div>
             )}
           </div>
