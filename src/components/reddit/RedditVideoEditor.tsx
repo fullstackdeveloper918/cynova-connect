@@ -8,6 +8,7 @@ import { ContentInput } from "./ContentInput";
 import { VoiceSettings } from "./VoiceSettings";
 import { VideoSettings } from "./VideoSettings";
 import { PreviewSection } from "./PreviewSection";
+import { CaptionStyle } from "./CaptionStyles";
 import { supabase } from "@/integrations/supabase/client";
 
 export const RedditVideoEditor = () => {
@@ -15,8 +16,10 @@ export const RedditVideoEditor = () => {
   const [content, setContent] = useState("");
   const [selectedResolution, setSelectedResolution] = useState<VideoResolution>("shorts");
   const [selectedDuration, setSelectedDuration] = useState("30");
+  const [selectedCaptionStyle, setSelectedCaptionStyle] = useState<CaptionStyle>("subtitles");
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState("");
+  const [audioUrl, setAudioUrl] = useState("");
   const [titleVoice, setTitleVoice] = useState("EXAVITQu4vr4xnSDxMaL");
   const [commentVoice, setCommentVoice] = useState("onwK4e9ZLuTAKqWW03F9");
   const { toast } = useToast();
@@ -98,13 +101,26 @@ export const RedditVideoEditor = () => {
 
     setIsGenerating(true);
     try {
-      // TODO: Implement video generation with duration
+      // Generate narration audio using ElevenLabs API
+      const { data: audioData, error: audioError } = await supabase.functions.invoke("generate-video-preview", {
+        body: { 
+          script: content,
+          voice: commentVoice,
+          duration: selectedDuration
+        }
+      });
+
+      if (audioError) throw audioError;
+
       setPreviewUrl("/stock/minecraft-gameplay.mp4");
+      setAudioUrl(audioData.previewUrl.audioUrl);
+      
       toast({
         title: "Video Generated",
         description: "Your video has been generated successfully.",
       });
     } catch (error) {
+      console.error('Generation error:', error);
       toast({
         title: "Generation Failed",
         description: "Failed to generate video. Please try again.",
@@ -126,6 +142,15 @@ export const RedditVideoEditor = () => {
         onFetch={handleFetch}
       />
 
+      <VideoSettings
+        selectedResolution={selectedResolution}
+        selectedDuration={selectedDuration}
+        selectedCaptionStyle={selectedCaptionStyle}
+        onResolutionSelect={setSelectedResolution}
+        onDurationSelect={setSelectedDuration}
+        onCaptionStyleSelect={setSelectedCaptionStyle}
+      />
+
       <VoiceSettings
         titleVoice={titleVoice}
         commentVoice={commentVoice}
@@ -133,18 +158,13 @@ export const RedditVideoEditor = () => {
         onCommentVoiceSelect={setCommentVoice}
       />
 
-      <VideoSettings
-        selectedResolution={selectedResolution}
-        selectedDuration={selectedDuration}
-        onResolutionSelect={setSelectedResolution}
-        onDurationSelect={setSelectedDuration}
-      />
-
       {(content || previewUrl) && (
         <PreviewSection
           content={content}
           selectedResolution={selectedResolution}
+          selectedCaptionStyle={selectedCaptionStyle}
           previewUrl={previewUrl}
+          audioUrl={audioUrl}
         />
       )}
 

@@ -1,15 +1,23 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VideoResolution } from "./ResolutionSelector";
 import { RedditPost } from "./RedditPost";
+import { CaptionStyle } from "./CaptionStyles";
 
 interface PreviewSectionProps {
   content: string;
   selectedResolution: VideoResolution;
+  selectedCaptionStyle: CaptionStyle;
   previewUrl: string;
+  audioUrl?: string;
 }
 
-export const PreviewSection = ({ content, selectedResolution, previewUrl }: PreviewSectionProps) => {
-  // Define aspect ratios and max heights for different resolutions
+export const PreviewSection = ({ 
+  content, 
+  selectedResolution, 
+  selectedCaptionStyle,
+  previewUrl,
+  audioUrl
+}: PreviewSectionProps) => {
   const resolutionStyles = {
     shorts: {
       aspectRatio: "9/16",
@@ -30,6 +38,19 @@ export const PreviewSection = ({ content, selectedResolution, previewUrl }: Prev
   const title = contentLines[0];
   const comments = contentLines.slice(1);
 
+  const getCaptionStyle = () => {
+    switch (selectedCaptionStyle) {
+      case "minimal":
+        return "bg-black/60 text-white px-3 py-2 rounded-md text-lg";
+      case "subtitles":
+        return "bg-black/80 text-white px-4 py-3 rounded-lg text-xl font-medium";
+      case "captions":
+        return "bg-black/90 text-white px-5 py-4 rounded-xl text-2xl font-semibold";
+      default:
+        return "bg-black/80 text-white px-4 py-3 rounded-lg text-lg";
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -48,16 +69,17 @@ export const PreviewSection = ({ content, selectedResolution, previewUrl }: Prev
               width: currentStyle.width,
             }}
           >
-            {/* Background Video (Full Screen) */}
+            {/* Background Video */}
             <div className="absolute inset-0">
               {previewUrl ? (
                 <video
                   src={previewUrl}
                   autoPlay
                   loop
-                  muted
+                  muted={!audioUrl}
                   className="w-full h-full object-cover"
                 >
+                  {audioUrl && <source src={audioUrl} type="audio/mpeg" />}
                   Your browser does not support the video tag.
                 </video>
               ) : (
@@ -69,7 +91,7 @@ export const PreviewSection = ({ content, selectedResolution, previewUrl }: Prev
 
             {/* Content Overlay */}
             <div className="absolute inset-0 bg-black/40">
-              {/* Question Section */}
+              {/* Title Section */}
               {content && (
                 <div className="p-4">
                   <div className="max-w-2xl mx-auto">
@@ -80,7 +102,7 @@ export const PreviewSection = ({ content, selectedResolution, previewUrl }: Prev
               
               {/* Subtitles Overlay */}
               <div className="absolute bottom-8 left-0 right-0 text-center">
-                <div className="bg-black/80 text-white p-3 mx-4 rounded-lg text-lg font-medium">
+                <div className={`mx-4 ${getCaptionStyle()}`}>
                   {comments[0] || "Subtitles will appear here"}
                 </div>
               </div>
