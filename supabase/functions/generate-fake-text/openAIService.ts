@@ -12,43 +12,27 @@ export async function generateConversation(openAiKey: string, topic: string, pro
       messages: [
         {
           role: 'system',
-          content: `You are a JSON generator that creates realistic iMessage conversations. Generate a conversation with exactly ${targetMessageCount} messages that spans ${duration} seconds.
-
-Format each message as:
-{
-  "content": "message text",
-  "isUser": boolean,
-  "timestamp": "HH:MM AM/PM"
-}
-
-Requirements:
-- Return ONLY a valid JSON array of messages, no other text
-- Keep messages natural and conversational
-- Alternate between isUser true/false
-- Space timestamps evenly across the duration
-- Keep messages under 10 words for better audio generation
-
-Example valid response:
+          content: `Generate a realistic iMessage conversation with exactly ${targetMessageCount} messages that spans ${duration} seconds. Return ONLY a JSON array of messages in this format:
 [
   {
-    "content": "Hey, what's up?",
-    "isUser": true,
-    "timestamp": "2:30 PM"
-  },
-  {
-    "content": "Just finished work, you?",
-    "isUser": false,
-    "timestamp": "2:31 PM"
+    "content": "message text",
+    "isUser": boolean,
+    "timestamp": "HH:MM AM/PM"
   }
-]`
+]
+
+Requirements:
+- Messages should be natural and conversational
+- Alternate between isUser true/false
+- Space timestamps evenly across the duration
+- Keep messages under 10 words for better audio generation`
         },
         {
           role: 'user',
           content: `Topic: ${topic}. Additional context: ${prompt}`
         }
       ],
-      temperature: 0.7,
-      response_format: { type: "json_object" }
+      temperature: 0.7
     }),
   });
 
@@ -59,11 +43,11 @@ Example valid response:
   }
 
   const data = await response.json();
-  console.log('Raw OpenAI response:', data.choices[0].message.content);
+  console.log('Raw OpenAI response:', data);
   
   try {
-    // Parse and validate the response
     const messages = JSON.parse(data.choices[0].message.content);
+    console.log('Parsed messages:', messages);
     
     if (!Array.isArray(messages)) {
       throw new Error('Response is not an array');
@@ -75,8 +59,7 @@ Example valid response:
       }
     });
     
-    console.log(`Successfully parsed ${messages.length} messages`);
-    return data;
+    return { choices: [{ message: { content: JSON.stringify(messages) } }] };
   } catch (error) {
     console.error('Failed to parse OpenAI response:', error);
     console.error('Raw response content:', data.choices[0].message.content);
