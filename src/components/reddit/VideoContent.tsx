@@ -29,16 +29,17 @@ export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentPro
             audio.addEventListener('loadeddata', resolve, { once: true });
           });
 
-          if (isPlaying) {
-            console.log('Audio loaded, starting playback');
-            await audio.play();
-            if (videoRef.current) {
-              videoRef.current.play();
-            }
-            console.log('Audio and video playback started successfully');
+          if (isPlaying && videoRef.current) {
+            console.log('Starting synchronized playback');
+            await Promise.all([
+              audio.play(),
+              videoRef.current.play()
+            ]);
+            console.log('Synchronized playback started successfully');
           }
         } catch (error) {
           console.error('Audio playback error:', error);
+          setIsPlaying(false);
         }
       };
 
@@ -50,7 +51,7 @@ export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentPro
         if (videoRef.current) {
           videoRef.current.currentTime = 0;
         }
-        startPlayback();
+        setIsPlaying(false);
       };
 
       audio.addEventListener('ended', handleEnded);
@@ -59,27 +60,36 @@ export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentPro
         audio.removeEventListener('ended', handleEnded);
         audio.pause();
         audio.src = '';
+        setIsPlaying(false);
       };
     }
   }, [audioUrl, audioRef, isPlaying]);
 
   const togglePlayback = async () => {
-    if (audioRef.current && videoRef.current) {
-      try {
-        if (isPlaying) {
-          audioRef.current.pause();
-          videoRef.current.pause();
-        } else {
-          await Promise.all([
-            audioRef.current.play(),
-            videoRef.current.play()
-          ]);
-        }
-        setIsPlaying(!isPlaying);
-        console.log('Playback toggled:', !isPlaying);
-      } catch (error) {
-        console.error('Playback error:', error);
+    if (!audioRef.current || !videoRef.current) return;
+
+    try {
+      if (isPlaying) {
+        console.log('Pausing playback');
+        audioRef.current.pause();
+        videoRef.current.pause();
+      } else {
+        console.log('Starting playback');
+        // Reset positions
+        audioRef.current.currentTime = 0;
+        videoRef.current.currentTime = 0;
+        
+        // Start both simultaneously
+        await Promise.all([
+          audioRef.current.play(),
+          videoRef.current.play()
+        ]);
       }
+      setIsPlaying(!isPlaying);
+      console.log('Playback state toggled:', !isPlaying);
+    } catch (error) {
+      console.error('Playback toggle error:', error);
+      setIsPlaying(false);
     }
   };
 
