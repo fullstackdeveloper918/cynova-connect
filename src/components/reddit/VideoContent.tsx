@@ -5,9 +5,16 @@ interface VideoContentProps {
   titleAudioUrl?: string;
   commentAudioUrl?: string;
   audioRef: RefObject<HTMLAudioElement>;
+  onDurationChange?: (duration: number) => void;
 }
 
-export const VideoContent = ({ previewUrl, titleAudioUrl, commentAudioUrl, audioRef }: VideoContentProps) => {
+export const VideoContent = ({ 
+  previewUrl, 
+  titleAudioUrl, 
+  commentAudioUrl, 
+  audioRef,
+  onDurationChange 
+}: VideoContentProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -39,6 +46,33 @@ export const VideoContent = ({ previewUrl, titleAudioUrl, commentAudioUrl, audio
         }
       };
 
+      const handleDurationChange = () => {
+        if (onDurationChange) {
+          // Calculate total duration (title + comments)
+          let totalDuration = 0;
+          if (titleAudioUrl) {
+            const titleAudio = new Audio(titleAudioUrl);
+            titleAudio.addEventListener('loadedmetadata', () => {
+              totalDuration += titleAudio.duration;
+              if (commentAudioUrl) {
+                const commentAudio = new Audio(commentAudioUrl);
+                commentAudio.addEventListener('loadedmetadata', () => {
+                  totalDuration += commentAudio.duration;
+                  onDurationChange(totalDuration);
+                });
+              } else {
+                onDurationChange(totalDuration);
+              }
+            });
+          } else if (commentAudioUrl) {
+            const commentAudio = new Audio(commentAudioUrl);
+            commentAudio.addEventListener('loadedmetadata', () => {
+              onDurationChange(commentAudio.duration);
+            });
+          }
+        }
+      };
+
       // If we have both title and comment audio
       if (titleAudioUrl && commentAudioUrl) {
         audio.addEventListener('ended', handleTitleEnded, { once: true });
@@ -46,6 +80,9 @@ export const VideoContent = ({ previewUrl, titleAudioUrl, commentAudioUrl, audio
         // If we only have comment audio
         audio.addEventListener('ended', handleCommentEnded);
       }
+
+      // Set up duration change handler
+      audio.addEventListener('loadedmetadata', handleDurationChange);
       
       // Start playback
       Promise.all([
@@ -58,11 +95,12 @@ export const VideoContent = ({ previewUrl, titleAudioUrl, commentAudioUrl, audio
       return () => {
         audio.removeEventListener('ended', handleTitleEnded);
         audio.removeEventListener('ended', handleCommentEnded);
+        audio.removeEventListener('loadedmetadata', handleDurationChange);
         audio.pause();
         audio.src = '';
       };
     }
-  }, [titleAudioUrl, commentAudioUrl, audioRef]);
+  }, [titleAudioUrl, commentAudioUrl, audioRef, onDurationChange]);
 
   return (
     <div className="relative w-full h-full">

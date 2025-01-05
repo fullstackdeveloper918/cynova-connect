@@ -5,8 +5,9 @@ import { useRef, useState } from "react";
 import { VideoContent } from "./VideoContent";
 import { ContentOverlay } from "./ContentOverlay";
 import { Button } from "../ui/button";
-import { ExternalLink } from "lucide-react";
+import { Download } from "lucide-react";
 import { BackgroundSelector } from "./BackgroundSelector";
+import { useToast } from "@/hooks/use-toast";
 
 interface PreviewSectionProps {
   content: string;
@@ -29,6 +30,8 @@ export const PreviewSection = ({
 }: PreviewSectionProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [selectedBackground, setSelectedBackground] = useState("/stock/minecraft-gameplay.mp4");
+  const [duration, setDuration] = useState(0);
+  const { toast } = useToast();
 
   const resolutionStyles = {
     shorts: {
@@ -50,6 +53,44 @@ export const PreviewSection = ({
   const title = contentLines[0];
   const comments = contentLines.slice(1).join('\n\n');
 
+  const handleDownload = async () => {
+    try {
+      if (!previewUrl) {
+        toast({
+          title: "No video available",
+          description: "Please generate a video first.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await fetch(previewUrl);
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${title.slice(0, 30)}.mp4`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Download started",
+        description: "Your video will be downloaded shortly.",
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Download failed",
+        description: "There was an error downloading your video. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getCaptionStyle = () => {
     switch (selectedCaptionStyle) {
       case "minimal":
@@ -67,6 +108,10 @@ export const PreviewSection = ({
       default:
         return "bg-black/80 text-white px-4 py-3 rounded-lg text-xl shadow-lg";
     }
+  };
+
+  const handleDurationChange = (newDuration: number) => {
+    setDuration(newDuration);
   };
 
   return (
@@ -99,6 +144,7 @@ export const PreviewSection = ({
                 titleAudioUrl={titleAudioUrl}
                 commentAudioUrl={commentAudioUrl}
                 audioRef={audioRef}
+                onDurationChange={handleDurationChange}
               />
             </div>
 
@@ -121,40 +167,25 @@ export const PreviewSection = ({
           </div>
         </div>
 
-        {/* Preview Links */}
-        {(previewUrl || titleAudioUrl || commentAudioUrl) && (
-          <div className="space-y-2 p-4 bg-accent/20 rounded-lg">
-            <h3 className="font-medium mb-2">Generated Files:</h3>
-            {previewUrl && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Video URL:</span>
-                <Button variant="link" size="sm" onClick={() => window.open(previewUrl, '_blank')}>
-                  View Video <ExternalLink className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            )}
-            {titleAudioUrl && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Title Audio URL:</span>
-                <Button variant="link" size="sm" onClick={() => window.open(titleAudioUrl, '_blank')}>
-                  View Title Audio <ExternalLink className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            )}
-            {commentAudioUrl && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Comment Audio URL:</span>
-                <Button variant="link" size="sm" onClick={() => window.open(commentAudioUrl, '_blank')}>
-                  View Comment Audio <ExternalLink className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            )}
+        {/* Download Button */}
+        {previewUrl && (
+          <div className="flex justify-center">
+            <Button
+              variant="default"
+              size="lg"
+              onClick={handleDownload}
+              className="w-full sm:w-auto"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download Video
+            </Button>
           </div>
         )}
 
-        {/* Resolution Info */}
-        <div className="text-sm text-muted-foreground text-center">
-          1080x1920
+        {/* Resolution and Duration Info */}
+        <div className="text-sm text-muted-foreground text-center space-y-1">
+          <div>1080x1920</div>
+          <div>{Math.round(duration)} seconds</div>
         </div>
       </CardContent>
     </Card>
