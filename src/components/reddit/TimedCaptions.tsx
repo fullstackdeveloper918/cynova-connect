@@ -15,15 +15,15 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
   const sentences = captions.split(/[.!?]+/).filter(Boolean).map(s => s.trim());
 
   useEffect(() => {
-    if (!audioRef.current) {
-      console.log('No audio reference available for captions');
+    if (!audioRef.current || sentences.length === 0) {
+      console.log('No audio reference or sentences available for captions');
       return;
     }
 
     // Reset when audio source changes
     setCaptionIndex(0);
-    setCurrentCaption("");
-    setIsVisible(false);
+    setCurrentCaption(sentences[0]);
+    setIsVisible(true);
 
     const audio = audioRef.current;
     
@@ -51,20 +51,19 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
 
     const handlePlay = () => {
       console.log('Audio started playing');
-      if (sentences.length > 0) {
-        setCurrentCaption(sentences[0]);
-        setIsVisible(true);
-      }
+      setIsVisible(true);
     };
 
     const handlePause = () => {
       console.log('Audio paused');
-      setIsVisible(false);
+      // Keep captions visible when paused
+      setIsVisible(true);
     };
 
     const handleEnded = () => {
       console.log('Audio ended');
-      setIsVisible(false);
+      // Keep last caption visible
+      setIsVisible(true);
     };
 
     audio.addEventListener("timeupdate", handleTimeUpdate);
@@ -80,14 +79,16 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     };
   }, [audioRef, sentences, captionIndex]);
 
-  if (!isVisible || !currentCaption) {
+  if (!currentCaption) {
     return null;
   }
 
   return (
     <div className="flex justify-center items-center w-full">
-      <div className={`transition-all duration-300 ease-in-out transform ${className}`}>
-        <p className="animate-fade-in text-center max-w-3xl mx-auto">
+      <div 
+        className={`transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'} ${className}`}
+      >
+        <p className="text-center max-w-3xl mx-auto">
           {currentCaption}
         </p>
       </div>
