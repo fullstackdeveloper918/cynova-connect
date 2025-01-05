@@ -55,17 +55,14 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: "9ca13f619b96a3413ab1e03f142c2c67cc980e8590afb44a1c0c5a9bdfa04593",
+        version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
         input: {
-          prompt: script.slice(0, 500),
           image: `data:image/png;base64,${base64Image}`,
-          num_frames: 25,
-          width: 1024,
-          height: 576,
-          fps: 6,
-          num_inference_steps: 25,
+          prompt: script.slice(0, 500),
+          video_length: "14_frames_with_svd",
+          sizing_strategy: "maintain_aspect_ratio",
           motion_bucket_id: 127,
-          guidance_scale: 12.5
+          frames_per_second: 6
         },
       }),
     })
