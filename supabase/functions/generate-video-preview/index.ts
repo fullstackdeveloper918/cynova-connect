@@ -10,6 +10,9 @@ serve(async (req) => {
 
   try {
     console.log('Starting generate-video-preview function...');
+    const { script, voice, duration } = await req.json();
+    
+    console.log('Request parameters:', { script, voice, duration });
 
     // Get API keys and verify they exist
     const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
@@ -23,9 +26,38 @@ serve(async (req) => {
       throw new Error('Missing required API keys');
     }
 
-    // Test video generation with a simple prompt
-    console.log('Starting test video generation...');
+    // Test audio generation
+    console.log('Testing audio generation with ElevenLabs...');
+    const testAudioResponse = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${voice}/stream`,
+      {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': elevenLabsKey,
+        },
+        body: JSON.stringify({
+          text: script || "This is a test audio message",
+          model_id: "eleven_turbo_v2",
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.5,
+          },
+        }),
+      }
+    );
+
+    console.log('Audio generation response status:', testAudioResponse.status);
     
+    if (!testAudioResponse.ok) {
+      const errorText = await testAudioResponse.text();
+      console.error('ElevenLabs API Error:', errorText);
+      throw new Error(`ElevenLabs API error: ${errorText}`);
+    }
+
+    // Test video generation with Replicate
+    console.log('Testing video generation with Replicate...');
     const videoResponse = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -35,7 +67,7 @@ serve(async (req) => {
       body: JSON.stringify({
         version: "85d775927d738f501d2b7fcc5f33d8566904f27d7b29960f1a8c0195220d1c7d",
         input: {
-          prompt: "A serene mountain landscape",
+          prompt: script || "A serene mountain landscape",
           width: 768,
           height: 432,
           num_frames: 24,
@@ -55,43 +87,19 @@ serve(async (req) => {
     const predictionData = await videoResponse.json();
     console.log('Video generation started. Prediction ID:', predictionData.id);
 
-    // Test audio generation
-    console.log('Testing audio generation...');
-    const testAudioResponse = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL/stream`,
-      {
-        method: 'POST',
-        headers: {
-          'Accept': 'audio/mpeg',
-          'Content-Type': 'application/json',
-          'xi-api-key': elevenLabsKey,
-        },
-        body: JSON.stringify({
-          text: "This is a test audio message",
-          model_id: "eleven_turbo_v2",
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.5,
-          },
-        }),
-      }
-    );
-
-    console.log('Audio generation response status:', testAudioResponse.status);
-
-    if (!testAudioResponse.ok) {
-      const errorText = await testAudioResponse.text();
-      console.error('ElevenLabs API Error:', errorText);
-      throw new Error(`ElevenLabs API error: ${errorText}`);
-    }
-
-    console.log('Test completed successfully');
-
+    // Return success response with test results
     return new Response(
       JSON.stringify({
         success: true,
         message: "API test completed successfully",
-        videoDetails: predictionData,
+        audioTest: {
+          status: testAudioResponse.status,
+          ok: testAudioResponse.ok
+        },
+        videoTest: {
+          status: videoResponse.status,
+          predictionId: predictionData.id
+        }
       }),
       { 
         headers: { 
