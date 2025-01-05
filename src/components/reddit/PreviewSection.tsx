@@ -53,26 +53,8 @@ export const PreviewSection = ({ content, selectedResolution, previewUrl }: Prev
               width: currentStyle.width,
             }}
           >
-            {/* Question Section (Top 2/3) */}
-            <div className="absolute inset-x-0 top-0 h-2/3 bg-[#1A1A1B] overflow-hidden">
-              {content && (
-                <div className="p-4">
-                  <div className="max-w-2xl mx-auto">
-                    {title && <RedditPost title={title} darkMode />}
-                  </div>
-                </div>
-              )}
-              
-              {/* Subtitles Overlay */}
-              <div className="absolute bottom-4 left-0 right-0 text-center">
-                <div className="bg-black/60 text-white p-2 mx-4 rounded text-lg">
-                  {comments[0] || "Subtitles will appear here"}
-                </div>
-              </div>
-            </div>
-
-            {/* Background Video Section (Bottom 1/3) */}
-            <div className="absolute inset-x-0 bottom-0 h-1/3">
+            {/* Background Video (Full Screen) */}
+            <div className="absolute inset-0">
               {previewUrl ? (
                 <video
                   src={previewUrl}
@@ -88,6 +70,25 @@ export const PreviewSection = ({ content, selectedResolution, previewUrl }: Prev
                   Background video will appear here
                 </div>
               )}
+            </div>
+
+            {/* Content Overlay */}
+            <div className="absolute inset-0 bg-black/40">
+              {/* Question Section */}
+              {content && (
+                <div className="p-4">
+                  <div className="max-w-2xl mx-auto">
+                    {title && <RedditPost title={title} darkMode />}
+                  </div>
+                </div>
+              )}
+              
+              {/* Subtitles Overlay */}
+              <div className="absolute bottom-8 left-0 right-0 text-center">
+                <div className="bg-black/80 text-white p-3 mx-4 rounded-lg text-lg font-medium">
+                  {comments[0] || "Subtitles will appear here"}
+                </div>
+              </div>
             </div>
 
             {/* Placeholder when no content */}
