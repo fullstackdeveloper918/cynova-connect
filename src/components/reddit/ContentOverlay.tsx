@@ -1,6 +1,5 @@
 import { RedditPost } from "./RedditPost";
 import { TimedCaptions } from "./TimedCaptions";
-import { CaptionStyle } from "./CaptionStyles";
 import { RefObject } from "react";
 
 interface ContentOverlayProps {
@@ -23,15 +22,13 @@ export const ContentOverlay = ({ title, comments, audioRef, captionStyle }: Cont
       </div>
       
       {/* Timed Captions */}
-      {comments && (
-        <div className="flex-1 relative">
-          <TimedCaptions
-            captions={comments}
-            audioRef={audioRef}
-            className={captionStyle}
-          />
-        </div>
-      )}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <TimedCaptions
+          captions={comments}
+          audioRef={audioRef}
+          className={captionStyle}
+        />
+      </div>
     </div>
   );
 };
