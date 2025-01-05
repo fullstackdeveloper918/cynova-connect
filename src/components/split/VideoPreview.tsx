@@ -18,11 +18,11 @@ export const VideoPreview = ({ file, onTimeUpdate, onDurationChange }: VideoPrev
   }, [file]);
 
   return (
-    <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
+    <div className="relative aspect-[9/16] w-full max-w-[450px] mx-auto bg-black rounded-lg overflow-hidden">
       <video
         ref={videoRef}
         controls
-        className="w-full h-full"
+        className="absolute inset-0 w-full h-full object-contain"
         onTimeUpdate={(e) => onTimeUpdate(e.currentTarget.currentTime)}
         onLoadedMetadata={(e) => onDurationChange(e.currentTarget.duration)}
       >
