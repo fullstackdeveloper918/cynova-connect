@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { generateAudio } from "./audioService.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
 serve(async (req) => {
   // Handle CORS
@@ -9,13 +10,15 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Starting video preview generation...');
+    
     const { script, voice, duration } = await req.json();
     
     if (!script) {
       throw new Error('Script is required');
     }
 
-    console.log('Starting audio generation with script:', script.substring(0, 100) + '...');
+    console.log('Generating audio with script length:', script.length);
 
     // Generate audio using ElevenLabs
     const elevenLabsKey = Deno.env.get('ELEVEN_LABS_API_KEY');
@@ -47,7 +50,7 @@ serve(async (req) => {
     const { error: audioError } = await supabase
       .storage
       .from('exports')
-      .upload(audioFileName, decode(audioBase64), {
+      .upload(audioFileName, new Uint8Array(audioBuffer), {
         contentType: 'audio/mpeg',
         upsert: true
       });
@@ -65,7 +68,7 @@ serve(async (req) => {
 
     console.log('Audio uploaded successfully, returning preview URLs...');
 
-    // Return the template video URL along with the generated audio URL
+    // Return the URLs
     return new Response(
       JSON.stringify({
         success: true,
