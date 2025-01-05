@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface User {
+  id: string;
   name: string;
   email: string;
 }
@@ -8,6 +9,7 @@ interface User {
 const getStoredUser = (): User => {
   const storedUser = localStorage.getItem('user');
   return storedUser ? JSON.parse(storedUser) : {
+    id: "default-id", // Added id field
     name: "John Doe",
     email: "john@example.com"
   };
