@@ -3,7 +3,6 @@ import { OpenAI } from "https://esm.sh/openai@4.28.0";
 import { corsHeaders } from "../_shared/cors.ts";
 
 serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -18,7 +17,6 @@ serve(async (req) => {
     console.log('Generating frames for script:', script);
     console.log('Number of frames to generate:', numberOfFrames);
 
-    // Initialize OpenAI
     const openAiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAiKey) {
       throw new Error('OPENAI_API_KEY is not set');
@@ -26,7 +24,7 @@ serve(async (req) => {
 
     const openai = new OpenAI({ apiKey: openAiKey });
 
-    // Split script into sections based on the number of frames needed
+    // Split script into meaningful sections
     const sentences = script.split(/[.!?]+/).filter(Boolean).map(s => s.trim());
     const sectionsPerFrame = Math.ceil(sentences.length / numberOfFrames);
     
@@ -36,7 +34,16 @@ serve(async (req) => {
       const endIndex = Math.min((i + 1) * sectionsPerFrame, sentences.length);
       const relevantSentences = sentences.slice(startIndex, endIndex).join('. ');
       
-      const prompt = `Create a vertical video frame (9:16 aspect ratio) for this scene: "${relevantSentences}". Style: cinematic, high quality, photorealistic. Make it suitable for TikTok/YouTube Shorts with vibrant colors and engaging composition.`;
+      // Enhanced prompt engineering for better relevancy
+      const prompt = `Create a highly detailed, photorealistic vertical video frame (9:16 aspect ratio) that vividly illustrates this scene: "${relevantSentences}". 
+      Key requirements:
+      - Cinematic quality with professional lighting
+      - Strong visual storytelling that directly relates to the text
+      - Vibrant, engaging composition optimized for mobile viewing
+      - Photorealistic style with high attention to detail
+      - Clear focal point that captures the main action/subject
+      Make it suitable for TikTok/YouTube Shorts with perfect composition and lighting.`;
+      
       framePrompts.push(prompt);
     }
 
@@ -51,7 +58,7 @@ serve(async (req) => {
             prompt,
             n: 1,
             size: "1024x1792",
-            quality: "standard",
+            quality: "hd",
             style: "natural"
           });
           
@@ -63,8 +70,6 @@ serve(async (req) => {
         }
       })
     );
-
-    console.log('All frames generated successfully. Total frames:', frameUrls.length);
 
     return new Response(
       JSON.stringify({
