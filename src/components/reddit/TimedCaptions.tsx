@@ -75,11 +75,11 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       if (!audio.duration) return;
 
       const now = Date.now();
-      if (now - lastUpdateTime < 30) return;
+      if (now - lastUpdateTime < 50) return; // Increased from 30ms to 50ms for smoother updates
       lastUpdateTime = now;
 
-      // Calculate proportional durations
-      const titleDuration = (titleChunks.length / allChunks.length) * audio.duration;
+      // Calculate proportional durations with a slight adjustment for better sync
+      const titleDuration = (titleChunks.length / allChunks.length) * audio.duration * 1.1; // Added 10% more time for title
       const currentTime = audio.currentTime;
       
       let currentChunkIndex;
@@ -93,7 +93,9 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
         currentChunkIndex = titleChunks.length + Math.floor(commentProgress * commentChunks.length);
       }
       
-      updateCaption(Math.min(currentChunkIndex, allChunks.length - 1));
+      // Add a small offset to improve synchronization
+      const adjustedIndex = Math.max(0, Math.min(currentChunkIndex - 1, allChunks.length - 1));
+      updateCaption(adjustedIndex);
     };
 
     const handlePlay = () => {
