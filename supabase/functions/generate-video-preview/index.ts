@@ -11,24 +11,19 @@ serve(async (req) => {
   try {
     console.log('Starting generate-video-preview function...');
     const { script, voice, duration } = await req.json();
-    
     console.log('Request parameters:', { script, voice, duration });
 
     // Get API keys and verify they exist
     const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
     const elevenLabsKey = Deno.env.get('ELEVEN_LABS_API_KEY');
 
-    console.log('Checking API keys...');
-    console.log('Replicate API Key exists:', !!replicateApiKey);
-    console.log('ElevenLabs API Key exists:', !!elevenLabsKey);
-
     if (!replicateApiKey || !elevenLabsKey) {
       throw new Error('Missing required API keys');
     }
 
-    // Test audio generation
-    console.log('Testing audio generation with ElevenLabs...');
-    const testAudioResponse = await fetch(
+    // Generate audio with ElevenLabs
+    console.log('Generating audio with ElevenLabs...');
+    const audioResponse = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voice}/stream`,
       {
         method: 'POST',
@@ -38,7 +33,7 @@ serve(async (req) => {
           'xi-api-key': elevenLabsKey,
         },
         body: JSON.stringify({
-          text: script || "This is a test audio message",
+          text: script,
           model_id: "eleven_turbo_v2",
           voice_settings: {
             stability: 0.5,
@@ -48,16 +43,18 @@ serve(async (req) => {
       }
     );
 
-    console.log('Audio generation response status:', testAudioResponse.status);
-    
-    if (!testAudioResponse.ok) {
-      const errorText = await testAudioResponse.text();
+    if (!audioResponse.ok) {
+      const errorText = await audioResponse.text();
       console.error('ElevenLabs API Error:', errorText);
       throw new Error(`ElevenLabs API error: ${errorText}`);
     }
 
-    // Test video generation with Replicate
-    console.log('Testing video generation with Replicate...');
+    const audioBlob = await audioResponse.blob();
+    const audioUrl = URL.createObjectURL(audioBlob);
+    console.log('Audio generated successfully:', audioUrl);
+
+    // Generate video with Replicate
+    console.log('Generating video with Replicate...');
     const videoResponse = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -67,17 +64,15 @@ serve(async (req) => {
       body: JSON.stringify({
         version: "85d775927d738f501d2b7fcc5f33d8566904f27d7b29960f1a8c0195220d1c7d",
         input: {
-          prompt: script || "A serene mountain landscape",
+          prompt: script,
           width: 768,
           height: 432,
-          num_frames: 24,
+          num_frames: parseInt(duration) || 24,
           fps: 8,
         },
       }),
     });
 
-    console.log('Video generation response status:', videoResponse.status);
-    
     if (!videoResponse.ok) {
       const errorText = await videoResponse.text();
       console.error('Replicate API Error:', errorText);
@@ -87,18 +82,54 @@ serve(async (req) => {
     const predictionData = await videoResponse.json();
     console.log('Video generation started. Prediction ID:', predictionData.id);
 
-    // Return success response with test results
+    // Poll for video completion
+    let videoUrl = null;
+    let attempts = 0;
+    const maxAttempts = 30;
+
+    while (attempts < maxAttempts && !videoUrl) {
+      console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`);
+      const pollResponse = await fetch(
+        `https://api.replicate.com/v1/predictions/${predictionData.id}`,
+        {
+          headers: {
+            "Authorization": `Token ${replicateApiKey}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!pollResponse.ok) {
+        throw new Error(`Failed to check prediction status: ${await pollResponse.text()}`);
+      }
+
+      const prediction = await pollResponse.json();
+      console.log('Prediction status:', prediction.status);
+
+      if (prediction.status === 'succeeded') {
+        videoUrl = prediction.output;
+        break;
+      } else if (prediction.status === 'failed') {
+        throw new Error('Video generation failed');
+      }
+
+      attempts++;
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+
+    if (!videoUrl) {
+      throw new Error('Video generation timed out');
+    }
+
+    console.log('Video generated successfully:', videoUrl);
+
+    // Return success response with both URLs
     return new Response(
       JSON.stringify({
         success: true,
-        message: "API test completed successfully",
-        audioTest: {
-          status: testAudioResponse.status,
-          ok: testAudioResponse.ok
-        },
-        videoTest: {
-          status: videoResponse.status,
-          predictionId: predictionData.id
+        previewUrl: {
+          videoUrl,
+          audioUrl
         }
       }),
       { 

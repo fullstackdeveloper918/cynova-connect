@@ -5,7 +5,7 @@ export const generateAudio = async (
 ) => {
   console.log('Generating audio with ElevenLabs using voice ID:', voiceId);
   
-  const audioResponse = await fetch(
+  const response = await fetch(
     `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
     {
       method: 'POST',
@@ -16,22 +16,20 @@ export const generateAudio = async (
       },
       body: JSON.stringify({
         text: script,
-        model_id: "eleven_turbo_v2", // Using fastest model for testing
+        model_id: "eleven_turbo_v2",
         voice_settings: {
           stability: 0.5,
           similarity_boost: 0.5,
-          style: 0, // Neutral style for testing
-          use_speaker_boost: false // Disable speaker boost for testing
         },
       }),
     }
   );
 
-  if (!audioResponse.ok) {
-    const error = await audioResponse.text();
+  if (!response.ok) {
+    const error = await response.text();
     console.error('ElevenLabs API Error:', error);
     throw new Error(`ElevenLabs API error: ${error}`);
   }
 
-  return audioResponse;
+  return response;
 };
