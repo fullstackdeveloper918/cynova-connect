@@ -25,11 +25,5 @@ export const generateAudio = async (
     }
   );
 
-  if (!response.ok) {
-    const error = await response.text();
-    console.error('ElevenLabs API Error:', error);
-    throw new Error(`ElevenLabs API error: ${error}`);
-  }
-
   return response;
 };

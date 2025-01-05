@@ -28,8 +28,14 @@ serve(async (req) => {
 
     // Generate audio narration
     const audioResponse = await generateAudio(script, voice, elevenLabsKey);
+    
+    if (!audioResponse.ok) {
+      const error = await audioResponse.text();
+      console.error('ElevenLabs API Error:', error);
+      throw new Error(`ElevenLabs API error: ${error}`);
+    }
+
     const audioBuffer = await audioResponse.arrayBuffer();
-    const audioBase64 = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
 
     console.log('Audio generated successfully, uploading to storage...');
 
