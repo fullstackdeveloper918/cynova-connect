@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/card";
 import { BackgroundSelector } from "./BackgroundSelector";
 import { VideoPreview } from "./VideoPreview";
+import { ResolutionSelector, type VideoResolution } from "./ResolutionSelector";
+import { SpeechToText } from "./SpeechToText";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Save } from "lucide-react";
 
@@ -18,6 +20,7 @@ export const RedditVideoEditor = () => {
   const [redditUrl, setRedditUrl] = useState("");
   const [content, setContent] = useState("");
   const [selectedBackground, setSelectedBackground] = useState("");
+  const [selectedResolution, setSelectedResolution] = useState<VideoResolution>("youtube");
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState("");
   const { toast } = useToast();
@@ -82,6 +85,10 @@ export const RedditVideoEditor = () => {
     }
   };
 
+  const handleSpeechToText = (transcript: string) => {
+    setContent((prevContent) => prevContent + " " + transcript);
+  };
+
   return (
     <div className="space-y-8">
       <Card>
@@ -110,19 +117,46 @@ export const RedditVideoEditor = () => {
               )}
             </Button>
           </div>
-          <Textarea
-            placeholder="Or paste your content here..."
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="min-h-[200px]"
-          />
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <label className="text-sm font-medium">Content</label>
+              <SpeechToText onTranscript={handleSpeechToText} />
+            </div>
+            <Textarea
+              placeholder="Or paste your content here..."
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="min-h-[200px]"
+            />
+          </div>
         </CardContent>
       </Card>
 
-      <BackgroundSelector
-        selected={selectedBackground}
-        onSelect={setSelectedBackground}
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle>Video Settings</CardTitle>
+          <CardDescription>
+            Choose your video resolution and background
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Resolution</label>
+            <ResolutionSelector
+              selected={selectedResolution}
+              onSelect={setSelectedResolution}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Background Video</label>
+            <BackgroundSelector
+              selected={selectedBackground}
+              onSelect={setSelectedBackground}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {(content || previewUrl) && (
         <Card>
