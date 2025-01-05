@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { OpenAI } from "https://esm.sh/openai@4.28.0";
+import { HfInference } from 'https://esm.sh/@huggingface/inference@2.3.2';
 import { corsHeaders } from "../_shared/cors.ts";
 
 serve(async (req) => {
@@ -17,12 +17,12 @@ serve(async (req) => {
     console.log('Generating frames for script:', script);
     console.log('Number of frames to generate:', numberOfFrames);
 
-    const openAiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAiKey) {
-      throw new Error('OPENAI_API_KEY is not set');
+    const hfToken = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN');
+    if (!hfToken) {
+      throw new Error('HUGGING_FACE_ACCESS_TOKEN is not set');
     }
 
-    const openai = new OpenAI({ apiKey: openAiKey });
+    const hf = new HfInference(hfToken);
 
     // Split script into meaningful sections
     const sentences = script.split(/[.!?]+/).filter(Boolean).map(s => s.trim());
@@ -34,15 +34,12 @@ serve(async (req) => {
       const endIndex = Math.min((i + 1) * sectionsPerFrame, sentences.length);
       const relevantSentences = sentences.slice(startIndex, endIndex).join('. ');
       
-      // Enhanced prompt engineering for better relevancy
-      const prompt = `Create a highly detailed, photorealistic vertical video frame (9:16 aspect ratio) that vividly illustrates this scene: "${relevantSentences}". 
-      Key requirements:
-      - Cinematic quality with professional lighting
-      - Strong visual storytelling that directly relates to the text
-      - Vibrant, engaging composition optimized for mobile viewing
-      - Photorealistic style with high attention to detail
-      - Clear focal point that captures the main action/subject
-      Make it suitable for TikTok/YouTube Shorts with perfect composition and lighting.`;
+      const prompt = `Create a vertical video frame that vividly illustrates this scene: "${relevantSentences}". 
+      Requirements:
+      - Cinematic quality
+      - Vertical composition (9:16 aspect ratio)
+      - Clear focal point
+      - Suitable for social media video`;
       
       framePrompts.push(prompt);
     }
@@ -53,17 +50,23 @@ serve(async (req) => {
       framePrompts.map(async (prompt, index) => {
         try {
           console.log(`Starting generation for frame ${index + 1} with prompt:`, prompt);
-          const response = await openai.images.generate({
-            model: "dall-e-3",
-            prompt,
-            n: 1,
-            size: "1024x1792",
-            quality: "hd",
-            style: "natural"
-          });
           
-          console.log(`Frame ${index + 1} generated successfully:`, response.data[0].url);
-          return response.data[0].url;
+          const image = await hf.textToImage({
+            inputs: prompt,
+            model: "black-forest-labs/FLUX.1-schnell",
+            parameters: {
+              height: 1024,
+              width: 576,
+            }
+          });
+
+          // Convert blob to base64
+          const arrayBuffer = await image.arrayBuffer();
+          const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+          const dataUrl = `data:image/jpeg;base64,${base64}`;
+          
+          console.log(`Frame ${index + 1} generated successfully`);
+          return dataUrl;
         } catch (error) {
           console.error(`Error generating frame ${index + 1}:`, error);
           throw error;

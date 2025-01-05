@@ -60,13 +60,13 @@ export const FrameDisplay = ({
               style={{ zIndex: currentFrameIndex === index ? 1 : 0 }}
             />
           ))}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/30 flex items-center justify-center">
+            <div className="text-white text-lg p-6 text-center max-w-lg">
+              {currentCaption}
+            </div>
+          </div>
         </div>
       )}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/30 flex items-center justify-center">
-        <div className="text-white text-lg p-6 text-center max-w-lg">
-          {currentCaption}
-        </div>
-      </div>
       <div className="absolute bottom-4 left-4 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded-full">
         {isPlaying ? 'Click to pause' : 'Click to play'}
       </div>
