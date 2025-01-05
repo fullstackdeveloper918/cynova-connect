@@ -85,13 +85,18 @@ export const FakeTextGenerator = () => {
         `${msg.isUser ? 'User' : 'Friend'}: ${msg.content}`
       ).join('\n');
 
+      // Collect all audio URLs
+      const audioUrls = messages
+        .map(msg => msg.audioUrl)
+        .filter((url): url is string => url !== null && url !== undefined);
+
       const { data, error } = await supabase.functions.invoke('export-video', {
         body: {
           messages,
           title: `iMessage Conversation: ${messages[0]?.content.substring(0, 30)}...`,
           description: script,
           type: 'fake_text',
-          audioUrls: messages.map(msg => msg.audioUrl).filter(Boolean)
+          audioUrls
         },
       });
 
