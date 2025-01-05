@@ -51,13 +51,13 @@ export const PreviewSection = ({
   const getCaptionStyle = () => {
     switch (selectedCaptionStyle) {
       case "minimal":
-        return "bg-black/60 text-white px-3 py-2 rounded-md text-lg";
+        return "bg-black/60 text-white px-3 py-2 rounded-md text-lg font-medium shadow-lg";
       case "subtitles":
-        return "bg-black/80 text-white px-4 py-3 rounded-lg text-xl font-medium";
+        return "bg-black/80 text-white px-4 py-3 rounded-lg text-xl font-semibold shadow-xl";
       case "captions":
-        return "bg-black/90 text-white px-5 py-4 rounded-xl text-2xl font-semibold";
+        return "bg-black/90 text-white px-5 py-4 rounded-xl text-2xl font-bold shadow-2xl";
       default:
-        return "bg-black/80 text-white px-4 py-3 rounded-lg text-lg";
+        return "bg-black/80 text-white px-4 py-3 rounded-lg text-xl shadow-lg";
     }
   };
 

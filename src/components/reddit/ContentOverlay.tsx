@@ -24,7 +24,7 @@ export const ContentOverlay = ({ title, comments, audioRef, captionStyle }: Cont
       
       {/* Timed Captions */}
       {comments && (
-        <div className="mb-8 px-4">
+        <div className="mb-8 px-4 z-10">
           <TimedCaptions
             captions={comments}
             audioRef={audioRef}

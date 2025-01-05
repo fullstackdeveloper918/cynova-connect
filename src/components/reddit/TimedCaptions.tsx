@@ -89,10 +89,12 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
   }
 
   return (
-    <div className={`transition-opacity duration-300 ${className}`}>
-      <p className="animate-fade-in text-center">
-        {currentCaption}
-      </p>
+    <div className="flex justify-center items-center w-full">
+      <div className={`transition-all duration-300 ease-in-out transform ${className}`}>
+        <p className="animate-fade-in text-center max-w-3xl mx-auto">
+          {currentCaption}
+        </p>
+      </div>
     </div>
   );
 };
