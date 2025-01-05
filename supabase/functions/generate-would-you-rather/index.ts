@@ -20,34 +20,42 @@ serve(async (req) => {
     // Generate script for narration
     const script = `Would you rather ${optionA}? Or would you rather ${optionB}? Comment below with your choice!`;
 
-    // Generate images for both options using DALL-E
-    console.log('Generating images for options...');
+    // Generate images for both options using Stability AI
+    console.log('Generating images using Stability AI...');
     
     const generateImage = async (prompt: string) => {
-      const response = await fetch('https://api.openai.com/v1/images/generations', {
+      const response = await fetch('https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('STABILITY_API_KEY')}`,
         },
         body: JSON.stringify({
-          model: "dall-e-3",
-          prompt: `Create a cinematic, photorealistic image that captures this scene: "${prompt}". Make it dramatic and visually striking, suitable for a social media video. Vertical format (9:16 aspect ratio).`,
-          n: 1,
-          size: "1024x1024",
-          quality: "hd",
-          style: "vivid"
+          text_prompts: [
+            {
+              text: `Create a cinematic, photorealistic image that captures this scene: "${prompt}". Make it dramatic and visually striking, suitable for a social media video. Vertical format, 9:16 aspect ratio, high detail, dramatic lighting.`,
+              weight: 1
+            }
+          ],
+          cfg_scale: 7,
+          height: 1024,
+          width: 576, // Adjusted for 9:16 aspect ratio
+          samples: 1,
+          steps: 50,
+          style_preset: "cinematic"
         }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        console.error('DALL-E API Error:', error);
-        throw new Error(`DALL-E API error: ${error.error?.message || 'Unknown error'}`);
+        console.error('Stability AI API Error:', error);
+        throw new Error(`Stability AI API error: ${error.message || 'Unknown error'}`);
       }
 
       const result = await response.json();
-      return result.data[0].url;
+      // The API returns base64 encoded images
+      return `data:image/png;base64,${result.artifacts[0].base64}`;
     };
 
     // Generate images in parallel
@@ -56,7 +64,7 @@ serve(async (req) => {
       generateImage(optionB)
     ]);
 
-    console.log('Images generated successfully:', { imageAUrl, imageBUrl });
+    console.log('Images generated successfully');
 
     // Generate audio narration using ElevenLabs
     const elevenLabsKey = Deno.env.get('ELEVEN_LABS_API_KEY');
@@ -108,16 +116,18 @@ serve(async (req) => {
       .from('exports')
       .getPublicUrl(audioFileName);
 
-    // Download and upload the generated images
-    const uploadImage = async (imageUrl: string, prefix: string) => {
-      const response = await fetch(imageUrl);
-      const imageBuffer = await response.arrayBuffer();
+    // Convert data URLs to Blob and upload to Supabase storage
+    const uploadImage = async (dataUrl: string, prefix: string) => {
+      // Remove the data URL prefix to get the base64 string
+      const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, '');
+      const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+      
       const imageFileName = `wyr-${prefix}-${timestamp}.png`;
       
       await supabase
         .storage
         .from('exports')
-        .upload(imageFileName, new Uint8Array(imageBuffer), {
+        .upload(imageFileName, binaryData, {
           contentType: 'image/png',
           upsert: true
         });
