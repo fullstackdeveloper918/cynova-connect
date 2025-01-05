@@ -78,11 +78,14 @@ export const DashboardContent = () => {
   const { toast } = useToast();
   const { data: user } = useUser();
 
+  // Special case for test email
+  const userName = user?.email === 'inke2@hotmail.com' ? 'Test User' : user?.name;
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-primary">
-          Welcome back, {user?.name}! 👋
+          Welcome back, {userName || 'Guest'}! 👋
         </h1>
         <div className="flex items-center gap-4">
           <Button
