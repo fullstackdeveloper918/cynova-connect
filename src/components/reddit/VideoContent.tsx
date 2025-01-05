@@ -6,19 +6,16 @@ interface VideoContentProps {
   audioRef: RefObject<HTMLAudioElement>;
 }
 
-export const VideoContent = ({ audioUrl, audioRef }: VideoContentProps) => {
+export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentProps) => {
   useEffect(() => {
     if (audioRef.current && audioUrl) {
       console.log('Setting up audio playback with:', { audioUrl });
       
       const audio = audioRef.current;
-
-      // Reset when sources change
       audio.currentTime = 0;
 
       const startPlayback = async () => {
         try {
-          // Set audio source
           audio.src = audioUrl;
           console.log('Audio source set:', audioUrl);
 
@@ -28,8 +25,6 @@ export const VideoContent = ({ audioUrl, audioRef }: VideoContentProps) => {
           });
 
           console.log('Audio loaded, starting playback');
-          
-          // Start playback
           await audio.play();
           console.log('Audio playback started successfully');
         } catch (error) {
@@ -37,10 +32,8 @@ export const VideoContent = ({ audioUrl, audioRef }: VideoContentProps) => {
         }
       };
 
-      // Start playback immediately
       startPlayback();
 
-      // Handle audio ending
       const handleEnded = () => {
         console.log('Audio ended, restarting');
         audio.currentTime = 0;
@@ -51,6 +44,8 @@ export const VideoContent = ({ audioUrl, audioRef }: VideoContentProps) => {
       
       return () => {
         audio.removeEventListener('ended', handleEnded);
+        audio.pause();
+        audio.src = '';
       };
     }
   }, [audioUrl, audioRef]);

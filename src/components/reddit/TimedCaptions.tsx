@@ -28,10 +28,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     const audio = audioRef.current;
     
     const handleTimeUpdate = () => {
-      if (!audio.duration) {
-        console.log('Audio duration not available yet');
-        return;
-      }
+      if (!audio.duration) return;
       
       // Calculate time per sentence based on audio duration
       const timePerSentence = audio.duration / sentences.length;
@@ -53,8 +50,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     };
 
     const handlePlay = () => {
-      console.log('Audio started playing, setting initial caption');
-      // Set initial caption
+      console.log('Audio started playing');
       if (sentences.length > 0) {
         setCurrentCaption(sentences[0]);
         setIsVisible(true);
