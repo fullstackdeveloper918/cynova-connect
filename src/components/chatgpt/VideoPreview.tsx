@@ -28,8 +28,18 @@ export const VideoPreview = ({
   const [frameUrls, setFrameUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Split script into sentences for more natural caption breaks
-  const sentences = script?.split(/[.!?]+/).filter(Boolean).map(s => s.trim()) || [];
+  // Split script into smaller chunks for better readability
+  const words = script?.split(/\s+/) || [];
+  const WORDS_PER_CHUNK = 3;
+  const captionChunks = words.reduce((chunks: string[], word, index) => {
+    const chunkIndex = Math.floor(index / WORDS_PER_CHUNK);
+    if (!chunks[chunkIndex]) {
+      chunks[chunkIndex] = word;
+    } else {
+      chunks[chunkIndex] += ` ${word}`;
+    }
+    return chunks;
+  }, []);
   
   useEffect(() => {
     if (script && !frameUrls.length) {
@@ -83,14 +93,14 @@ export const VideoPreview = ({
         const time = audioRef.current?.currentTime || 0;
         setCurrentTime(time);
         
-        // Calculate which sentence should be shown based on current time
+        // Calculate which chunk should be shown based on current time
         const audioDuration = audioRef.current?.duration || 0;
         if (audioDuration > 0) {
-          const sentenceIndex = Math.min(
-            Math.floor((time / audioDuration) * sentences.length),
-            sentences.length - 1
+          const chunkIndex = Math.min(
+            Math.floor((time / audioDuration) * captionChunks.length),
+            captionChunks.length - 1
           );
-          setCurrentCaption(sentences[sentenceIndex]);
+          setCurrentCaption(captionChunks[chunkIndex]);
         }
 
         // Update frame index
@@ -107,7 +117,7 @@ export const VideoPreview = ({
       const interval = setInterval(updateCaption, 100);
       return () => clearInterval(interval);
     }
-  }, [isPlaying, sentences, frameUrls.length]);
+  }, [isPlaying, captionChunks, frameUrls.length]);
 
   const handlePlayPause = () => {
     if (audioRef.current) {
@@ -151,7 +161,7 @@ export const VideoPreview = ({
               isLoading={isLoading}
               frameUrls={frameUrls}
               currentFrameIndex={currentFrameIndex}
-              currentCaption={currentCaption || sentences[0]}
+              currentCaption={currentCaption || captionChunks[0]}
               isPlaying={isPlaying}
               audioRef={audioRef}
               currentTime={currentTime}
