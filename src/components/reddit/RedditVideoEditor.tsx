@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Save, Loader2 } from "lucide-react";
@@ -98,7 +98,7 @@ export const RedditVideoEditor = () => {
       const title = content.split('\n')[0];
       const comments = content.split('\n').slice(1).join('\n');
 
-      // Generate audio for title and comments using the eleven_turbo_v2 model
+      // Generate audio for title and comments
       const titleAudio = await generateAudio(title, titleVoice);
       const commentsAudio = await generateAudio(comments, commentVoice);
 
@@ -119,10 +119,6 @@ export const RedditVideoEditor = () => {
     }
   };
 
-  const handleSpeechToText = (transcript: string) => {
-    setContent((prevContent) => prevContent + " " + transcript);
-  };
-
   return (
     <div className="space-y-8">
       <ContentInput
@@ -132,7 +128,6 @@ export const RedditVideoEditor = () => {
         onUrlChange={setRedditUrl}
         onContentChange={setContent}
         onFetch={handleFetch}
-        onSpeechTranscript={handleSpeechToText}
       />
 
       <VoiceSettings
