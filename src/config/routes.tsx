@@ -15,6 +15,7 @@ import ChatGPTVideo from "@/pages/ChatGPTVideo";
 import FakeTextVideo from "@/pages/FakeTextVideo";
 import RedditVideo from "@/pages/RedditVideo";
 import SplitVideo from "@/pages/SplitVideo";
+import WouldYouRatherVideo from "@/pages/WouldYouRatherVideo";
 
 export const routes = [
   {
@@ -80,12 +81,7 @@ export const routes = [
   },
   {
     path: "/dashboard/would-you-rather",
-    element: (
-      <PlaceholderPage
-        title="Would You Rather Videos"
-        description="Create engaging decision-based content videos."
-      />
-    ),
+    element: <WouldYouRatherVideo />,
   },
   {
     path: "/dashboard/quiz",
