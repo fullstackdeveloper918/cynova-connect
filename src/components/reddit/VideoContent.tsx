@@ -26,7 +26,7 @@ export const VideoContent = ({ previewUrl, audioUrl }: VideoContentProps) => {
           setIsPlaying(true);
           await Promise.all([
             video.play(),
-            audio.play()
+            audioUrl ? audio.play() : Promise.resolve()
           ]);
           console.log('Playback started successfully');
         } catch (error) {
@@ -45,7 +45,7 @@ export const VideoContent = ({ previewUrl, audioUrl }: VideoContentProps) => {
       // Handle video ending
       const handleEnded = () => {
         video.currentTime = 0;
-        audio.currentTime = 0;
+        if (audioUrl) audio.currentTime = 0;
         startPlayback();
       };
 
@@ -54,7 +54,7 @@ export const VideoContent = ({ previewUrl, audioUrl }: VideoContentProps) => {
       
       // Start playback when both video and audio are loaded
       let videoLoaded = false;
-      let audioLoaded = false;
+      let audioLoaded = !audioUrl;
 
       video.addEventListener('loadeddata', () => {
         console.log('Video loaded');
@@ -62,11 +62,13 @@ export const VideoContent = ({ previewUrl, audioUrl }: VideoContentProps) => {
         if (audioLoaded) startPlayback();
       });
 
-      audio.addEventListener('loadeddata', () => {
-        console.log('Audio loaded');
-        audioLoaded = true;
-        if (videoLoaded) startPlayback();
-      });
+      if (audioUrl) {
+        audio.addEventListener('loadeddata', () => {
+          console.log('Audio loaded');
+          audioLoaded = true;
+          if (videoLoaded) startPlayback();
+        });
+      }
 
       return () => {
         video.removeEventListener('timeupdate', handleTimeUpdate);

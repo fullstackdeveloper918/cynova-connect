@@ -6,6 +6,7 @@ import { VideoContent } from "./VideoContent";
 import { ContentOverlay } from "./ContentOverlay";
 import { Button } from "../ui/button";
 import { ExternalLink } from "lucide-react";
+import { BackgroundSelector } from "./BackgroundSelector";
 
 interface PreviewSectionProps {
   content: string;
@@ -25,6 +26,7 @@ export const PreviewSection = ({
   onExport
 }: PreviewSectionProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [selectedBackground, setSelectedBackground] = useState("/stock/minecraft-gameplay.mp4");
 
   const resolutionStyles = {
     shorts: {
@@ -67,7 +69,12 @@ export const PreviewSection = ({
           Preview your video with {selectedResolution.toUpperCase()} resolution
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-8">
+        <BackgroundSelector
+          selected={selectedBackground}
+          onSelect={setSelectedBackground}
+        />
+
         <div className="flex justify-center">
           <div 
             className="relative bg-black rounded-lg overflow-hidden"
@@ -79,13 +86,10 @@ export const PreviewSection = ({
           >
             {/* Background Video */}
             <div className="absolute inset-0">
-              {previewUrl ? (
-                <VideoContent previewUrl={previewUrl} audioUrl={audioUrl} />
-              ) : (
-                <div className="w-full h-full bg-gray-900 flex items-center justify-center text-white/50">
-                  Background video will appear here
-                </div>
-              )}
+              <VideoContent 
+                previewUrl={selectedBackground} 
+                audioUrl={audioUrl} 
+              />
             </div>
 
             {/* Content Overlay */}
@@ -99,7 +103,7 @@ export const PreviewSection = ({
             )}
 
             {/* Placeholder when no content */}
-            {!content && !previewUrl && (
+            {!content && (
               <div className="absolute inset-0 flex items-center justify-center text-white/50">
                 Content and video preview will appear here
               </div>
