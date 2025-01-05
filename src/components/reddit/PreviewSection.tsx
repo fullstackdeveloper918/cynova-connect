@@ -4,6 +4,8 @@ import { CaptionStyle } from "./CaptionStyles";
 import { useRef } from "react";
 import { VideoContent } from "./VideoContent";
 import { ContentOverlay } from "./ContentOverlay";
+import { Button } from "../ui/button";
+import { ExternalLink } from "lucide-react";
 
 interface PreviewSectionProps {
   content: string;
@@ -104,6 +106,29 @@ export const PreviewSection = ({
             )}
           </div>
         </div>
+
+        {/* Preview Links */}
+        {(previewUrl || audioUrl) && (
+          <div className="space-y-2 p-4 bg-accent/20 rounded-lg">
+            <h3 className="font-medium mb-2">Generated Files:</h3>
+            {previewUrl && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Video URL:</span>
+                <Button variant="link" size="sm" onClick={() => window.open(previewUrl, '_blank')}>
+                  View Video <ExternalLink className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            {audioUrl && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Audio URL:</span>
+                <Button variant="link" size="sm" onClick={() => window.open(audioUrl, '_blank')}>
+                  View Audio <ExternalLink className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Resolution Info */}
         <div className="text-sm text-muted-foreground text-center">
