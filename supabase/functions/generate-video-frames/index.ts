@@ -24,10 +24,10 @@ serve(async (req) => {
 
     const openai = new OpenAI({ apiKey: openAiKey });
 
-    // Ensure we have at least 4 frames for a 30-second video (one every 7-8 seconds)
-    const minFrames = Math.max(4, numberOfFrames);
+    // Generate at least 6 frames for a 30-second video (one every 5 seconds)
+    const minFrames = Math.max(6, numberOfFrames);
     
-    // Split script into meaningful sections for each frame
+    // Split script into meaningful sections
     const sentences = script.split(/[.!?]+/).filter(Boolean).map(s => s.trim());
     const sectionsPerFrame = Math.ceil(sentences.length / minFrames);
     
@@ -37,22 +37,18 @@ serve(async (req) => {
       const endIndex = Math.min((i + 1) * sectionsPerFrame, sentences.length);
       const relevantSentences = sentences.slice(startIndex, endIndex).join('. ');
       
-      // Enhanced prompt engineering for more relevant images
-      const prompt = `Create a high-quality, photorealistic vertical video frame (9:16 aspect ratio) that captures this scene: "${relevantSentences}".
+      const prompt = `Create a photorealistic vertical image (9:16) of: "${relevantSentences}"
 
-      Key requirements:
-      - Hyper-realistic, cinematic quality imagery
-      - Vertical composition optimized for mobile viewing
-      - Strong visual storytelling that directly illustrates the text
-      - Professional lighting and dramatic atmosphere
-      - Clear subject focus and emotional impact
-      - Rich details that match the narrative
-      - Natural, believable scene composition
-      - Vibrant, lifelike colors
-      - Proper perspective and scale
-      - Seamless integration of all elements
-
-      The image should look like a professional photograph or film still, not artificial or generated.`;
+      Essential requirements:
+      - Photorealistic style, like a high-end camera photo
+      - Vertical format optimized for mobile
+      - Focus on the main subject/action
+      - Natural lighting and composition
+      - Clear, sharp details
+      - No text or watermarks
+      - No artificial or generated look
+      - Simple, clean background
+      - Professional photography style`;
       
       framePrompts.push(prompt);
     }
@@ -62,7 +58,7 @@ serve(async (req) => {
     const frameUrls = await Promise.all(
       framePrompts.map(async (prompt, index) => {
         try {
-          console.log(`Starting generation for frame ${index + 1} with prompt:`, prompt);
+          console.log(`Generating frame ${index + 1} with prompt:`, prompt);
           
           const response = await openai.images.generate({
             model: "dall-e-2",

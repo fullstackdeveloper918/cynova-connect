@@ -2,7 +2,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -18,7 +17,6 @@ serve(async (req) => {
       throw new Error('Missing OpenAI API key');
     }
 
-    // Generate script using OpenAI
     console.log('Calling OpenAI API...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -31,21 +29,22 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a professional video script writer. Create engaging, detailed scripts that take approximately ${targetDuration} seconds to narrate at a natural pace (approximately 150 words per minute). Include vivid visual descriptions that can be used to generate relevant images.`
+            content: `You are a storyteller creating engaging content. Write naturally flowing narratives that take ${targetDuration} seconds to read at a comfortable pace (150 words per minute). Focus on vivid descriptions and engaging storytelling without any meta-commentary or technical instructions.`
           },
           {
             role: 'user',
-            content: `Write a detailed, visually descriptive script about: ${prompt}. 
-            The script should:
-            - Be at least ${minWords} words
-            - Take ${targetDuration} seconds to narrate naturally
-            - Include clear visual scenes that can be illustrated
-            - Be engaging and ${style}
-            - Focus on descriptive, visual language`
+            content: `Create an engaging story or description about: ${prompt}
+            Requirements:
+            - Write at least ${minWords} words
+            - Use natural, conversational language
+            - Include vivid details and descriptions
+            - Maintain a ${style} tone
+            - DO NOT include any technical terms, narration instructions, or scene descriptions
+            - Focus purely on the story or content itself`
           }
         ],
         temperature: 0.7,
-        max_tokens: 500, // Increased for longer scripts
+        max_tokens: 500,
       }),
     });
 
