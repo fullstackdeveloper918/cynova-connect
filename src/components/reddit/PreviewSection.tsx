@@ -88,7 +88,8 @@ export const PreviewSection = ({
             <div className="absolute inset-0">
               <VideoContent 
                 previewUrl={selectedBackground} 
-                audioUrl={audioUrl} 
+                audioUrl={audioUrl}
+                audioRef={audioRef}
               />
             </div>
 

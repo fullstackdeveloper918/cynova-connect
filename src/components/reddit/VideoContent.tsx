@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 
 interface VideoContentProps {
   previewUrl: string;
   audioUrl?: string;
+  audioRef: RefObject<HTMLAudioElement>;
 }
 
-export const VideoContent = ({ previewUrl, audioUrl }: VideoContentProps) => {
-  const audioRef = useRef<HTMLAudioElement>(null);
+export const VideoContent = ({ previewUrl, audioUrl, audioRef }: VideoContentProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -76,7 +76,7 @@ export const VideoContent = ({ previewUrl, audioUrl }: VideoContentProps) => {
         setIsPlaying(false);
       };
     }
-  }, [previewUrl, audioUrl]);
+  }, [previewUrl, audioUrl, audioRef]);
 
   return (
     <>
