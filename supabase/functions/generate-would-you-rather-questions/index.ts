@@ -12,6 +12,9 @@ serve(async (req) => {
   }
 
   try {
+    const { count = 1 } = await req.json();
+    const questionCount = Math.min(Math.max(1, count), 10); // Ensure count is between 1 and 10
+
     const openAiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAiKey) {
       throw new Error('OpenAI API key is not configured');
@@ -28,11 +31,11 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a creative assistant that generates engaging "Would You Rather" questions. Generate a pair of interesting, thought-provoking options that will spark discussion.'
+            content: `You are a creative assistant that generates engaging "Would You Rather" questions. Generate ${questionCount} pairs of interesting, thought-provoking options that will spark discussion. Format your response as a JSON array of objects with optionA and optionB properties.`
           },
           {
             role: 'user',
-            content: 'Generate a would you rather question with two options.'
+            content: `Generate ${questionCount} would you rather questions.`
           }
         ],
         temperature: 0.7,
@@ -41,26 +44,36 @@ serve(async (req) => {
 
     const data = await response.json();
     const content = data.choices[0].message.content;
-
-    // Extract options using regex
-    const options = content.match(/would you rather (.*?) or (.*?)(?:\?|$)/i);
     
-    if (!options || options.length < 3) {
-      throw new Error('Failed to parse generated options');
-    }
-
-    return new Response(
-      JSON.stringify({
-        optionA: options[1].trim(),
-        optionB: options[2].trim(),
-      }),
-      { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+    try {
+      const questions = JSON.parse(content);
+      
+      if (!Array.isArray(questions)) {
+        throw new Error('Response is not an array');
       }
-    );
+      
+      // Validate question format
+      questions.forEach((q, index) => {
+        if (!q.optionA || !q.optionB) {
+          console.error('Invalid question format:', q);
+          throw new Error(`Question ${index + 1} is missing required options`);
+        }
+      });
+
+      return new Response(
+        JSON.stringify({ questions }),
+        { 
+          headers: { 
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    } catch (parseError) {
+      console.error('Failed to parse response:', parseError);
+      console.error('Raw content:', content);
+      throw new Error(`Invalid response format: ${parseError.message}`);
+    }
 
   } catch (error) {
     console.error('Error in generate-would-you-rather-questions:', error);

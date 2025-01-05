@@ -8,47 +8,22 @@ import { useUser } from "@/hooks/useUser";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoPreview } from "../chatgpt/VideoPreview";
-import { Loader2, Wand2 } from "lucide-react";
+import { QuestionGenerationForm } from "./QuestionGenerationForm";
 
 export const WouldYouRatherEditor = () => {
   const { data: user, isLoading: userLoading } = useUser();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [optionA, setOptionA] = useState("");
-  const [optionB, setOptionB] = useState("");
+  const [questions, setQuestions] = useState<Array<{ optionA: string; optionB: string }>>([{ optionA: "", optionB: "" }]);
+  const [selectedQuestionIndex, setSelectedQuestionIndex] = useState(0);
   const [selectedVoice, setSelectedVoice] = useState("21m00Tcm4TlvDq8ikWAM");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<{ audioUrl: string; videoUrl?: string } | null>(null);
   const [script, setScript] = useState<string>("");
 
-  const handleGenerate = async () => {
-    setIsGenerating(true);
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        "generate-would-you-rather-questions",
-        { body: {} }
-      );
-
-      if (error) throw error;
-
-      setOptionA(data.optionA);
-      setOptionB(data.optionB);
-
-      toast({
-        title: "Questions Generated",
-        description: "Feel free to edit them or use them as is!",
-      });
-    } catch (error) {
-      console.error('Error generating questions:', error);
-      toast({
-        title: "Generation Failed",
-        description: "Failed to generate questions. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
+  const handleQuestionsGenerated = (newQuestions: Array<{ optionA: string; optionB: string }>) => {
+    setQuestions(newQuestions);
+    setSelectedQuestionIndex(0);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,6 +39,7 @@ export const WouldYouRatherEditor = () => {
       return;
     }
 
+    const currentQuestion = questions[selectedQuestionIndex];
     setIsSubmitting(true);
     try {
       console.log("Generating video content...");
@@ -72,8 +48,8 @@ export const WouldYouRatherEditor = () => {
         "generate-would-you-rather",
         {
           body: {
-            optionA,
-            optionB,
+            optionA: currentQuestion.optionA,
+            optionB: currentQuestion.optionB,
             voiceId: selectedVoice,
           },
         }
@@ -95,7 +71,7 @@ export const WouldYouRatherEditor = () => {
           title: "Would You Rather Video",
           type: "would_you_rather",
           user_id: user.id,
-          description: `Would you rather ${optionA} OR ${optionB}?`,
+          description: `Would you rather ${currentQuestion.optionA} OR ${currentQuestion.optionB}?`,
           status: "draft"
         })
         .select()
@@ -117,8 +93,8 @@ export const WouldYouRatherEditor = () => {
         .insert({
           project_id: project.id,
           user_id: user.id,
-          option_a: optionA,
-          option_b: optionB,
+          option_a: currentQuestion.optionA,
+          option_b: currentQuestion.optionB,
         });
 
       if (questionError) {
@@ -148,35 +124,41 @@ export const WouldYouRatherEditor = () => {
       <Card className="p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">Options</h2>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleGenerate}
-                disabled={isGenerating}
+            <QuestionGenerationForm onQuestionsGenerated={handleQuestionsGenerated} />
+            
+            {questions.length > 1 && (
+              <Select 
+                value={selectedQuestionIndex.toString()} 
+                onValueChange={(value) => setSelectedQuestionIndex(parseInt(value))}
               >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="mr-2 h-4 w-4" />
-                    Generate Options
-                  </>
-                )}
-              </Button>
-            </div>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a question" />
+                </SelectTrigger>
+                <SelectContent>
+                  {questions.map((_, index) => (
+                    <SelectItem key={index} value={index.toString()}>
+                      Question {index + 1}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
             <div>
               <label className="block text-sm font-medium mb-2">
                 Would you rather...
               </label>
               <Input
                 placeholder="Option A"
-                value={optionA}
-                onChange={(e) => setOptionA(e.target.value)}
+                value={questions[selectedQuestionIndex]?.optionA || ""}
+                onChange={(e) => {
+                  const newQuestions = [...questions];
+                  newQuestions[selectedQuestionIndex] = {
+                    ...newQuestions[selectedQuestionIndex],
+                    optionA: e.target.value
+                  };
+                  setQuestions(newQuestions);
+                }}
                 required
               />
             </div>
@@ -184,8 +166,15 @@ export const WouldYouRatherEditor = () => {
               <label className="block text-sm font-medium mb-2">OR</label>
               <Input
                 placeholder="Option B"
-                value={optionB}
-                onChange={(e) => setOptionB(e.target.value)}
+                value={questions[selectedQuestionIndex]?.optionB || ""}
+                onChange={(e) => {
+                  const newQuestions = [...questions];
+                  newQuestions[selectedQuestionIndex] = {
+                    ...newQuestions[selectedQuestionIndex],
+                    optionB: e.target.value
+                  };
+                  setQuestions(newQuestions);
+                }}
                 required
               />
             </div>
