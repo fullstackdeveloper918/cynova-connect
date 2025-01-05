@@ -43,6 +43,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
           currentTime: audio.currentTime,
           chunk: chunks[index],
           totalChunks: chunks.length,
+          audioDuration: audio.duration
         });
         
         currentIndex = index;
@@ -55,20 +56,20 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       if (!audio.duration) return;
 
       const now = Date.now();
-      if (now - lastUpdateTime < 100) return;
+      if (now - lastUpdateTime < 50) return; // Reduced throttle time for more frequent updates
       lastUpdateTime = now;
 
-      // Calculate the current chunk based on audio progress
-      const progress = audio.currentTime / audio.duration;
-      const newIndex = Math.floor(progress * chunks.length);
+      // Calculate chunk duration based on total audio duration
+      const chunkDuration = audio.duration / chunks.length;
+      const currentChunkIndex = Math.floor(audio.currentTime / chunkDuration);
       
-      updateCaption(newIndex);
+      updateCaption(currentChunkIndex);
     };
 
     const handlePlay = () => {
       console.log('Audio started playing');
       setIsVisible(true);
-      updateCaption(0);
+      updateCaption(0); // Start with first caption
     };
 
     const handlePause = () => {
