@@ -21,10 +21,33 @@ export const VideoPreview = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentCaption, setCurrentCaption] = useState("");
   const [currentTime, setCurrentTime] = useState(0);
+  const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
+  const [frameUrls, setFrameUrls] = useState<string[]>([]);
 
   // Split script into sentences for captions
   const sentences = script?.split(/[.!?]+/).filter(Boolean).map(s => s.trim()) || [];
   const sentenceDuration = audioRef.current ? audioRef.current.duration / sentences.length : 0;
+
+  useEffect(() => {
+    if (script && !frameUrls.length) {
+      const generateFrames = async () => {
+        try {
+          const { data, error } = await supabase.functions.invoke("generate-video-frames", {
+            body: { script }
+          });
+
+          if (error) throw error;
+          if (data.frameUrls) {
+            setFrameUrls(data.frameUrls);
+          }
+        } catch (error) {
+          console.error('Error generating frames:', error);
+        }
+      };
+
+      generateFrames();
+    }
+  }, [script]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -39,16 +62,26 @@ export const VideoPreview = ({
       const updateCaption = () => {
         const time = audioRef.current?.currentTime || 0;
         setCurrentTime(time);
+        
+        // Update current sentence based on time
         const sentenceIndex = Math.floor(time / sentenceDuration);
         if (sentences[sentenceIndex]) {
           setCurrentCaption(sentences[sentenceIndex]);
         }
+
+        // Update current frame based on time progress
+        const progress = time / (audioRef.current?.duration || 1);
+        const frameIndex = Math.min(
+          Math.floor(progress * frameUrls.length),
+          frameUrls.length - 1
+        );
+        setCurrentFrameIndex(frameIndex);
       };
 
       const interval = setInterval(updateCaption, 100);
       return () => clearInterval(interval);
     }
-  }, [isPlaying, sentences, sentenceDuration]);
+  }, [isPlaying, sentences, sentenceDuration, frameUrls.length]);
 
   const handlePlayPause = () => {
     if (audioRef.current) {
@@ -88,6 +121,13 @@ export const VideoPreview = ({
       >
         {previewUrl ? (
           <>
+            {frameUrls.length > 0 && (
+              <img
+                src={frameUrls[currentFrameIndex]}
+                alt={`Frame ${currentFrameIndex + 1}`}
+                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/30 flex items-center justify-center">
               <div className="text-white text-lg p-6 text-center max-w-lg">
                 {currentCaption || sentences[0]}

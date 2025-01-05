@@ -46,7 +46,7 @@ export const useVideoPreview = () => {
       
       if (data.previewUrl?.audioUrl) {
         setPreviewUrl({
-          videoUrl: "/stock/minecraft-gameplay.mp4", // Using a template video for now
+          videoUrl: "/stock/minecraft-gameplay.mp4", // This is not used anymore but kept for compatibility
           audioUrl: data.previewUrl.audioUrl
         });
         
