@@ -22,7 +22,7 @@ serve(async (req) => {
       throw new Error('Missing required API keys');
     }
 
-    // Generate conversation using OpenAI
+    // Generate conversation using OpenAI with specific duration guidance
     console.log('Calling OpenAI API...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -36,9 +36,10 @@ serve(async (req) => {
           {
             role: 'system',
             content: `You are an expert at creating realistic iMessage conversations. Generate a natural conversation between two people about the given topic. 
-            The conversation should last approximately ${duration} seconds when read aloud.
+            The conversation should be paced to last exactly ${duration} seconds when read aloud at a natural speaking pace.
             Format the response as a JSON array of messages, where each message has: content (string), isUser (boolean), and timestamp (string in format "h:mm PM").
-            Make the conversation flow naturally with appropriate delays between messages.`
+            Add natural pauses between messages by spacing out the timestamps appropriately within the ${duration} second duration.
+            Keep messages concise and natural - aim for 10-15 words per message maximum.`
           },
           {
             role: 'user',
@@ -58,12 +59,12 @@ serve(async (req) => {
     const data = await response.json();
     const messages = JSON.parse(data.choices[0].message.content);
 
-    // Generate audio for each message
+    // Generate audio for each message with better error handling
     console.log('Generating audio for messages...');
     const messagesWithAudio = await Promise.all(
-      messages.map(async (message: any) => {
+      messages.map(async (message: any, index: number) => {
         try {
-          console.log('Generating audio for message:', message.content);
+          console.log(`Generating audio for message ${index}:`, message.content);
           const audioResponse = await fetch(
             `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
             {
@@ -85,21 +86,20 @@ serve(async (req) => {
           );
 
           if (!audioResponse.ok) {
-            const errorData = await audioResponse.json();
-            console.error('ElevenLabs API Error:', errorData);
-            throw new Error('Failed to generate audio');
+            throw new Error(`Failed to generate audio for message ${index}`);
           }
 
           const audioBuffer = await audioResponse.arrayBuffer();
           const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
+          
           return { 
             ...message, 
             audioUrl: `data:audio/mpeg;base64,${base64Audio}` 
           };
         } catch (error) {
-          console.error('Error generating audio for message:', error);
-          // Return message without audio if generation fails
-          return message;
+          console.error(`Error generating audio for message ${index}:`, error);
+          // If audio generation fails, throw the error to retry the whole message
+          throw new Error(`Failed to generate audio for message ${index}: ${error.message}`);
         }
       })
     );

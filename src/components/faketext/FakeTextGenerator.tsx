@@ -9,6 +9,7 @@ export const FakeTextGenerator = () => {
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [exporting, setExporting] = useState(false);
+  const [selectedDuration, setSelectedDuration] = useState("30");
   const { toast } = useToast();
 
   const generateConversation = async ({
@@ -32,6 +33,7 @@ export const FakeTextGenerator = () => {
     }
 
     setLoading(true);
+    setSelectedDuration(duration);
     try {
       const { data, error } = await supabase.functions.invoke('generate-fake-text', {
         body: { 
@@ -118,6 +120,7 @@ export const FakeTextGenerator = () => {
           messages={messages}
           onExport={exportVideo}
           exporting={exporting}
+          duration={selectedDuration}
         />
       </div>
     </div>

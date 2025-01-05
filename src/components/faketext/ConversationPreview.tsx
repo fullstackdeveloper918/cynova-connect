@@ -8,12 +8,14 @@ interface ConversationPreviewProps {
   messages: Message[];
   onExport: () => Promise<void>;
   exporting: boolean;
+  duration?: string;
 }
 
 export const ConversationPreview = ({
   messages,
   onExport,
   exporting,
+  duration = "30",
 }: ConversationPreviewProps) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [visibleMessages, setVisibleMessages] = useState<Message[]>([]);
@@ -29,9 +31,9 @@ export const ConversationPreview = ({
       return;
     }
 
-    // Reset state and initialize audio
+    // Reset state and initialize audio with duration
     setVisibleMessages([]);
-    audioPlayer.initialize(messages);
+    audioPlayer.initialize(messages, parseInt(duration));
 
     const playMessageSequence = async (index: number) => {
       if (index >= messages.length || !audioPlayer.getIsPlaying()) {
@@ -45,18 +47,11 @@ export const ConversationPreview = ({
       // Show current message
       setVisibleMessages(prev => [...prev, currentMessage]);
 
-      if (currentMessage.audioUrl) {
-        try {
-          console.log(`Playing audio for message ${index}`);
-          await audioPlayer.playAudio(index);
-          console.log(`Audio completed for message ${index}`);
-        } catch (error) {
-          console.error(`Failed to play audio for message ${index}:`, error);
-        }
-      } else {
-        console.log(`No audio URL for message ${index}`);
-        // Add a small delay even if there's no audio
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      try {
+        await audioPlayer.playAudio(index);
+        console.log(`Audio completed for message ${index}`);
+      } catch (error) {
+        console.error(`Failed to play audio for message ${index}:`, error);
       }
 
       // Continue to next message
@@ -75,7 +70,7 @@ export const ConversationPreview = ({
       console.log('Cleaning up audio player');
       audioPlayer.cleanup();
     };
-  }, [messages]);
+  }, [messages, duration]);
 
   return (
     <div className="space-y-6">
