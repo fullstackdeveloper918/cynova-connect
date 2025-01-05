@@ -19,6 +19,8 @@ serve(async (req) => {
       throw new Error('Script is required');
     }
 
+    console.log('Starting video generation with script:', script.substring(0, 100) + '...');
+
     // Generate audio using ElevenLabs
     const elevenLabsKey = Deno.env.get('ELEVEN_LABS_API_KEY');
     if (!elevenLabsKey) {
@@ -29,6 +31,8 @@ serve(async (req) => {
     const audioResponse = await generateAudio(script, voice, elevenLabsKey);
     const audioBuffer = await audioResponse.arrayBuffer();
     const audioBase64 = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
+
+    console.log('Audio generated successfully, uploading to storage...');
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -50,6 +54,7 @@ serve(async (req) => {
       });
 
     if (audioError) {
+      console.error('Audio upload error:', audioError);
       throw audioError;
     }
 
@@ -58,13 +63,14 @@ serve(async (req) => {
       .from('exports')
       .getPublicUrl(audioFileName);
 
+    console.log('Audio uploaded successfully, generating video...');
+
     // Generate preview video using Replicate
     const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
     if (!replicateApiKey) {
       throw new Error('REPLICATE_API_KEY is not set');
     }
 
-    console.log('Generating preview video with Replicate...');
     const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -75,9 +81,16 @@ serve(async (req) => {
         version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
         input: {
           html: `
-            <div style="width: 1080px; height: 1920px; background: black; display: flex; justify-content: center; align-items: center;">
-              <div style="color: white; font-size: 48px; text-align: center; padding: 40px;">
-                ${script.slice(0, 500)}
+            <div style="width: 1080px; height: 1920px; background: linear-gradient(180deg, #000000 0%, #1a1a1a 100%); display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 40px; font-family: system-ui, -apple-system, sans-serif;">
+              <div style="width: 100%; max-width: 900px; background: rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 24px; margin-bottom: 40px;">
+                <div style="color: white; font-size: 28px; line-height: 1.4; font-weight: 600; text-align: left;">
+                  ${script.split('\n\n')[0]}
+                </div>
+              </div>
+              <div style="width: 100%; max-width: 900px;">
+                <div style="color: white; font-size: 24px; line-height: 1.5; text-align: center; background: rgba(0, 0, 0, 0.7); padding: 20px; border-radius: 12px;">
+                  ${script.split('\n\n').slice(1).join('\n\n')}
+                </div>
               </div>
             </div>
           `,
@@ -85,7 +98,7 @@ serve(async (req) => {
           height: 1920,
           fps: 30,
           duration: parseInt(duration) || 30,
-          quality: "high",
+          quality: "medium",
           format: "mp4"
         },
       }),
