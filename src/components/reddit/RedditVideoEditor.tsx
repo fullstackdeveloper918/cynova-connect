@@ -13,8 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 export const RedditVideoEditor = () => {
   const [redditUrl, setRedditUrl] = useState("");
   const [content, setContent] = useState("");
-  const [selectedBackground, setSelectedBackground] = useState("");
-  const [selectedResolution, setSelectedResolution] = useState<VideoResolution>("youtube");
+  const [selectedResolution, setSelectedResolution] = useState<VideoResolution>("shorts");
+  const [selectedDuration, setSelectedDuration] = useState("30");
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState("");
   const [titleVoice, setTitleVoice] = useState("EXAVITQu4vr4xnSDxMaL");
@@ -55,9 +55,15 @@ export const RedditVideoEditor = () => {
 
       const data = await response.json();
       const post = data[0].data.children[0].data;
+      
+      // Calculate number of comments based on duration
+      const commentsPerMinute = 4; // Adjust this value to control pacing
+      const durationInMinutes = parseInt(selectedDuration) / 60;
+      const targetCommentCount = Math.max(1, Math.round(commentsPerMinute * durationInMinutes));
+      
       const comments = data[1].data.children
         .filter((comment: any) => !comment.data.stickied)
-        .slice(0, 5) // Get top 5 comments
+        .slice(0, targetCommentCount)
         .map((comment: any) => comment.data.body)
         .join('\n\n');
 
@@ -80,42 +86,11 @@ export const RedditVideoEditor = () => {
     }
   };
 
-  const generateAudio = async (text: string, voiceId: string) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error("No session");
-
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
-      {
-        method: 'POST',
-        headers: {
-          'Accept': 'audio/mpeg',
-          'Content-Type': 'application/json',
-          'xi-api-key': process.env.ELEVEN_LABS_API_KEY || '',
-        },
-        body: JSON.stringify({
-          text,
-          model_id: "eleven_turbo_v2",
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.5,
-          },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error('Failed to generate audio');
-    }
-
-    return response.blob();
-  };
-
   const handleGenerate = async () => {
-    if (!content || !selectedBackground) {
+    if (!content) {
       toast({
-        title: "Missing Requirements",
-        description: "Please provide content and select a background video.",
+        title: "Missing Content",
+        description: "Please fetch or enter content first.",
         variant: "destructive",
       });
       return;
@@ -123,16 +98,8 @@ export const RedditVideoEditor = () => {
 
     setIsGenerating(true);
     try {
-      // Split content into title and comments
-      const title = content.split('\n')[0];
-      const comments = content.split('\n').slice(1).join('\n');
-
-      // Generate audio for title and comments
-      const titleAudio = await generateAudio(title, titleVoice);
-      const commentsAudio = await generateAudio(comments, commentVoice);
-
-      // TODO: Combine audio files and background video
-      setPreviewUrl(selectedBackground);
+      // TODO: Implement video generation with duration
+      setPreviewUrl("/stock/minecraft-gameplay.mp4");
       toast({
         title: "Video Generated",
         description: "Your video has been generated successfully.",
@@ -168,9 +135,9 @@ export const RedditVideoEditor = () => {
 
       <VideoSettings
         selectedResolution={selectedResolution}
-        selectedBackground={selectedBackground}
+        selectedDuration={selectedDuration}
         onResolutionSelect={setSelectedResolution}
-        onBackgroundSelect={setSelectedBackground}
+        onDurationSelect={setSelectedDuration}
       />
 
       {(content || previewUrl) && (
