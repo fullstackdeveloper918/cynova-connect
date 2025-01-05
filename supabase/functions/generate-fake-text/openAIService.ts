@@ -8,7 +8,7 @@ export async function generateConversation(openAiKey: string, topic: string, pro
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gpt-4',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -22,7 +22,7 @@ Format each message as:
 }
 
 Requirements:
-- Return a valid JSON array of messages
+- Return ONLY a valid JSON array of messages, no other text
 - Keep messages natural and conversational
 - Alternate between isUser true/false
 - Space timestamps evenly across the duration
@@ -63,8 +63,7 @@ Example valid response:
   
   try {
     // Parse and validate the response
-    const content = JSON.parse(data.choices[0].message.content);
-    const messages = content.messages || content;
+    const messages = JSON.parse(data.choices[0].message.content);
     
     if (!Array.isArray(messages)) {
       throw new Error('Response is not an array');
