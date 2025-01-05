@@ -1,121 +1,171 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from '@supabase/supabase-js';
+import { generateAudio } from "./audioService.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { script, voice, duration } = await req.json()
-    console.log('Received request with script:', script)
-
-    // First, generate background image using Stability AI
-    console.log('Generating background image with Stability AI...')
-    const imageResponse = await fetch('https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('STABILITY_API_KEY')}`,
-      },
-      body: JSON.stringify({
-        text_prompts: [
-          {
-            text: script.slice(0, 500), // Limit prompt length
-            weight: 1
-          }
-        ],
-        cfg_scale: 7,
-        height: 1024,
-        width: 1024,
-        samples: 1,
-        steps: 30,
-      }),
-    })
-
-    if (!imageResponse.ok) {
-      throw new Error(`Stability AI API error: ${await imageResponse.text()}`)
+    const { script, voice, duration } = await req.json();
+    
+    if (!script) {
+      throw new Error('Script is required');
     }
 
-    const imageData = await imageResponse.json()
-    const base64Image = imageData.artifacts[0].base64
+    // Generate audio using ElevenLabs
+    const elevenLabsKey = Deno.env.get('ELEVEN_LABS_API_KEY');
+    if (!elevenLabsKey) {
+      throw new Error('ELEVEN_LABS_API_KEY is not set');
+    }
 
-    // Generate video with Replicate using the generated image
-    console.log('Generating video with Replicate...')
-    const videoResponse = await fetch("https://api.replicate.com/v1/predictions", {
+    console.log('Generating audio with ElevenLabs...');
+    const audioResponse = await generateAudio(script, voice, elevenLabsKey);
+    const audioBuffer = await audioResponse.arrayBuffer();
+    const audioBase64 = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
+
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Supabase credentials not configured');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const timestamp = Date.now();
+    const audioFileName = `preview-audio-${timestamp}.mp3`;
+
+    // Upload audio to Supabase Storage
+    const { data: audioData, error: audioError } = await supabase.storage
+      .from('exports')
+      .upload(audioFileName, Buffer.from(audioBuffer), {
+        contentType: 'audio/mpeg',
+        upsert: true
+      });
+
+    if (audioError) {
+      throw audioError;
+    }
+
+    // Get public URL for the audio
+    const { data: { publicUrl: audioUrl } } = supabase.storage
+      .from('exports')
+      .getPublicUrl(audioFileName);
+
+    // Generate preview video using Replicate
+    const replicateApiKey = Deno.env.get('REPLICATE_API_KEY');
+    if (!replicateApiKey) {
+      throw new Error('REPLICATE_API_KEY is not set');
+    }
+
+    console.log('Generating preview video with Replicate...');
+    const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
-        Authorization: `Token ${Deno.env.get('REPLICATE_API_KEY')}`,
+        Authorization: `Token ${replicateApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         version: "2b017d9b67edd2ee1401238df49d75da53c523f36e363881e057f5dc3ed3c5b2",
         input: {
-          image: `data:image/png;base64,${base64Image}`,
-          prompt: script.slice(0, 500),
-          video_length: "14_frames_with_svd",
-          sizing_strategy: "maintain_aspect_ratio",
-          motion_bucket_id: 127,
-          frames_per_second: 6
+          html: `
+            <div style="width: 1080px; height: 1920px; background: black; display: flex; justify-content: center; align-items: center;">
+              <div style="color: white; font-size: 48px; text-align: center; padding: 40px;">
+                ${script.slice(0, 500)}
+              </div>
+            </div>
+          `,
+          width: 1080,
+          height: 1920,
+          fps: 30,
+          duration: parseInt(duration) || 30,
+          quality: "high",
+          format: "mp4"
         },
       }),
-    })
+    });
 
-    if (!videoResponse.ok) {
-      const error = await videoResponse.json()
-      throw new Error(`Replicate API error: ${JSON.stringify(error)}`)
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('Replicate API error:', error);
+      throw new Error(`Replicate API error: ${error}`);
     }
 
-    const prediction = await videoResponse.json()
-    console.log('Video generation started:', prediction)
+    const prediction = await response.json();
+    console.log('Video generation started:', prediction);
 
-    // Generate audio with ElevenLabs
-    console.log('Generating audio with ElevenLabs...')
-    const audioResponse = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voice, {
-      method: 'POST',
-      headers: {
-        'Accept': 'audio/mpeg',
-        'Content-Type': 'application/json',
-        'xi-api-key': Deno.env.get('ELEVEN_LABS_API_KEY') || '',
-      },
-      body: JSON.stringify({
-        text: script,
-        model_id: "eleven_monolingual_v1",
-        voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75,
-        },
-      }),
-    })
+    // Poll for video completion
+    let videoUrl = null;
+    const maxAttempts = 60;
+    let attempts = 0;
 
-    if (!audioResponse.ok) {
-      throw new Error(`ElevenLabs API error: ${await audioResponse.text()}`)
+    while (!videoUrl && attempts < maxAttempts) {
+      console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`);
+      const pollResponse = await fetch(
+        `https://api.replicate.com/v1/predictions/${prediction.id}`,
+        {
+          headers: {
+            Authorization: `Token ${replicateApiKey}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!pollResponse.ok) {
+        throw new Error(`Failed to check prediction status: ${await pollResponse.text()}`);
+      }
+
+      const pollResult = await pollResponse.json();
+      console.log('Poll result:', pollResult);
+
+      if (pollResult.status === 'succeeded') {
+        videoUrl = pollResult.output;
+        break;
+      } else if (pollResult.status === 'failed') {
+        throw new Error('Video generation failed: ' + pollResult.error);
+      }
+
+      attempts++;
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
-    const audioBlob = await audioResponse.blob()
-    const audioBase64 = btoa(String.fromCharCode(...new Uint8Array(await audioBlob.arrayBuffer())))
+    if (!videoUrl) {
+      throw new Error('Video generation timed out');
+    }
 
+    console.log('Preview generation completed successfully');
     return new Response(
       JSON.stringify({
+        success: true,
         previewUrl: {
-          videoUrl: prediction.urls?.get,
-          audioUrl: `data:audio/mpeg;base64,${audioBase64}`
+          videoUrl,
+          audioUrl
         }
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+      { 
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
 
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error in generate-video-preview:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    )
+      JSON.stringify({ 
+        error: error.message
+      }),
+      { 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   }
-})
+});
