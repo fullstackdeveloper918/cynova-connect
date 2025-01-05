@@ -10,6 +10,12 @@ export interface Subscription {
   current_period_end: string;
   stripe_subscription_id: string | null;
   stripe_customer_id: string | null;
+  plan_limits: {
+    features: string[];
+    max_duration_minutes: number;
+    max_videos_per_month: number;
+    max_exports_per_month: number;
+  } | null;
 }
 
 export const useSubscription = () => {
