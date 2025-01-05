@@ -1,21 +1,14 @@
 import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { BackgroundSelector } from "./BackgroundSelector";
-import { VideoPreview } from "./VideoPreview";
-import { ResolutionSelector, type VideoResolution } from "./ResolutionSelector";
-import { SpeechToText } from "./SpeechToText";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Save } from "lucide-react";
-import { VoiceSelector } from "../chatgpt/VoiceSelector";
+import { Save, Loader2 } from "lucide-react";
+import { VideoResolution } from "./ResolutionSelector";
+import { VideoPreview } from "./VideoPreview";
+import { ContentInput } from "./ContentInput";
+import { VoiceSettings } from "./VoiceSettings";
+import { VideoSettings } from "./VideoSettings";
+import { supabase } from "@/integrations/supabase/client";
 
 export const RedditVideoEditor = () => {
   const [redditUrl, setRedditUrl] = useState("");
@@ -58,6 +51,37 @@ export const RedditVideoEditor = () => {
     }
   };
 
+  const generateAudio = async (text: string, voiceId: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error("No session");
+
+    const response = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
+      {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': process.env.ELEVEN_LABS_API_KEY || '',
+        },
+        body: JSON.stringify({
+          text,
+          model_id: "eleven_turbo_v2",
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.5,
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to generate audio');
+    }
+
+    return response.blob();
+  };
+
   const handleGenerate = async () => {
     if (!content || !selectedBackground) {
       toast({
@@ -70,12 +94,15 @@ export const RedditVideoEditor = () => {
 
     setIsGenerating(true);
     try {
-      // TODO: Implement video generation with narration
-      // This would involve:
-      // 1. Splitting content into title and comments
-      // 2. Generating audio for each part with different voices
-      // 3. Combining audio with background video
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Split content into title and comments (mock implementation)
+      const title = content.split('\n')[0];
+      const comments = content.split('\n').slice(1).join('\n');
+
+      // Generate audio for title and comments
+      const titleAudio = await generateAudio(title, titleVoice);
+      const commentsAudio = await generateAudio(comments, commentVoice);
+
+      // TODO: Combine audio files and background video
       setPreviewUrl(selectedBackground);
       toast({
         title: "Video Generated",
@@ -98,97 +125,29 @@ export const RedditVideoEditor = () => {
 
   return (
     <div className="space-y-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Reddit Content</CardTitle>
-          <CardDescription>
-            Enter a Reddit post URL or paste your content directly
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-4">
-            <Input
-              placeholder="Enter Reddit URL"
-              value={redditUrl}
-              onChange={(e) => setRedditUrl(e.target.value)}
-            />
-            <Button
-              onClick={handleFetch}
-              disabled={isGenerating}
-              className="min-w-[100px]"
-            >
-              {isGenerating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                "Fetch"
-              )}
-            </Button>
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <label className="text-sm font-medium">Content</label>
-              <SpeechToText onTranscript={handleSpeechToText} />
-            </div>
-            <Textarea
-              placeholder="Or paste your content here..."
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="min-h-[200px]"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <ContentInput
+        redditUrl={redditUrl}
+        content={content}
+        isGenerating={isGenerating}
+        onUrlChange={setRedditUrl}
+        onContentChange={setContent}
+        onFetch={handleFetch}
+        onSpeechTranscript={handleSpeechToText}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Voice Settings</CardTitle>
-          <CardDescription>
-            Choose different voices for the title and comments
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-2 block">Title Voice</label>
-            <VoiceSelector
-              selectedVoice={titleVoice}
-              onVoiceSelect={setTitleVoice}
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-2 block">Comment Voice</label>
-            <VoiceSelector
-              selectedVoice={commentVoice}
-              onVoiceSelect={setCommentVoice}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <VoiceSettings
+        titleVoice={titleVoice}
+        commentVoice={commentVoice}
+        onTitleVoiceSelect={setTitleVoice}
+        onCommentVoiceSelect={setCommentVoice}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Video Settings</CardTitle>
-          <CardDescription>
-            Choose your video resolution and background
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Resolution</label>
-            <ResolutionSelector
-              selected={selectedResolution}
-              onSelect={setSelectedResolution}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Background Video</label>
-            <BackgroundSelector
-              selected={selectedBackground}
-              onSelect={setSelectedBackground}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <VideoSettings
+        selectedResolution={selectedResolution}
+        selectedBackground={selectedBackground}
+        onResolutionSelect={setSelectedResolution}
+        onBackgroundSelect={setSelectedBackground}
+      />
 
       {(content || previewUrl) && (
         <Card>
