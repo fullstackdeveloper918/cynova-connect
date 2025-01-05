@@ -27,27 +27,32 @@ serve(async (req) => {
 
     const openai = new OpenAI({ apiKey: openAiKey });
 
-    // Generate a sequence of 4 frames based on the script
-    const framePrompts = [
-      `Frame 1: ${script.substring(0, 200)}`,
-      `Frame 2: ${script.substring(200, 400)}`,
-      `Frame 3: ${script.substring(400, 600)}`,
-      `Frame 4: ${script.substring(600, 800)}`
-    ].filter(prompt => prompt.length > 10);
+    // Split script into sections for frame generation
+    const sections = script.split(/[.!?]+/).filter(Boolean).map(s => s.trim());
+    const framePrompts = sections.slice(0, 4).map(section => 
+      `Create a high quality, cinematic video frame for this scene: ${section}. Make it photorealistic and visually striking.`
+    );
 
     console.log('Generating frames with DALL-E...');
+    console.log('Frame prompts:', framePrompts);
     
     const frameUrls = await Promise.all(
       framePrompts.map(async (prompt) => {
-        const response = await openai.images.generate({
-          model: "dall-e-3",
-          prompt: prompt + " Make it look like a video frame, cinematic quality.",
-          n: 1,
-          size: "1024x1024",
-          quality: "standard",
-          style: "natural"
-        });
-        return response.data[0].url;
+        try {
+          const response = await openai.images.generate({
+            model: "dall-e-3",
+            prompt: prompt,
+            n: 1,
+            size: "1024x1024",
+            quality: "standard",
+            style: "natural"
+          });
+          console.log('Generated frame URL:', response.data[0].url);
+          return response.data[0].url;
+        } catch (error) {
+          console.error('Error generating frame:', error);
+          throw error;
+        }
       })
     );
 
