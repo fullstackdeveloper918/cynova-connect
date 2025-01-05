@@ -28,21 +28,9 @@ export const VideoPreview = ({
   const [frameUrls, setFrameUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Split script into sentences and then into smaller chunks
+  // Split script into sentences for more natural caption breaks
   const sentences = script?.split(/[.!?]+/).filter(Boolean).map(s => s.trim()) || [];
-  const captionChunks = sentences.flatMap(sentence => 
-    sentence
-      .split(/\s+/)
-      .reduce((chunks: string[], word, i) => {
-        const chunkIndex = Math.floor(i / 4);
-        if (!chunks[chunkIndex]) chunks[chunkIndex] = word;
-        else chunks[chunkIndex] += ` ${word}`;
-        return chunks;
-      }, [])
-  );
   
-  const chunkDuration = audioRef.current ? audioRef.current.duration / captionChunks.length : 0;
-
   useEffect(() => {
     if (script && !frameUrls.length) {
       const generateFrames = async () => {
@@ -95,11 +83,17 @@ export const VideoPreview = ({
         const time = audioRef.current?.currentTime || 0;
         setCurrentTime(time);
         
-        const chunkIndex = Math.floor(time / chunkDuration);
-        if (captionChunks[chunkIndex]) {
-          setCurrentCaption(captionChunks[chunkIndex]);
+        // Calculate which sentence should be shown based on current time
+        const audioDuration = audioRef.current?.duration || 0;
+        if (audioDuration > 0) {
+          const sentenceIndex = Math.min(
+            Math.floor((time / audioDuration) * sentences.length),
+            sentences.length - 1
+          );
+          setCurrentCaption(sentences[sentenceIndex]);
         }
 
+        // Update frame index
         if (frameUrls.length > 0) {
           const frameIndex = Math.min(
             Math.floor(time / 10),
@@ -113,7 +107,7 @@ export const VideoPreview = ({
       const interval = setInterval(updateCaption, 100);
       return () => clearInterval(interval);
     }
-  }, [isPlaying, captionChunks, chunkDuration, frameUrls.length]);
+  }, [isPlaying, sentences, frameUrls.length]);
 
   const handlePlayPause = () => {
     if (audioRef.current) {
@@ -157,7 +151,7 @@ export const VideoPreview = ({
               isLoading={isLoading}
               frameUrls={frameUrls}
               currentFrameIndex={currentFrameIndex}
-              currentCaption={currentCaption || captionChunks[0]}
+              currentCaption={currentCaption || sentences[0]}
               isPlaying={isPlaying}
               audioRef={audioRef}
               currentTime={currentTime}
