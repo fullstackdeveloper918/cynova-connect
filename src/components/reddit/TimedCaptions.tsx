@@ -19,7 +19,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     .trim()
     .split(/\s+/)
     .reduce((acc: string[], word, i) => {
-      const chunkIndex = Math.floor(i / 3); // Reduced chunk size for title
+      const chunkIndex = Math.floor(i / 3);
       if (!acc[chunkIndex]) acc[chunkIndex] = word;
       else acc[chunkIndex] += ` ${word}`;
       return acc;
@@ -75,29 +75,21 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       if (!audio.duration) return;
 
       const now = Date.now();
-      if (now - lastUpdateTime < 30) return; // Reduced throttle time for smoother updates
+      if (now - lastUpdateTime < 30) return;
       lastUpdateTime = now;
 
-      // Allocate timing based on content length
-      const titleTextLength = title.length;
-      const commentsTextLength = commentsText.length;
-      const totalLength = titleTextLength + commentsTextLength;
-      
       // Calculate proportional durations
-      const titleDuration = (titleTextLength / totalLength) * audio.duration;
-      const commentsDuration = audio.duration - titleDuration;
-      
-      // Calculate current position
+      const titleDuration = (titleChunks.length / allChunks.length) * audio.duration;
       const currentTime = audio.currentTime;
-      let currentChunkIndex;
       
+      let currentChunkIndex;
       if (currentTime < titleDuration) {
         // We're in the title section
         const titleProgress = currentTime / titleDuration;
         currentChunkIndex = Math.floor(titleProgress * titleChunks.length);
       } else {
         // We're in the comments section
-        const commentProgress = (currentTime - titleDuration) / commentsDuration;
+        const commentProgress = (currentTime - titleDuration) / (audio.duration - titleDuration);
         currentChunkIndex = titleChunks.length + Math.floor(commentProgress * commentChunks.length);
       }
       
@@ -107,7 +99,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     const handlePlay = () => {
       console.log('Audio started playing');
       setIsVisible(true);
-      updateCaption(0); // Start with first caption
+      updateCaption(0);
     };
 
     const handlePause = () => {
@@ -132,7 +124,7 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("ended", handleEnded);
     };
-  }, [audioRef, allChunks, titleChunks.length, title, commentsText]);
+  }, [audioRef, allChunks, titleChunks.length]);
 
   return (
     <div className="absolute inset-0 flex items-center justify-center">

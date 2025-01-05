@@ -21,8 +21,8 @@ export const RedditVideoEditor = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
-  const [titleVoice, setTitleVoice] = useState("EXAVITQu4vr4xnSDxMaL");
-  const [commentVoice, setCommentVoice] = useState("onwK4e9ZLuTAKqWW03F9");
+  const [titleVoice, setTitleVoice] = useState("EXAVITQu4vr4xnSDxMaL"); // Sarah voice for title
+  const [commentVoice, setCommentVoice] = useState("onwK4e9ZLuTAKqWW03F9"); // Daniel voice for comments
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -46,7 +46,7 @@ export const RedditVideoEditor = () => {
       const { data: audioData, error: audioError } = await supabase.functions.invoke("generate-video-preview", {
         body: { 
           script: contentToGenerate,
-          voice: commentVoice,
+          voice: commentVoice, // Use comment voice for the entire content for now
           duration: selectedDuration
         }
       });
