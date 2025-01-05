@@ -30,20 +30,27 @@ export const ExportsGrid = () => {
     },
   });
 
+  const getPublicUrl = (path: string) => {
+    if (!path) return null;
+    // If it's already a full URL, return it
+    if (path.startsWith('http')) return path;
+    // Otherwise, get the public URL from Supabase storage
+    const { data } = supabase.storage
+      .from('exports')
+      .getPublicUrl(path);
+    return data?.publicUrl;
+  };
+
   const handleDownload = async (exportItem: Export) => {
     try {
-      // Get the public URL for the file
-      const { data: publicURL } = supabase.storage
-        .from('exports')
-        .getPublicUrl(exportItem.file_url);
-
-      if (!publicURL?.publicUrl) {
+      const publicUrl = getPublicUrl(exportItem.file_url);
+      if (!publicUrl) {
         throw new Error('Could not generate download URL');
       }
 
       // Create a temporary anchor element to trigger the download
       const link = document.createElement('a');
-      link.href = publicURL.publicUrl;
+      link.href = publicUrl;
       link.download = exportItem.title;
       document.body.appendChild(link);
       link.click();
@@ -111,7 +118,7 @@ export const ExportsGrid = () => {
             <div className="aspect-video w-full overflow-hidden relative">
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
               <img
-                src={exportItem.thumbnail_url || '/placeholder.svg'}
+                src={getPublicUrl(exportItem.thumbnail_url) || '/placeholder.svg'}
                 alt={exportItem.title}
                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
