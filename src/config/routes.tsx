@@ -13,6 +13,7 @@ import Projects from "@/pages/Projects";
 import Exports from "@/pages/Exports";
 import ChatGPTVideo from "@/pages/ChatGPTVideo";
 import FakeTextVideo from "@/pages/FakeTextVideo";
+import RedditVideo from "@/pages/RedditVideo";
 
 export const routes = [
   {
@@ -61,12 +62,7 @@ export const routes = [
   },
   {
     path: "/dashboard/reddit",
-    element: (
-      <PlaceholderPage
-        title="Reddit Videos"
-        description="Transform Reddit content into engaging video stories."
-      />
-    ),
+    element: <RedditVideo />,
   },
   {
     path: "/dashboard/split",
