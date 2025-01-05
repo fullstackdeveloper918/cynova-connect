@@ -15,6 +15,7 @@ export const ChatGPTVideoEditor = () => {
   const [prompt, setPrompt] = useState("");
   const [voice, setVoice] = useState("alloy");
   const [duration, setDuration] = useState(30);
+  const [progress, setProgress] = useState(0);
   const { toast } = useToast();
 
   const {
@@ -64,7 +65,6 @@ export const ChatGPTVideoEditor = () => {
 
     await exportVideo({
       script,
-      voice,
       frames: previewFrames,
     });
   };
@@ -73,20 +73,28 @@ export const ChatGPTVideoEditor = () => {
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-6">
-          <PromptInput value={prompt} onChange={setPrompt} />
-          <VoiceSelector value={voice} onChange={setVoice} />
-          <DurationSelector value={duration} onChange={setDuration} />
-          <Button
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="w-full"
-          >
-            {isGenerating ? "Generating..." : "Generate Video"}
-          </Button>
+          <PromptInput
+            value={prompt}
+            onChange={setPrompt}
+            onGenerate={handleGenerate}
+            isGenerating={isGenerating}
+            progress={progress}
+          />
+          <VoiceSelector
+            value={voice}
+            onChange={setVoice}
+          />
+          <DurationSelector
+            value={duration}
+            onChange={setDuration}
+          />
         </div>
 
         <div className="space-y-6">
-          <ScriptEditor value={script} onChange={setScript} />
+          <ScriptEditor
+            value={script}
+            onChange={setScript}
+          />
           <Button
             onClick={handleExport}
             disabled={isExporting || !script || !previewFrames.length}
@@ -100,9 +108,9 @@ export const ChatGPTVideoEditor = () => {
       {previewFrames.length > 0 && (
         <div className="space-y-4">
           <VideoPreview
-            frames={previewFrames}
-            currentFrame={currentFrame}
-            isPlaying={isPlaying}
+            script={script}
+            previewUrl={null}
+            selectedVoice={voice}
           />
           <PreviewControls
             currentFrame={currentFrame}

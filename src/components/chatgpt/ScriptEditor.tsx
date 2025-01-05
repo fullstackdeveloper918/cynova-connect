@@ -1,15 +1,15 @@
 import { Textarea } from "@/components/ui/textarea";
 
 interface ScriptEditorProps {
-  script: string;
-  onScriptChange: (script: string) => void;
+  value: string;
+  onChange: (value: string) => void;
 }
 
-export const ScriptEditor = ({ script, onScriptChange }: ScriptEditorProps) => {
+export const ScriptEditor = ({ value, onChange }: ScriptEditorProps) => {
   return (
     <Textarea
-      value={script}
-      onChange={(e) => onScriptChange(e.target.value)}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
       className="h-48 font-mono"
       placeholder="Your script will appear here..."
     />
