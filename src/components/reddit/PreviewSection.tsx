@@ -64,22 +64,33 @@ export const PreviewSection = ({
         return;
       }
 
+      // Start download toast
+      toast({
+        title: "Starting download",
+        description: "Preparing your video...",
+      });
+
       const response = await fetch(previewUrl);
       if (!response.ok) throw new Error('Download failed');
       
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      // Ensure proper MIME type for MP4
+      const videoBlob = new Blob([blob], { type: 'video/mp4' });
+      const url = window.URL.createObjectURL(videoBlob);
+      
+      // Create and trigger download
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${title.slice(0, 30)}.mp4`;
+      // Ensure .mp4 extension
+      link.download = `${title.slice(0, 30).replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
       toast({
-        title: "Download started",
-        description: "Your video will be downloaded shortly.",
+        title: "Download complete",
+        description: "Your video has been downloaded successfully.",
       });
     } catch (error) {
       console.error('Download error:', error);
