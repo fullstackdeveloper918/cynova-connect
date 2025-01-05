@@ -43,18 +43,35 @@ export const RedditVideoEditor = () => {
 
     setIsGenerating(true);
     try {
-      const { data: audioData, error: audioError } = await supabase.functions.invoke("generate-video-preview", {
+      // Split content into title and comments
+      const [title, ...comments] = contentToGenerate.split('\n\n');
+      const commentsText = comments.join('\n\n');
+
+      // Generate audio for title with Sarah's voice
+      const { data: titleAudioData, error: titleAudioError } = await supabase.functions.invoke("generate-video-preview", {
         body: { 
-          script: contentToGenerate,
-          voice: commentVoice, // Use comment voice for the entire content for now
+          script: title,
+          voice: titleVoice,
+          duration: "10" // Shorter duration for title
+        }
+      });
+
+      if (titleAudioError) throw titleAudioError;
+
+      // Generate audio for comments with Daniel's voice
+      const { data: commentAudioData, error: commentAudioError } = await supabase.functions.invoke("generate-video-preview", {
+        body: { 
+          script: commentsText,
+          voice: commentVoice,
           duration: selectedDuration
         }
       });
 
-      if (audioError) throw audioError;
+      if (commentAudioError) throw commentAudioError;
 
-      setPreviewUrl(audioData.previewUrl.videoUrl);
-      setAudioUrl(audioData.previewUrl.audioUrl);
+      // Use the comment audio URL for preview (we'll handle title separately in TimedCaptions)
+      setPreviewUrl(commentAudioData.previewUrl.videoUrl);
+      setAudioUrl(commentAudioData.previewUrl.audioUrl);
       
       toast({
         title: "Video Generated",
