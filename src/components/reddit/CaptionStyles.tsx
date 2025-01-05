@@ -1,6 +1,6 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export type CaptionStyle = "minimal" | "subtitles" | "captions";
+export type CaptionStyle = "minimal" | "subtitles" | "captions" | "elevenlabs-default" | "elevenlabs-clean" | "elevenlabs-overlay";
 
 interface CaptionStylesProps {
   selectedStyle: CaptionStyle;
@@ -22,6 +22,9 @@ export const CaptionStyles = ({
           <SelectItem value="minimal">Minimal</SelectItem>
           <SelectItem value="subtitles">Subtitles</SelectItem>
           <SelectItem value="captions">Closed Captions</SelectItem>
+          <SelectItem value="elevenlabs-default">ElevenLabs Default</SelectItem>
+          <SelectItem value="elevenlabs-clean">ElevenLabs Clean</SelectItem>
+          <SelectItem value="elevenlabs-overlay">ElevenLabs Overlay</SelectItem>
         </SelectContent>
       </Select>
     </div>
