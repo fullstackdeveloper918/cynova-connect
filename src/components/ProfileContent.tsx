@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
-import { User, Lock, CreditCard } from "lucide-react";
+import { User, Lock, CreditCard, Shield } from "lucide-react";
 import { useUser, useUpdateUser } from "@/hooks/useUser";
+import { useRole } from "@/hooks/useRole";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const ProfileContent = () => {
   const { data: user } = useUser();
+  const { data: role } = useRole();
   const updateUser = useUpdateUser();
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
@@ -84,6 +86,13 @@ export const ProfileContent = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="mt-1"
                 />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Role</label>
+                <div className="flex items-center gap-2 mt-1">
+                  <Shield className="w-4 h-4 text-primary" />
+                  <span className="capitalize">{role || 'user'}</span>
+                </div>
               </div>
               <Button type="submit">Update Profile</Button>
             </form>

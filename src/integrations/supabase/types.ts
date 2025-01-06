@@ -280,6 +280,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"] | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       video_segments: {
         Row: {
           combined_url: string | null
@@ -403,6 +424,7 @@ export type Database = {
       quiz_question_type: "multiple_choice" | "true_false"
       segment_status: "pending" | "processing" | "completed" | "failed"
       subscription_status: "active" | "canceled" | "past_due"
+      user_role: "admin" | "user"
       video_processing_status: "pending" | "processing" | "completed" | "failed"
     }
     CompositeTypes: {
