@@ -22,18 +22,25 @@ export const NewSignupForm = () => {
     try {
       setLoading(true);
       
-      const { data: { user }, error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/login`,
+        },
       });
 
       if (error) {
-        throw error;
+        console.error("Signup error:", error);
+        toast.error(error.message);
+        return;
       }
 
-      if (user) {
+      if (data.user) {
         toast.success("Check your email for the confirmation link!");
         navigate("/login");
+      } else {
+        toast.error("Something went wrong. Please try again.");
       }
       
     } catch (error) {
