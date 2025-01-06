@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { PersonalInfoCard } from "./profile/PersonalInfoCard";
 import { SecurityCard } from "./profile/SecurityCard";
 import { SubscriptionCard } from "./profile/SubscriptionCard";
+import { BillingCard } from "./profile/BillingCard";
 
 export const ProfileContent = () => {
   const { data: user } = useUser();
@@ -64,6 +65,7 @@ export const ProfileContent = () => {
       <Tabs defaultValue="profile" className="w-full">
         <TabsList className="mb-8">
           <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="billing">Billing</TabsTrigger>
           <TabsTrigger value="usage">Usage</TabsTrigger>
           {role === 'admin' && <TabsTrigger value="admin">Admin Tools</TabsTrigger>}
         </TabsList>
@@ -87,6 +89,10 @@ export const ProfileContent = () => {
           />
 
           <SubscriptionCard />
+        </TabsContent>
+
+        <TabsContent value="billing" className="space-y-8">
+          <BillingCard />
         </TabsContent>
 
         <TabsContent value="usage" className="space-y-4">
