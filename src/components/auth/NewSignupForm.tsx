@@ -40,12 +40,15 @@ export const NewSignupForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Starting signup process...");
     
     if (!validateForm()) {
+      console.log("Form validation failed");
       return;
     }
 
     setIsLoading(true);
+    console.log("Attempting to sign up with email:", email);
 
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -53,8 +56,14 @@ export const NewSignupForm = () => {
         password,
       });
 
+      console.log("Signup response:", { data, error });
+
       if (error) {
-        console.error("Signup error:", error);
+        console.error("Signup error details:", {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        });
         
         if (error.message.includes("User already registered")) {
           toast.error("This email is already registered. Please try logging in instead.");
@@ -65,14 +74,20 @@ export const NewSignupForm = () => {
       }
 
       if (data?.user) {
+        console.log("User created successfully:", data.user);
         toast.success("Account created successfully! Please check your email to verify your account.");
         navigate("/login");
       } else {
+        console.error("No user data in response");
         toast.error("No response from server. Please try again.");
       }
     } catch (error) {
       const err = error as AuthError;
-      console.error("Signup error:", err);
+      console.error("Signup error:", {
+        name: err.name,
+        message: err.message,
+        stack: err.stack
+      });
       toast.error("An unexpected error occurred. Please try again later.");
     } finally {
       setIsLoading(false);
