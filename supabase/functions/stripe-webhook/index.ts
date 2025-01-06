@@ -36,6 +36,7 @@ serve(async (req) => {
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
+      httpClient: Stripe.createFetchHttpClient(),
     });
 
     console.log('Attempting to construct Stripe event...');
@@ -48,7 +49,16 @@ serve(async (req) => {
       );
     } catch (err) {
       console.error('Error constructing event:', err);
-      throw new Error(`Webhook Error: ${err.message}`);
+      return new Response(
+        JSON.stringify({
+          error: 'Webhook Error',
+          details: err.message,
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     console.log('Event constructed successfully:', {
@@ -73,20 +83,20 @@ serve(async (req) => {
       switch (event.type) {
         case 'checkout.session.completed':
           result = await handleCheckoutCompleted(
-            event.data.object as Stripe.Checkout.Session,
+            event.data.object,
             stripe,
             supabaseAdmin
           );
           break;
         case 'customer.subscription.updated':
           result = await handleSubscriptionUpdated(
-            event.data.object as Stripe.Subscription,
+            event.data.object,
             supabaseAdmin
           );
           break;
         case 'customer.subscription.deleted':
           result = await handleSubscriptionDeleted(
-            event.data.object as Stripe.Subscription,
+            event.data.object,
             supabaseAdmin
           );
           break;
@@ -94,25 +104,38 @@ serve(async (req) => {
           console.log(`Unhandled event type: ${event.type}`);
           result = { status: 'success', message: 'Unhandled event type' };
       }
+
+      const endTime = new Date().toISOString();
+      console.log(`[${endTime}] Webhook processed successfully:`, result);
+
+      return new Response(
+        JSON.stringify(result),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
     } catch (error) {
       console.error('Error processing webhook event:', error);
-      throw error;
+      return new Response(
+        JSON.stringify({
+          error: 'Webhook processing failed',
+          details: error.message,
+          stack: error.stack,
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
-
-    const endTime = new Date().toISOString();
-    console.log(`[${endTime}] Webhook processed successfully`);
-
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
   } catch (err) {
     const errorTime = new Date().toISOString();
     console.error(`[${errorTime}] Error processing webhook:`, err);
     return new Response(
       JSON.stringify({ 
         error: err.message,
-        details: err.stack
+        details: err.stack,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
