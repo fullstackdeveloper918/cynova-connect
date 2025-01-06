@@ -34,60 +34,63 @@ export const useSubscription = () => {
         return null;
       }
 
-      const { data: subscriptionData, error } = await supabase
+      // First, try to get the active subscription
+      const { data: activeSubscription, error: activeError } = await supabase
         .from("subscriptions")
         .select("*")
         .eq("user_id", user.id)
         .eq("status", "active")
-        .maybeSingle();
+        .single();
 
-      if (error) {
-        console.error("Subscription fetch error:", error);
-        throw error;
+      if (activeError && activeError.code !== 'PGRST116') {
+        console.error("Error fetching active subscription:", activeError);
+        throw activeError;
       }
 
-      console.log("Raw subscription data from DB:", subscriptionData);
+      console.log("Active subscription data:", activeSubscription);
 
-      // If no active subscription is found, check for any subscription
-      if (!subscriptionData) {
-        const { data: anySubscription, error: anyError } = await supabase
-          .from("subscriptions")
-          .select("*")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (anyError) {
-          console.error("Error fetching any subscription:", anyError);
-          throw anyError;
-        }
-
-        console.log("Any subscription found:", anySubscription);
-
-        if (!anySubscription) {
-          console.log("No subscription found at all, returning free tier");
-          return {
-            id: "free-tier",
-            user_id: user.id,
-            plan_name: "Free",
-            status: "active" as const,
-            current_period_start: new Date().toISOString(),
-            current_period_end: null,
-            stripe_subscription_id: null,
-            stripe_customer_id: null,
-            plan_limits: {
-              features: ["chatgpt_video", "fake_text"],
-              max_duration_minutes: 10,
-              max_videos_per_month: 20,
-              max_exports_per_month: 10,
-            },
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          } as Subscription;
-        }
+      if (activeSubscription) {
+        return activeSubscription as Subscription;
       }
 
-      console.log("Returning subscription data:", subscriptionData);
-      return subscriptionData as Subscription;
+      // If no active subscription, check for any subscription
+      const { data: anySubscription, error: anyError } = await supabase
+        .from("subscriptions")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (anyError && anyError.code !== 'PGRST116') {
+        console.error("Error fetching any subscription:", anyError);
+        throw anyError;
+      }
+
+      console.log("Any subscription found:", anySubscription);
+
+      if (anySubscription) {
+        return anySubscription as Subscription;
+      }
+
+      // If no subscription found at all, return free tier
+      console.log("No subscription found, returning free tier");
+      return {
+        id: "free-tier",
+        user_id: user.id,
+        plan_name: "Free",
+        status: "active" as const,
+        current_period_start: new Date().toISOString(),
+        current_period_end: null,
+        stripe_subscription_id: null,
+        stripe_customer_id: null,
+        plan_limits: {
+          features: ["chatgpt_video", "fake_text"],
+          max_duration_minutes: 10,
+          max_videos_per_month: 20,
+          max_exports_per_month: 10,
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as Subscription;
     },
     enabled: !!user?.id,
   });
