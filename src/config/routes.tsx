@@ -16,6 +16,8 @@ import FakeTextVideo from "@/pages/FakeTextVideo";
 import RedditVideo from "@/pages/RedditVideo";
 import SplitVideo from "@/pages/SplitVideo";
 import WouldYouRatherVideo from "@/pages/WouldYouRatherVideo";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import UserManagement from "@/pages/admin/UserManagement";
 
 export const routes = [
   {
@@ -112,5 +114,13 @@ export const routes = [
   {
     path: "/dashboard/affiliate",
     element: <Affiliate />,
+  },
+  {
+    path: "/admin",
+    element: <AdminDashboard />,
+  },
+  {
+    path: "/admin/users",
+    element: <UserManagement />,
   },
 ];
