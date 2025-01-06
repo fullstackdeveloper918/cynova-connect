@@ -1,66 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthError } from "@supabase/supabase-js";
-import { SignupForm } from "@/components/auth/SignupForm";
+import { NewSignupForm } from "@/components/auth/NewSignupForm";
 import { GoogleSignup } from "@/components/auth/GoogleSignup";
+import { AuthError } from "@supabase/supabase-js";
+import { toast } from "sonner";
 
 const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-
-  const handleSubmit = async (email: string, password: string, confirmPassword: string) => {
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters long");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/login`,
-          data: {
-            email,
-          }
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.user) {
-        toast.success("Account created successfully! Please check your email to verify your account.");
-        navigate("/login");
-      } else {
-        toast.error("Something went wrong. Please try again.");
-      }
-    } catch (error) {
-      console.error("Signup error:", error);
-      const authError = error as AuthError;
-      
-      if (authError.message.includes("Database error")) {
-        toast.error("There was an issue creating your account. Please try again later.");
-      } else if (authError.message.includes("unique constraint")) {
-        toast.error("This email is already registered. Please try logging in instead.");
-      } else if (authError.message.includes("password")) {
-        toast.error("Password must be at least 6 characters long.");
-      } else {
-        toast.error("Failed to create account. Please try again.");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleGoogleSignup = async () => {
     try {
@@ -93,7 +42,7 @@ const Signup = () => {
           <p className="mt-2 text-muted-foreground">Sign up for Cynova</p>
         </div>
 
-        <SignupForm onSubmit={handleSubmit} isLoading={isLoading} />
+        <NewSignupForm />
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
