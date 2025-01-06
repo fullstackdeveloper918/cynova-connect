@@ -14,11 +14,15 @@ export const NewSignupForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+    
     try {
       setLoading(true);
       
-      // 1. Create auth user
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -26,32 +30,16 @@ export const NewSignupForm = () => {
         }
       });
 
-      if (signUpError) throw signUpError;
+      if (error) throw error;
 
-      if (authData.user) {
-        // 2. Create initial user credits
-        const { error: creditsError } = await supabase
-          .from('user_credits')
-          .insert([
-            { 
-              user_id: authData.user.id,
-              credits_balance: 50 // Default free tier credits
-            }
-          ]);
-
-        if (creditsError) {
-          console.error("Failed to create initial credits:", creditsError);
-          throw new Error("Failed to set up user account. Please contact support.");
-        }
-
-        toast.success("Check your email for the confirmation link!");
-        navigate("/login");
-      }
+      toast.success("Check your email for the confirmation link!");
+      navigate("/login");
+      
     } catch (error) {
+      console.error("Signup error:", error);
       if (error instanceof Error) {
         toast.error(error.message);
       }
-      console.error("Signup error:", error);
     } finally {
       setLoading(false);
     }
