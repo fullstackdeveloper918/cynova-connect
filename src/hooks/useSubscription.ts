@@ -39,7 +39,8 @@ export const useSubscription = () => {
         .from("subscriptions")
         .select("*")
         .eq("user_id", user.id)
-        .eq("status", "active");
+        .eq("status", "active")
+        .order('created_at', { ascending: false });
 
       if (subscriptionError) {
         console.error("Error fetching subscriptions:", subscriptionError);
@@ -50,7 +51,7 @@ export const useSubscription = () => {
 
       // Get the most recent active subscription
       const activeSubscription = subscriptions?.length > 0 
-        ? subscriptions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
+        ? subscriptions[0]
         : null;
 
       if (activeSubscription) {
@@ -80,5 +81,7 @@ export const useSubscription = () => {
       } as Subscription;
     },
     enabled: !!user?.id,
+    staleTime: 0, // This ensures the data is always refetched when the component mounts
+    refetchOnMount: true, // This ensures the data is refetched when the component mounts
   });
 };
