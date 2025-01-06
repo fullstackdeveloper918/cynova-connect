@@ -18,7 +18,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, UserCog } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Search, UserCog, MoreHorizontal } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -81,6 +89,31 @@ export const UserManagement = () => {
     });
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    // In a real application, this would need to handle cascading deletes
+    // and proper user cleanup
+    toast({
+      title: "Not implemented",
+      description: "User deletion is not implemented in this demo.",
+      variant: "destructive",
+    });
+  };
+
+  const handleExportUsers = () => {
+    const csv = users
+      ?.map((user) => `${user.user_id},${user.role},${user.created_at}`)
+      .join("\n");
+    
+    const blob = new Blob([`User ID,Role,Created At\n${csv}`], {
+      type: "text/csv",
+    });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "users.csv";
+    a.click();
+  };
+
   const filteredUsers = users?.filter((user) =>
     user.user_id.toLowerCase().includes(search.toLowerCase())
   );
@@ -102,7 +135,9 @@ export const UserManagement = () => {
             className="pl-9"
           />
         </div>
-        <Button variant="outline">Export</Button>
+        <Button variant="outline" onClick={handleExportUsers}>
+          Export CSV
+        </Button>
       </div>
 
       <div className="rounded-md border">
@@ -140,7 +175,9 @@ export const UserManagement = () => {
                   <TableCell>
                     <Select
                       defaultValue={user.role}
-                      onValueChange={(value: UserRole) => handleRoleChange(user.user_id, value)}
+                      onValueChange={(value: UserRole) =>
+                        handleRoleChange(user.user_id, value)
+                      }
                     >
                       <SelectTrigger className="w-32">
                         <SelectValue />
@@ -155,9 +192,33 @@ export const UserManagement = () => {
                     {new Date(user.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <Button variant="outline" size="sm">
-                      View Details
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => {
+                            toast({
+                              title: "View Details",
+                              description: "User details view not implemented in demo",
+                            });
+                          }}
+                        >
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => handleDeleteUser(user.user_id)}
+                        >
+                          Delete User
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))
