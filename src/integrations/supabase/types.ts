@@ -507,6 +507,27 @@ export type Database = {
   }
 }
 
+export interface PlanLimits {
+  features: string[];
+  max_duration_minutes: number;
+  max_videos_per_month: number;
+  max_exports_per_month: number;
+}
+
+export interface Subscription {
+  id: string;
+  user_id: string;
+  plan_name: string;
+  status: "active" | "canceled" | "past_due" | null;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  stripe_subscription_id: string | null;
+  stripe_customer_id: string | null;
+  plan_limits: PlanLimits;
+}
+
 type PublicSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
