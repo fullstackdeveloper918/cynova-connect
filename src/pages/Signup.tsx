@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,27 +6,64 @@ import { NewSignupForm } from "@/components/auth/NewSignupForm";
 import { GoogleSignup } from "@/components/auth/GoogleSignup";
 import { AuthError } from "@supabase/supabase-js";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 const Signup = () => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Session check error:", error);
+          throw error;
+        }
+
+        if (session) {
+          console.log("User already logged in, redirecting...");
+          navigate("/dashboard/projects");
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+        toast.error("Error checking authentication status");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkSession();
+  }, [navigate]);
 
   const handleGoogleSignup = async () => {
     try {
+      setIsLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: `${window.location.origin}/dashboard/projects`
         }
       });
       
       if (error) throw error;
     } catch (error) {
+      console.error("Google signup error:", error);
       const authError = error as AuthError;
-      console.error("Google signup error:", authError);
       toast.error("Failed to sign in with Google. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-accent to-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-accent to-background p-4">

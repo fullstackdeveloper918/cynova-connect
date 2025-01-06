@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { AuthError, AuthApiError } from "@supabase/supabase-js";
 
 export const NewSignupForm = () => {
   const [email, setEmail] = useState("");
@@ -21,23 +22,44 @@ export const NewSignupForm = () => {
     
     try {
       setLoading(true);
+      console.log("Starting signup process...");
       
-      const { data: { user }, error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/login`,
+        }
       });
 
       if (error) {
-        throw error;
+        console.error("Signup error:", error);
+        if (error instanceof AuthApiError) {
+          switch (error.status) {
+            case 400:
+              toast.error("Invalid email or password format");
+              break;
+            case 422:
+              toast.error("Email already registered");
+              break;
+            default:
+              toast.error(error.message);
+          }
+        } else {
+          toast.error("An unexpected error occurred");
+        }
+        return;
       }
 
-      if (user) {
+      console.log("Signup successful:", data);
+
+      if (data.user) {
         toast.success("Check your email for the confirmation link!");
         navigate("/login");
       }
       
     } catch (error) {
-      console.error("Signup error:", error);
+      console.error("Unexpected error during signup:", error);
       toast.error(error instanceof Error ? error.message : "Failed to sign up");
     } finally {
       setLoading(false);
