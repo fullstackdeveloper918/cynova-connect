@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoPreview } from "../chatgpt/VideoPreview";
 import { QuestionGenerationForm } from "./QuestionGenerationForm";
+import { Loader2 } from "lucide-react";
 
 export const WouldYouRatherEditor = () => {
   const { data: user, isLoading: userLoading } = useUser();
@@ -18,12 +19,16 @@ export const WouldYouRatherEditor = () => {
   const [selectedQuestionIndex, setSelectedQuestionIndex] = useState(0);
   const [selectedVoice, setSelectedVoice] = useState("21m00Tcm4TlvDq8ikWAM");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<{ audioUrl: string; videoUrl?: string } | null>(null);
-  const [script, setScript] = useState<string>("");
+  const [previewUrls, setPreviewUrls] = useState<Array<{ audioUrl: string; videoUrl?: string }>>([]);
+  const [scripts, setScripts] = useState<string[]>([]);
+  const [currentProcessingIndex, setCurrentProcessingIndex] = useState<number | null>(null);
 
   const handleQuestionsGenerated = (newQuestions: Array<{ optionA: string; optionB: string }>) => {
     setQuestions(newQuestions);
     setSelectedQuestionIndex(0);
+    // Reset preview URLs and scripts when new questions are generated
+    setPreviewUrls(new Array(newQuestions.length).fill(null));
+    setScripts(new Array(newQuestions.length).fill(""));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,83 +44,97 @@ export const WouldYouRatherEditor = () => {
       return;
     }
 
-    const currentQuestion = questions[selectedQuestionIndex];
     setIsSubmitting(true);
+    
     try {
-      console.log("Generating video content...");
-      
-      const { data: videoData, error: videoError } = await supabase.functions.invoke(
-        "generate-would-you-rather",
-        {
-          body: {
-            optionA: currentQuestion.optionA,
-            optionB: currentQuestion.optionB,
-            voiceId: selectedVoice,
-          },
+      // Process all questions sequentially
+      for (let i = 0; i < questions.length; i++) {
+        setCurrentProcessingIndex(i);
+        const currentQuestion = questions[i];
+        
+        console.log(`Generating video for question ${i + 1}:`, currentQuestion);
+        
+        const { data: videoData, error: videoError } = await supabase.functions.invoke(
+          "generate-would-you-rather",
+          {
+            body: {
+              optionA: currentQuestion.optionA,
+              optionB: currentQuestion.optionB,
+              voiceId: selectedVoice,
+            },
+          }
+        );
+
+        if (videoError) throw videoError;
+
+        // Update the preview URLs and scripts arrays
+        const newPreviewUrls = [...previewUrls];
+        newPreviewUrls[i] = {
+          audioUrl: videoData.audioUrl,
+          videoUrl: videoData.videoUrl
+        };
+        setPreviewUrls(newPreviewUrls);
+
+        const newScripts = [...scripts];
+        newScripts[i] = videoData.script;
+        setScripts(newScripts);
+
+        console.log(`Creating project for question ${i + 1}`);
+        
+        const { data: project, error: projectError } = await supabase
+          .from("projects")
+          .insert({
+            title: "Would You Rather Video",
+            type: "would_you_rather",
+            user_id: user.id,
+            description: `Would you rather ${currentQuestion.optionA} OR ${currentQuestion.optionB}?`,
+            status: "draft"
+          })
+          .select()
+          .single();
+
+        if (projectError) {
+          console.error("Project creation error:", projectError);
+          throw projectError;
         }
-      );
 
-      if (videoError) throw videoError;
+        if (!project) {
+          throw new Error("No project data returned");
+        }
 
-      setPreviewUrl({
-        audioUrl: videoData.audioUrl,
-        videoUrl: videoData.videoUrl
-      });
-      setScript(videoData.script);
+        console.log(`Project created successfully for question ${i + 1}:`, project);
 
-      console.log("Creating project with user ID:", user.id);
-      
-      const { data: project, error: projectError } = await supabase
-        .from("projects")
-        .insert({
-          title: "Would You Rather Video",
-          type: "would_you_rather",
-          user_id: user.id,
-          description: `Would you rather ${currentQuestion.optionA} OR ${currentQuestion.optionB}?`,
-          status: "draft"
-        })
-        .select()
-        .single();
+        const { error: questionError } = await supabase
+          .from("would_you_rather_questions")
+          .insert({
+            project_id: project.id,
+            user_id: user.id,
+            option_a: currentQuestion.optionA,
+            option_b: currentQuestion.optionB,
+          });
 
-      if (projectError) {
-        console.error("Project creation error:", projectError);
-        throw projectError;
+        if (questionError) {
+          console.error("Question creation error:", questionError);
+          throw questionError;
+        }
       }
 
-      if (!project) {
-        throw new Error("No project data returned");
-      }
-
-      console.log("Project created successfully:", project);
-
-      const { error: questionError } = await supabase
-        .from("would_you_rather_questions")
-        .insert({
-          project_id: project.id,
-          user_id: user.id,
-          option_a: currentQuestion.optionA,
-          option_b: currentQuestion.optionB,
-        });
-
-      if (questionError) {
-        console.error("Question creation error:", questionError);
-        throw questionError;
-      }
-
+      setCurrentProcessingIndex(null);
       toast({
         title: "Success",
-        description: "Your Would You Rather video has been created!",
+        description: `Created ${questions.length} Would You Rather videos!`,
       });
 
     } catch (error) {
-      console.error("Error creating would you rather video:", error);
+      console.error("Error creating would you rather videos:", error);
       toast({
         title: "Error",
-        description: "Failed to create video. Please try again.",
+        description: "Failed to create videos. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
+      setCurrentProcessingIndex(null);
     }
   };
 
@@ -137,7 +156,7 @@ export const WouldYouRatherEditor = () => {
                 <SelectContent>
                   {questions.map((_, index) => (
                     <SelectItem key={index} value={index.toString()}>
-                      Question {index + 1}
+                      Question {index + 1} {currentProcessingIndex === index && "- Processing..."}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -198,7 +217,14 @@ export const WouldYouRatherEditor = () => {
             </div>
           </div>
           <Button type="submit" disabled={isSubmitting || userLoading}>
-            {isSubmitting ? "Creating..." : "Create Video"}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating Videos...
+              </>
+            ) : (
+              "Create Videos"
+            )}
           </Button>
         </form>
       </Card>
@@ -206,10 +232,10 @@ export const WouldYouRatherEditor = () => {
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Preview</h2>
           <div className="aspect-[9/16] w-full max-w-[450px] mx-auto">
-            {previewUrl ? (
+            {previewUrls[selectedQuestionIndex] ? (
               <VideoPreview
-                script={script}
-                previewUrl={previewUrl}
+                script={scripts[selectedQuestionIndex]}
+                previewUrl={previewUrls[selectedQuestionIndex]}
                 selectedVoice={selectedVoice}
               />
             ) : (
