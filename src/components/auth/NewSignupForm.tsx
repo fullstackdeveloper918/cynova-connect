@@ -51,16 +51,14 @@ export const NewSignupForm = () => {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/login`
-        }
       });
 
       if (error) {
+        console.error("Signup error:", error);
+        
         if (error.message.includes("User already registered")) {
           toast.error("This email is already registered. Please try logging in instead.");
         } else {
-          console.error("Signup error:", error);
           toast.error(error.message || "Failed to create account");
         }
         return;
@@ -69,6 +67,8 @@ export const NewSignupForm = () => {
       if (data?.user) {
         toast.success("Account created successfully! Please check your email to verify your account.");
         navigate("/login");
+      } else {
+        toast.error("No response from server. Please try again.");
       }
     } catch (error) {
       const err = error as AuthError;
