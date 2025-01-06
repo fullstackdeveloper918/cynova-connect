@@ -46,7 +46,6 @@ export const NewSignupForm = () => {
     }
 
     setIsLoading(true);
-    console.log("Starting signup process for email:", email);
 
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -63,40 +62,14 @@ export const NewSignupForm = () => {
 
       if (error) {
         console.error("Signup error:", error);
-        
-        if (error.message.includes("User already registered")) {
-          toast.error("This email is already registered. Please try logging in instead.");
-        } else {
-          toast.error(error.message || "Failed to create account");
-        }
+        toast.error(error.message || "Failed to create account");
         return;
       }
 
       if (data?.user) {
-        console.log("User created successfully:", data.user.id);
-        
-        // Wait a moment for the trigger to create the role
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Verify user_roles entry was created
-        const { data: userRole, error: roleError } = await supabase
-          .from('user_roles')
-          .select('*')
-          .eq('user_id', data.user.id)
-          .single();
-          
-        console.log("User role verification:", { userRole, roleError });
-
-        if (roleError) {
-          console.error("Warning: Could not verify user role creation:", roleError);
-          // Continue anyway as the trigger might still be processing
-        }
-
-        toast.success("Account created successfully! Please check your email to verify your account.");
+        console.log("Signup successful:", data.user);
+        toast.success("Account created! Please check your email to verify your account.");
         navigate("/login");
-      } else {
-        console.error("No user data in response");
-        toast.error("An unexpected error occurred. Please try again.");
       }
     } catch (error) {
       const err = error as AuthError;
