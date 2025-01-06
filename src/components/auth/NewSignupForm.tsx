@@ -55,6 +55,7 @@ export const NewSignupForm = () => {
         options: {
           emailRedirectTo: `${window.location.origin}/login`,
           data: {
+            name: email.split('@')[0],
             email: email,
           }
         }
