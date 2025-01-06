@@ -1,63 +1,61 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import Stripe from "https://esm.sh/stripe@14.21.0";
-import { WebhookHandlerResult } from "../types.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
+import { StripeEvent } from '../types.ts'
 
-export async function handleSubscriptionUpdated(
-  subscription: Stripe.Subscription,
-  supabaseAdmin: ReturnType<typeof createClient>
-): Promise<WebhookHandlerResult> {
-  console.log('Processing subscription.updated event');
-  console.log('Subscription details:', {
-    id: subscription.id,
-    status: subscription.status,
-    customer: subscription.customer
-  });
+export async function handleSubscriptionChange(event: StripeEvent) {
+  const subscription = event.data.object
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  )
 
-  // Update subscription status
-  const { error: updateError } = await supabaseAdmin
-    .from('subscriptions')
-    .update({
-      status: subscription.status,
-      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-    })
-    .eq('stripe_subscription_id', subscription.id);
+  // Get customer email from Stripe to match with our user
+  const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+    apiVersion: '2023-10-16',
+  })
+  const customer = await stripe.customers.retrieve(subscription.customer as string)
+  const email = customer.email
 
-  if (updateError) {
-    console.error('Error updating subscription:', updateError);
-    throw updateError;
+  // Get user_id from email
+  const { data: userData, error: userError } = await supabase
+    .from('auth.users')
+    .select('id')
+    .eq('email', email)
+    .single()
+
+  if (userError || !userData) {
+    throw new Error('User not found')
   }
-  
-  console.log('Successfully updated subscription:', subscription.id);
-  return { 
-    status: 'success',
-    message: 'Subscription updated successfully'
-  };
+
+  const subscriptionData = {
+    user_id: userData.id,
+    plan_name: getPlanName(subscription.items.data[0].price.id),
+    status: subscription.status,
+    current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+    current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+    stripe_subscription_id: subscription.id,
+    stripe_customer_id: subscription.customer as string,
+  }
+
+  // Update or insert subscription
+  const { error: upsertError } = await supabase
+    .from('subscriptions')
+    .upsert(subscriptionData)
+
+  if (upsertError) {
+    throw upsertError
+  }
+
+  return new Response(JSON.stringify({ received: true }), {
+    headers: { 'Content-Type': 'application/json' },
+  })
 }
 
-export async function handleSubscriptionDeleted(
-  subscription: Stripe.Subscription,
-  supabaseAdmin: ReturnType<typeof createClient>
-): Promise<WebhookHandlerResult> {
-  console.log('Processing subscription.deleted event');
-  console.log('Subscription ID:', subscription.id);
-  
-  // Update subscription status to canceled
-  const { error: updateError } = await supabaseAdmin
-    .from('subscriptions')
-    .update({
-      status: 'canceled',
-    })
-    .eq('stripe_subscription_id', subscription.id);
-
-  if (updateError) {
-    console.error('Error marking subscription as canceled:', updateError);
-    throw updateError;
+function getPlanName(priceId: string): string {
+  // Map your Stripe price IDs to plan names
+  const planMap: Record<string, string> = {
+    'price_1QeDzGG8TTdTbu7dz9ApCJQM': 'Starter',
+    'price_1QeDzcG8TTdTbu7d6fJJNFFQ': 'Pro',
+    'price_1QeDzuG8TTdTbu7dosC1Ry4k': 'Premium',
   }
-  
-  console.log('Successfully marked subscription as canceled:', subscription.id);
-  return { 
-    status: 'success',
-    message: 'Subscription marked as canceled'
-  };
+  return planMap[priceId] || 'Free'
 }
