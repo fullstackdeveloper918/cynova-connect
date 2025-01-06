@@ -96,7 +96,7 @@ export const ProfileContent = () => {
               <div>
                 <div className="flex justify-between mb-2">
                   <span className="text-sm font-medium">AI Videos</span>
-                  <span className="text-sm text-muted-foreground">50/100 videos</span>
+                  <span className="text-sm text-muted-foreground">100/200 videos</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
                   <div className="bg-primary rounded-full h-2" style={{ width: '50%' }}></div>
@@ -106,17 +106,17 @@ export const ProfileContent = () => {
               <div>
                 <div className="flex justify-between mb-2">
                   <span className="text-sm font-medium">Export Minutes</span>
-                  <span className="text-sm text-muted-foreground">45/120 minutes</span>
+                  <span className="text-sm text-muted-foreground">90/180 minutes</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
-                  <div className="bg-primary rounded-full h-2" style={{ width: '37.5%' }}></div>
+                  <div className="bg-primary rounded-full h-2" style={{ width: '50%' }}></div>
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between mb-2">
                   <span className="text-sm font-medium">Voiceover Minutes</span>
-                  <span className="text-sm text-muted-foreground">75/150 minutes</span>
+                  <span className="text-sm text-muted-foreground">100/200 minutes</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
                   <div className="bg-primary rounded-full h-2" style={{ width: '50%' }}></div>
@@ -126,7 +126,7 @@ export const ProfileContent = () => {
               <div>
                 <div className="flex justify-between mb-2">
                   <span className="text-sm font-medium">AI Images</span>
-                  <span className="text-sm text-muted-foreground">150/300 images</span>
+                  <span className="text-sm text-muted-foreground">250/500 images</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
                   <div className="bg-primary rounded-full h-2" style={{ width: '50%' }}></div>
