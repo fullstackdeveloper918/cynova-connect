@@ -13,16 +13,35 @@ export const NewSignupForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const validateForm = () => {
+    if (!email || !password || !confirmPassword) {
+      toast.error("All fields are required");
+      return false;
+    }
+
     if (password !== confirmPassword) {
       toast.error("Passwords do not match");
-      return;
+      return false;
     }
 
     if (password.length < 6) {
       toast.error("Password must be at least 6 characters long");
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Please enter a valid email address");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
       return;
     }
 
@@ -32,37 +51,29 @@ export const NewSignupForm = () => {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/login`
+        }
       });
 
       if (error) {
-        console.error("Signup error details:", {
-          message: error.message,
-          status: error.status,
-          name: error.name
-        });
-        throw error;
+        if (error.message.includes("User already registered")) {
+          toast.error("This email is already registered. Please try logging in instead.");
+        } else {
+          console.error("Signup error:", error);
+          toast.error(error.message || "Failed to create account");
+        }
+        return;
       }
 
       if (data?.user) {
         toast.success("Account created successfully! Please check your email to verify your account.");
         navigate("/login");
-      } else {
-        toast.error("Something went wrong. Please try again.");
       }
     } catch (error) {
-      console.error("Full signup error:", error);
-      const authError = error as AuthError;
-      
-      // More specific error messages
-      if (authError.message.includes("unique constraint")) {
-        toast.error("This email is already registered. Please try logging in instead.");
-      } else if (authError.message.includes("password")) {
-        toast.error("Password must be at least 6 characters long.");
-      } else if (authError.message.includes("valid email")) {
-        toast.error("Please enter a valid email address.");
-      } else {
-        toast.error("Failed to create account. Please try again later.");
-      }
+      const err = error as AuthError;
+      console.error("Signup error:", err);
+      toast.error("An unexpected error occurred. Please try again later.");
     } finally {
       setIsLoading(false);
     }
