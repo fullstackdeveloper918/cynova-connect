@@ -32,17 +32,19 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `Generate 5 engaging quiz questions about the given topic. Each question should be either multiple choice (4 options) or true/false. Return ONLY a JSON array of objects with the following structure:
-            {
-              "question": "string",
-              "type": "multiple_choice" | "true_false",
-              "options": ["string"] (for multiple choice only),
-              "correctAnswer": "string"
-            }`
+            content: 'You are a quiz question generator. Generate 5 engaging quiz questions about the given topic. Return an array of question objects in the exact format specified, with no additional text or formatting. Each question should be either multiple choice (4 options) or true/false.'
           },
           {
             role: 'user',
-            content: `Generate quiz questions about: ${topic}`
+            content: `Generate quiz questions about: ${topic}. Return them in this exact format:
+            [
+              {
+                "question": "string",
+                "type": "multiple_choice",
+                "options": ["string", "string", "string", "string"],
+                "correctAnswer": "string"
+              }
+            ]`
           }
         ],
         temperature: 0.7,
@@ -56,8 +58,14 @@ serve(async (req) => {
       throw new Error('Invalid response from OpenAI');
     }
 
-    const questions = JSON.parse(data.choices[0].message.content);
-    console.log('Parsed questions:', questions);
+    let questions;
+    try {
+      questions = JSON.parse(data.choices[0].message.content.trim());
+      console.log('Parsed questions:', questions);
+    } catch (parseError) {
+      console.error('Error parsing OpenAI response:', parseError);
+      throw new Error('Failed to parse questions from OpenAI response');
+    }
 
     return new Response(
       JSON.stringify({ questions }),
