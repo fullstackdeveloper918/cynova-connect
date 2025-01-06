@@ -23,11 +23,12 @@ export const QuizPreview = ({
   onExport,
 }: QuizPreviewProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [showAnswers, setShowAnswers] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [previewAudioUrl, setPreviewAudioUrl] = useState<string | null>(null);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -35,11 +36,13 @@ export const QuizPreview = ({
     if (!isPlaying) {
       setShowAnswers(false);
       setPreviewAudioUrl(null);
+      setIsAudioPlaying(false);
       return;
     }
 
     const playQuestion = async () => {
       setShowAnswers(false);
+      setIsAudioPlaying(false);
       await generateAudioNarration();
     };
 
@@ -68,15 +71,18 @@ export const QuizPreview = ({
       
       if (data.previewUrl?.audioUrl) {
         setPreviewAudioUrl(data.previewUrl.audioUrl);
+        setIsAudioPlaying(true);
       }
     } catch (error) {
       console.error("Error generating audio narration:", error);
+      setIsPlaying(false);
     }
   };
 
   const handleQuestionChange = (direction: 'next' | 'prev') => {
     setShowAnswers(false);
     setPreviewAudioUrl(null);
+    setIsAudioPlaying(false);
     setIsPlaying(false);
     if (direction === 'next') {
       setCurrentQuestionIndex(Math.min(questions.length - 1, currentQuestionIndex + 1));
@@ -105,10 +111,12 @@ export const QuizPreview = ({
           <div className="absolute inset-0 flex flex-col cursor-pointer" onClick={handlePlay}>
             {/* Top half - Question display */}
             <div className="flex-1 bg-gradient-to-b from-purple-900 to-purple-800 p-6 flex items-center justify-center text-white">
-              <QuestionDisplay 
-                question={currentQuestion} 
-                showAnswers={showAnswers} 
-              />
+              {currentQuestion && (
+                <QuestionDisplay 
+                  question={currentQuestion} 
+                  showAnswers={showAnswers} 
+                />
+              )}
             </div>
 
             {/* Bottom half - Gameplay */}
@@ -122,21 +130,16 @@ export const QuizPreview = ({
         )}
 
         {/* Audio elements */}
-        <audio 
-          ref={audioRef} 
-          src="/tick.mp3" 
-          className="hidden"
-        />
         {previewAudioUrl && (
           <audio
             src={previewAudioUrl}
             autoPlay
             className="hidden"
+            onPlay={() => setIsAudioPlaying(true)}
             onEnded={() => {
-              // Show answers after audio finishes playing
+              setIsAudioPlaying(false);
               setShowAnswers(true);
-              
-              // Wait 3 seconds before moving to next question
+              // Wait for 3 seconds after showing answers before moving to next question
               setTimeout(() => {
                 if (currentQuestionIndex < questions.length - 1) {
                   handleQuestionChange('next');
