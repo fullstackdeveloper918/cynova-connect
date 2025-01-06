@@ -35,7 +35,7 @@ export const LoginForm = () => {
       if (data.session) {
         console.log("Login successful, redirecting...");
         toast.success("Successfully logged in!");
-        navigate("/dashboard/projects");
+        navigate("/dashboard");
       }
     } catch (error) {
       console.error("Unexpected error during login:", error);
