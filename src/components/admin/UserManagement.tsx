@@ -22,6 +22,15 @@ import { Search, UserCog } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 
+type UserRole = "admin" | "user";
+
+interface UserRoleData {
+  id: string;
+  user_id: string;
+  role: UserRole;
+  created_at: string;
+}
+
 export const UserManagement = () => {
   const [search, setSearch] = useState("");
   const { toast } = useToast();
@@ -39,11 +48,11 @@ export const UserManagement = () => {
         `);
 
       if (error) throw error;
-      return roles;
+      return roles as UserRoleData[];
     },
   });
 
-  const handleRoleChange = async (userId: string, newRole: string) => {
+  const handleRoleChange = async (userId: string, newRole: UserRole) => {
     const { error } = await supabase
       .from("user_roles")
       .update({ role: newRole })
@@ -131,7 +140,7 @@ export const UserManagement = () => {
                   <TableCell>
                     <Select
                       defaultValue={user.role}
-                      onValueChange={(value) => handleRoleChange(user.user_id, value)}
+                      onValueChange={(value: UserRole) => handleRoleChange(user.user_id, value)}
                     >
                       <SelectTrigger className="w-32">
                         <SelectValue />
@@ -143,7 +152,7 @@ export const UserManagement = () => {
                     </Select>
                   </TableCell>
                   <TableCell>
-                    {new Date(user.created_at!).toLocaleDateString()}
+                    {new Date(user.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
                     <Button variant="outline" size="sm">
