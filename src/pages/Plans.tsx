@@ -12,25 +12,25 @@ const plans = [
   {
     name: "Starter",
     price: {
-      monthly: 19,
-      yearly: 159,
+      monthly: 9,
+      yearly: 89,
     },
     priceId: {
       monthly: "price_1QdIQ0G8TTdTbu7dSw6PTIQG",
       yearly: "price_1QdIRgG8TTdTbu7d32x1RBaY",
     },
     features: [
-      "50 AI videos per month",
-      "40 minutes of exporting",
-      "30 minutes of voiceover",
-      "100 AI Images",
+      "25 AI videos per month",
+      "20 minutes of exporting",
+      "15 minutes of voiceover",
+      "50 AI Images",
     ],
   },
   {
     name: "Pro",
     price: {
-      monthly: 29,
-      yearly: 243,
+      monthly: 19,
+      yearly: 190,
     },
     priceId: {
       monthly: "price_1QdIQWG8TTdTbu7dpGfYO8qR",
@@ -38,27 +38,27 @@ const plans = [
     },
     popular: true,
     features: [
-      "100 AI videos per month",
-      "2 hours of export",
-      "150 voiceover minutes",
-      "300 AI Images",
+      "50 AI videos per month",
+      "1 hour of export",
+      "45 voiceover minutes",
+      "150 AI Images",
     ],
   },
   {
     name: "Premium",
     price: {
-      monthly: 49,
-      yearly: 411,
+      monthly: 39,
+      yearly: 390,
     },
     priceId: {
       monthly: "price_1QdIR3G8TTdTbu7d797PglPe",
       yearly: "price_1QdIScG8TTdTbu7duXhWR8Px",
     },
     features: [
-      "200 AI videos per month",
-      "3 hours of export",
-      "200 voiceover minutes",
-      "500 AI Images",
+      "100 AI videos per month",
+      "2 hours of export",
+      "90 voiceover minutes",
+      "300 AI Images",
     ],
   },
 ];
