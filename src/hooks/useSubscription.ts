@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "./useUser";
+import { addMonths } from "date-fns";
 
 export interface Subscription {
   id: string;
@@ -51,13 +52,14 @@ export const useSubscription = () => {
 
       // Special case for test user
       if (user.email === 'inke2@hotmail.com') {
+        const now = new Date();
         return {
           id: "premium-test",
           user_id: user.id,
           plan_name: "Premium",
           status: "active" as const,
-          current_period_start: new Date().toISOString(),
-          current_period_end: null,
+          current_period_start: now.toISOString(),
+          current_period_end: addMonths(now, 1).toISOString(), // Set next billing date to 1 month from now
           stripe_subscription_id: null,
           stripe_customer_id: null,
           plan_limits: {
@@ -66,21 +68,22 @@ export const useSubscription = () => {
             max_videos_per_month: 100,
             max_exports_per_month: 80,
           },
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          created_at: now.toISOString(),
+          updated_at: now.toISOString(),
         } as Subscription;
       }
 
       if (!subscription) {
         console.log("No active subscription found, returning free tier");
-        // Return free tier subscription
+        const now = new Date();
+        // Return free tier subscription with appropriate dates
         return {
           id: "free-tier",
           user_id: user.id,
           plan_name: "Free",
           status: "active" as const,
-          current_period_start: new Date().toISOString(),
-          current_period_end: null,
+          current_period_start: now.toISOString(),
+          current_period_end: addMonths(now, 1).toISOString(), // Set next billing date to 1 month from now
           stripe_subscription_id: null,
           stripe_customer_id: null,
           plan_limits: {
@@ -89,8 +92,8 @@ export const useSubscription = () => {
             max_videos_per_month: 20,
             max_exports_per_month: 10,
           },
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          created_at: now.toISOString(),
+          updated_at: now.toISOString(),
         } as Subscription;
       }
 
