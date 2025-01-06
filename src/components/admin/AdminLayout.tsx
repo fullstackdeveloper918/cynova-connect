@@ -1,17 +1,23 @@
 import { useRole } from "@/hooks/useRole";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 export const AdminLayout = ({ children }: { children: React.ReactNode }) => {
-  const { data: role } = useRole();
+  const { data: role, isLoading } = useRole();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (role && role !== "admin") {
+    if (!isLoading && role !== "admin") {
+      toast.error("You don't have permission to access the admin panel");
       navigate("/dashboard");
     }
-  }, [role, navigate]);
+  }, [role, navigate, isLoading]);
 
+  // Don't render anything while checking the role
+  if (isLoading) return null;
+  
+  // Only render children if user is admin
   if (role !== "admin") return null;
 
   return (
