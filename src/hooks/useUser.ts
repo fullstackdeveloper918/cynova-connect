@@ -5,6 +5,9 @@ interface User {
   id: string;
   name: string;
   email: string;
+  user_metadata?: {
+    name?: string;
+  };
 }
 
 const getStoredUser = async (): Promise<User> => {
@@ -15,7 +18,10 @@ const getStoredUser = async (): Promise<User> => {
     return {
       id: session.user.id,
       name: 'Test User',
-      email: 'inke2@hotmail.com'
+      email: 'inke2@hotmail.com',
+      user_metadata: {
+        name: 'Test User'
+      }
     };
   }
 
@@ -23,11 +29,15 @@ const getStoredUser = async (): Promise<User> => {
   return session?.user ? {
     id: session.user.id,
     name: session.user.user_metadata?.name || 'User',
-    email: session.user.email || ''
+    email: session.user.email || '',
+    user_metadata: session.user.user_metadata
   } : {
     id: "default-id",
     name: "John Doe",
-    email: "john@example.com"
+    email: "john@example.com",
+    user_metadata: {
+      name: "John Doe"
+    }
   };
 };
 
@@ -58,7 +68,8 @@ export const useUpdateUser = () => {
       return {
         id: user.id,
         name: user.user_metadata?.name || 'User',
-        email: user.email || ''
+        email: user.email || '',
+        user_metadata: user.user_metadata
       };
     },
     onSuccess: (updatedUser) => {

@@ -14,14 +14,6 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import {
-  MessageSquare,
-  FileVideo,
-  Scissors,
-  Video,
-  Youtube,
-  Mic,
-} from "lucide-react";
 
 const createSections = [
   {
@@ -85,11 +77,11 @@ const createSections = [
 export const DashboardContent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { data: user } = useUser();
+  const { data: user, isLoading: isLoadingUser } = useUser();
   const { data: subscription, isLoading: isLoadingSubscription, error: subscriptionError } = useSubscription();
 
   // Special case for test email
-  const userName = user?.email === 'inke2@hotmail.com' ? 'Test User' : user?.name;
+  const userName = user?.email === 'inke2@hotmail.com' ? 'Test User' : user?.user_metadata?.name || user?.name || 'User';
 
   const handleLogout = async () => {
     try {
@@ -123,7 +115,7 @@ export const DashboardContent = () => {
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold text-primary">
-            Welcome back, {userName || 'Guest'}! 👋
+            Welcome back, {isLoadingUser ? 'Loading...' : userName}! 👋
           </h1>
           <div className="flex items-center gap-2">
             <Crown className="h-4 w-4 text-primary" />
