@@ -17,12 +17,20 @@ const Signup = () => {
       return;
     }
 
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/login`,
+        }
       });
 
       if (error) {
@@ -40,12 +48,12 @@ const Signup = () => {
       const authError = error as AuthError;
       console.error("Signup error:", authError);
       
-      if (authError.message.includes("unique constraint")) {
+      if (authError.message.includes("Database error")) {
+        toast.error("There was an issue creating your account. Our team has been notified.");
+      } else if (authError.message.includes("unique constraint")) {
         toast.error("This email is already registered. Please try logging in instead.");
       } else if (authError.message.includes("password")) {
         toast.error("Password must be at least 6 characters long.");
-      } else if (authError.message.includes("Database error")) {
-        toast.error("There was an issue creating your account. Please try again later.");
       } else {
         toast.error(authError.message || "Failed to create account. Please try again.");
       }
@@ -59,7 +67,7 @@ const Signup = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/dashboard'
+          redirectTo: `${window.location.origin}/dashboard`
         }
       });
       
