@@ -11,6 +11,19 @@ export const FeatureGrid = ({ isFreePlan }: FeatureGridProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const handleFeatureClick = (path: string) => {
+    if (isFreePlan) {
+      toast({
+        title: "Feature not available",
+        description: "Please upgrade to a paid plan to access this feature.",
+        variant: "default",
+      });
+      navigate("/plans");
+      return;
+    }
+    navigate(path);
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {createSections.map((section, index) => (
@@ -19,17 +32,7 @@ export const FeatureGrid = ({ isFreePlan }: FeatureGridProps) => {
           {...section} 
           index={index} 
           isDisabled={isFreePlan}
-          onClick={() => {
-            if (isFreePlan) {
-              toast({
-                title: "Feature not available",
-                description: "Please upgrade to a paid plan to access this feature.",
-                variant: "default",
-              });
-              return;
-            }
-            navigate(section.path);
-          }}
+          onClick={() => handleFeatureClick(section.path)}
         />
       ))}
     </div>

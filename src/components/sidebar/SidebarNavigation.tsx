@@ -60,7 +60,9 @@ export const SidebarNavigation = () => {
                     tooltip={isFreePlan && section.label === "Cynova Create" ? "Premium Feature" : item.title}
                     isActive={selectedTool === item.id}
                     className={`text-gray-800 dark:text-gray-800 md:text-inherit md:dark:text-inherit ${
-                      isFreePlan && section.label === "Cynova Create" ? "opacity-50 cursor-not-allowed" : ""
+                      isFreePlan && section.label === "Cynova Create" 
+                        ? "opacity-50 cursor-not-allowed pointer-events-none" 
+                        : ""
                     }`}
                   >
                     <item.icon className="w-4 h-4" />
