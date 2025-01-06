@@ -421,6 +421,7 @@ export type Database = {
         | "voiceover_video"
         | "would_you_rather"
         | "quiz_video"
+      question_type: "multiple_choice" | "true_false"
       quiz_question_type: "multiple_choice" | "true_false"
       segment_status: "pending" | "processing" | "completed" | "failed"
       subscription_status: "active" | "canceled" | "past_due"
