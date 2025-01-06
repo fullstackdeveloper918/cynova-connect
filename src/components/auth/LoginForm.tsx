@@ -14,22 +14,37 @@ export const LoginForm = () => {
   const navigate = useNavigate();
 
   const getErrorMessage = (error: AuthError) => {
+    console.log("Auth error details:", error);
+    
     if (error instanceof AuthApiError) {
-      if (error.status === 400) {
-        if (error.message.includes("Invalid login credentials")) {
-          return "Invalid email or password. Please check your credentials and try again.";
-        }
-        if (error.message.includes("Email not confirmed")) {
-          return "Please verify your email address before signing in.";
-        }
+      // Check for invalid credentials first as it's the most common error
+      if (error.message.includes("Invalid login credentials")) {
+        return "Invalid email or password. Please check your credentials and try again.";
       }
-      if (error.status === 422) {
-        return "Invalid email format. Please enter a valid email address.";
+      
+      // Then check other specific error cases
+      if (error.message.includes("Email not confirmed")) {
+        return "Please verify your email address before signing in.";
       }
+      
+      // Handle rate limiting
       if (error.status === 429) {
         return "Too many login attempts. Please try again later.";
       }
+      
+      // Handle validation errors
+      if (error.status === 422) {
+        return "Invalid email format. Please enter a valid email address.";
+      }
+      
+      // Log unexpected error codes for debugging
+      console.error("Unexpected auth error:", {
+        status: error.status,
+        message: error.message,
+        name: error.name
+      });
     }
+    
     return "An unexpected error occurred. Please try again.";
   };
 
@@ -42,6 +57,7 @@ export const LoginForm = () => {
     
     setIsLoading(true);
     try {
+      console.log("Attempting login...");
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim()
@@ -54,7 +70,7 @@ export const LoginForm = () => {
       }
 
       if (data.session) {
-        console.log("Login successful, redirecting...");
+        console.log("Login successful!");
         toast.success("Successfully logged in!");
         navigate("/dashboard");
       }
