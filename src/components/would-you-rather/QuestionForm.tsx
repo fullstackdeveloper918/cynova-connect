@@ -23,7 +23,9 @@ export const QuestionForm = ({
       {questions.length > 1 && (
         <Select 
           value={selectedQuestionIndex.toString()} 
-          onValueChange={(value) => setSelectedQuestionIndex(parseInt(value))}
+          onValueChange={(value) => {
+            console.log('Selecting question:', parseInt(value));
+          }}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select a question" />

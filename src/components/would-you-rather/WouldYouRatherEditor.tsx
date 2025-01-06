@@ -23,6 +23,7 @@ export const WouldYouRatherEditor = () => {
   const [currentProcessingIndex, setCurrentProcessingIndex] = useState<number | null>(null);
 
   const handleQuestionsGenerated = (newQuestions: Array<{ optionA: string; optionB: string }>) => {
+    console.log('New questions generated:', newQuestions);
     setQuestions(newQuestions);
     setSelectedQuestionIndex(0);
     setPreviewUrls(new Array(newQuestions.length).fill(null));
@@ -31,6 +32,7 @@ export const WouldYouRatherEditor = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Starting video creation process...');
 
     if (!user?.id || userLoading) {
       toast({
@@ -46,6 +48,7 @@ export const WouldYouRatherEditor = () => {
     
     try {
       for (let i = 0; i < questions.length; i++) {
+        console.log(`Processing question ${i + 1} of ${questions.length}`);
         setCurrentProcessingIndex(i);
         const currentQuestion = questions[i];
         
@@ -55,6 +58,8 @@ export const WouldYouRatherEditor = () => {
           selectedVoice,
           user.id
         );
+
+        console.log(`Video data received for question ${i + 1}:`, videoData);
 
         const newPreviewUrls = [...previewUrls];
         newPreviewUrls[i] = {
