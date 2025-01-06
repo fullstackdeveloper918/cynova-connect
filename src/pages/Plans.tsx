@@ -166,7 +166,7 @@ const Plans = () => {
               variant={isYearly ? "default" : "outline"}
               onClick={() => setIsYearly(true)}
             >
-              Yearly (30% off)
+              Yearly (20% off)
             </Button>
           </div>
         </div>
