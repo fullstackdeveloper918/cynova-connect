@@ -49,11 +49,14 @@ export const NewSignupForm = () => {
     console.log("Starting signup process for email:", email);
 
     try {
-      const { data: { user }, error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/login`,
+          data: {
+            email: email,
+          }
         }
       });
 
@@ -68,8 +71,8 @@ export const NewSignupForm = () => {
         return;
       }
 
-      if (user) {
-        console.log("User created successfully:", user.id);
+      if (data?.user) {
+        console.log("User created successfully:", data.user.id);
         
         // Wait a moment for the trigger to create the role
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -78,7 +81,7 @@ export const NewSignupForm = () => {
         const { data: userRole, error: roleError } = await supabase
           .from('user_roles')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('user_id', data.user.id)
           .single();
           
         console.log("User role verification:", { userRole, roleError });
