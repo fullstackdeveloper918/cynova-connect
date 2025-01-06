@@ -13,31 +13,22 @@ interface User {
 const getStoredUser = async (): Promise<User> => {
   const { data: { session } } = await supabase.auth.getSession();
   
-  // Special case for test email
-  if (session?.user?.email === 'inke2@hotmail.com') {
+  if (!session?.user) {
     return {
-      id: session.user.id,
-      name: 'Test User',
-      email: 'inke2@hotmail.com',
+      id: "default-id",
+      name: "User",
+      email: "",
       user_metadata: {
-        name: 'Test User'
+        name: "User"
       }
     };
   }
 
-  // Default case
-  return session?.user ? {
+  return {
     id: session.user.id,
-    name: session.user.user_metadata?.name || 'User',
+    name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
     email: session.user.email || '',
     user_metadata: session.user.user_metadata
-  } : {
-    id: "default-id",
-    name: "John Doe",
-    email: "john@example.com",
-    user_metadata: {
-      name: "John Doe"
-    }
   };
 };
 
@@ -67,7 +58,7 @@ export const useUpdateUser = () => {
 
       return {
         id: user.id,
-        name: user.user_metadata?.name || 'User',
+        name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
         email: user.email || '',
         user_metadata: user.user_metadata
       };
