@@ -15,19 +15,19 @@ export const LoginForm = () => {
 
   const getErrorMessage = (error: AuthError) => {
     if (error instanceof AuthApiError) {
-      switch (error.status) {
-        case 400:
-          if (error.message.includes("Invalid login credentials")) {
-            return "Invalid email or password. Please check your credentials and try again.";
-          }
-          if (error.message.includes("Email not confirmed")) {
-            return "Please verify your email address before signing in.";
-          }
-          break;
-        case 422:
-          return "Invalid email format. Please enter a valid email address.";
-        case 429:
-          return "Too many login attempts. Please try again later.";
+      if (error.status === 400) {
+        if (error.message.includes("Invalid login credentials")) {
+          return "Invalid email or password. Please check your credentials and try again.";
+        }
+        if (error.message.includes("Email not confirmed")) {
+          return "Please verify your email address before signing in.";
+        }
+      }
+      if (error.status === 422) {
+        return "Invalid email format. Please enter a valid email address.";
+      }
+      if (error.status === 429) {
+        return "Too many login attempts. Please try again later.";
       }
     }
     return "An unexpected error occurred. Please try again.";
@@ -42,7 +42,6 @@ export const LoginForm = () => {
     
     setIsLoading(true);
     try {
-      console.log("Attempting login with email:", email.trim());
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim()
