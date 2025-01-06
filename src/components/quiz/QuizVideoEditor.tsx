@@ -16,13 +16,23 @@ export const QuizVideoEditor = () => {
   const handleQuestionsGenerated = async (newQuestions: QuizQuestion[]) => {
     setQuestions(newQuestions);
     
+    const user = await supabase.auth.getUser();
+    if (!user.data.user?.id) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to save your quiz.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       const { data: project, error: projectError } = await supabase
         .from('projects')
         .insert({
           title: "Quiz Video",
-          type: "quiz",
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          type: "quiz_video", // Fixed: Using the correct project type
+          user_id: user.data.user.id,
           status: 'draft'
         })
         .select()
@@ -36,7 +46,7 @@ export const QuizVideoEditor = () => {
         .insert(
           newQuestions.map(q => ({
             project_id: project.id,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
+            user_id: user.data.user.id,
             question: q.question,
             question_type: q.type,
             options: q.options,
