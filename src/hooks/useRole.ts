@@ -5,18 +5,19 @@ import { useUser } from "./useUser";
 export type UserRole = 'admin' | 'user';
 
 export const useRole = () => {
-  const { data: user } = useUser();
+  const { data: user, isLoading: isLoadingUser } = useUser();
 
   return useQuery({
     queryKey: ['role', user?.id],
     queryFn: async () => {
-      console.log("Fetching role for user:", user?.id); // Debug log
-      
-      if (!user?.id) {
-        console.log("No user ID available"); // Debug log
+      // Only proceed if we have a valid UUID
+      if (!user?.id || user.id === 'default-id') {
+        console.log("No valid user ID available, defaulting to 'user' role"); 
         return 'user' as UserRole;
       }
 
+      console.log("Fetching role for user:", user.id);
+      
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -28,10 +29,10 @@ export const useRole = () => {
         return 'user' as UserRole;
       }
 
-      console.log("Role data:", data); // Debug log
+      console.log("Role data:", data);
       return (data?.role || 'user') as UserRole;
     },
-    enabled: !!user?.id,
+    enabled: !isLoadingUser && !!user?.id && user.id !== 'default-id',
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     retry: 1,
   });
