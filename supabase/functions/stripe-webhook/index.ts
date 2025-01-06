@@ -30,14 +30,20 @@ serve(async (req) => {
 
     switch (event.type) {
       case 'checkout.session.completed': {
+        console.log('Processing checkout.session.completed event');
         const session = event.data.object as Stripe.Checkout.Session;
         const customerId = session.customer as string;
         const subscriptionId = session.subscription as string;
+
+        console.log('Customer ID:', customerId);
+        console.log('Subscription ID:', subscriptionId);
 
         // Get customer's email
         const customer = await stripe.customers.retrieve(customerId);
         const email = customer.email;
         if (!email) throw new Error('No email found for customer');
+        
+        console.log('Customer email:', email);
 
         // Get user id from email
         const { data: userData, error: userError } = await supabaseAdmin
@@ -46,13 +52,18 @@ serve(async (req) => {
           .eq('email', email)
           .single();
 
-        if (userError || !userData) {
+        if (userError) {
+          console.error('Error finding user:', userError);
           throw new Error('User not found');
         }
+
+        console.log('Found user:', userData);
 
         // Get subscription details
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const priceId = subscription.items.data[0].price.id;
+
+        console.log('Price ID:', priceId);
 
         // Map price ID to plan name
         const planMap: Record<string, string> = {
@@ -65,6 +76,7 @@ serve(async (req) => {
         };
 
         const planName = planMap[priceId] || 'Free';
+        console.log('Plan name:', planName);
 
         // Update or insert subscription
         const { error: subError } = await supabaseAdmin
@@ -79,7 +91,10 @@ serve(async (req) => {
             current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
           });
 
-        if (subError) throw subError;
+        if (subError) {
+          console.error('Error upserting subscription:', subError);
+          throw subError;
+        }
 
         console.log('Successfully processed subscription for user:', userData.id);
         break;
