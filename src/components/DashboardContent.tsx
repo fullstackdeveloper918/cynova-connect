@@ -217,7 +217,7 @@ export const DashboardContent = () => {
                 toast({
                   title: "Feature not available",
                   description: "Please upgrade to a paid plan to access this feature.",
-                  variant: "warning",
+                  variant: "default",
                 });
                 return;
               }
