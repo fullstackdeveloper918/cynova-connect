@@ -1,12 +1,13 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { User } from "lucide-react";
+import { User, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { UpdatesSection } from "./UpdatesSection";
 import { DashboardHero } from "./DashboardHero";
 import { FeatureCard } from "./FeatureCard";
 import { useUser } from "@/hooks/useUser";
+import { useSubscription } from "@/hooks/useSubscription";
 import {
   MessageSquare,
   FileVideo,
@@ -77,6 +78,7 @@ export const DashboardContent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: user } = useUser();
+  const { data: subscription, isLoading: isLoadingSubscription } = useSubscription();
 
   // Special case for test email
   const userName = user?.email === 'inke2@hotmail.com' ? 'Test User' : user?.name;
@@ -84,9 +86,21 @@ export const DashboardContent = () => {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-primary">
-          Welcome back, {userName || 'Guest'}! 👋
-        </h1>
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold text-primary">
+            Welcome back, {userName || 'Guest'}! 👋
+          </h1>
+          <div className="flex items-center gap-2">
+            <Crown className="h-4 w-4 text-primary" />
+            <span className="text-muted-foreground">
+              {isLoadingSubscription ? (
+                "Loading plan..."
+              ) : (
+                `Current Plan: ${subscription?.plan_name || "Free"}`
+              )}
+            </span>
+          </div>
+        </div>
         <div className="flex items-center gap-4">
           <Button
             onClick={() => navigate("/dashboard/profile")}
