@@ -16,7 +16,7 @@ const plans = [
       yearly: 230,
     },
     priceId: {
-      monthly: "price_1OgbZeG8TTdTbu7dxMxqxgK3",
+      monthly: "price_1QeDzGG8TTdTbu7dz9ApCJQM",
       yearly: "price_1OgbZeG8TTdTbu7dKpFGWqL9",
     },
     features: [
@@ -33,7 +33,7 @@ const plans = [
       yearly: 374,
     },
     priceId: {
-      monthly: "price_1OgbZeG8TTdTbu7dxMxqxgK3",
+      monthly: "price_1QeDzcG8TTdTbu7d6fJJNFFQ",
       yearly: "price_1OgbZeG8TTdTbu7dKpFGWqL9",
     },
     popular: true,
@@ -51,7 +51,7 @@ const plans = [
       yearly: 758,
     },
     priceId: {
-      monthly: "price_1OgbZeG8TTdTbu7dxMxqxgK3",
+      monthly: "price_1QeDzuG8TTdTbu7dosC1Ry4k",
       yearly: "price_1OgbZeG8TTdTbu7dKpFGWqL9",
     },
     features: [
