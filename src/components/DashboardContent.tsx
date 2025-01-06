@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { User, Crown, LogOut, MessageSquare, FileVideo, Scissors, Mic } from "lucide-react";
+import { User, Crown, LogOut, MessageSquare, FileVideo, Scissors, Mic, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { UpdatesSection } from "./UpdatesSection";
@@ -82,6 +82,7 @@ export const DashboardContent = () => {
 
   // Get user name from metadata
   const userName = user?.name || 'User';
+  const userEmail = user?.email;
 
   const handleLogout = async () => {
     try {
@@ -131,6 +132,16 @@ export const DashboardContent = () => {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          {userEmail === 'inke2@hotmail.com' && (
+            <Button
+              onClick={() => navigate("/admin")}
+              variant="destructive"
+              className="gap-2"
+            >
+              <Shield className="h-4 w-4" />
+              Admin Panel
+            </Button>
+          )}
           <HoverCard openDelay={0} closeDelay={0}>
             <HoverCardTrigger asChild>
               <Button
