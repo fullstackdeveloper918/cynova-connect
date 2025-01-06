@@ -49,6 +49,28 @@ export const useSubscription = () => {
         throw subscriptionError;
       }
 
+      // Special case for test user
+      if (user.email === 'inke2@hotmail.com') {
+        return {
+          id: "premium-test",
+          user_id: user.id,
+          plan_name: "Premium",
+          status: "active" as const,
+          current_period_start: new Date().toISOString(),
+          current_period_end: null,
+          stripe_subscription_id: null,
+          stripe_customer_id: null,
+          plan_limits: {
+            features: ["chatgpt_video", "fake_text", "reddit_video", "split_video"],
+            max_duration_minutes: 60,
+            max_videos_per_month: 100,
+            max_exports_per_month: 80,
+          },
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } as Subscription;
+      }
+
       if (!subscription) {
         console.log("No active subscription found, returning free tier");
         // Return free tier subscription
