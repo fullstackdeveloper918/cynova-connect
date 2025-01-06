@@ -5,7 +5,7 @@ import { FrameDisplay } from "./video-preview/FrameDisplay";
 import { EmptyState } from "./video-preview/EmptyState";
 
 interface PreviewUrls {
-  videoUrl?: string; // Made optional
+  videoUrl?: string;
   audioUrl: string;
 }
 
@@ -30,7 +30,7 @@ export const VideoPreview = ({
 
   // Split script into smaller chunks for better readability and timing
   const words = script?.split(/\s+/) || [];
-  const WORDS_PER_CHUNK = 4; // Adjusted for better pacing
+  const WORDS_PER_CHUNK = 4;
   const captionChunks = words.reduce((chunks: string[], word, index) => {
     const chunkIndex = Math.floor(index / WORDS_PER_CHUNK);
     if (!chunks[chunkIndex]) {
@@ -47,7 +47,8 @@ export const VideoPreview = ({
         setIsLoading(true);
         try {
           const audioDuration = audioRef.current?.duration || 30;
-          const numberOfFrames = Math.max(1, Math.ceil(audioDuration / 7.5));
+          // Reduce number of frames to 2 (one for each option) for faster generation
+          const numberOfFrames = 2;
           
           console.log('Starting frame generation for script:', script);
           console.log('Generating frames:', numberOfFrames);
@@ -66,7 +67,12 @@ export const VideoPreview = ({
 
           if (data.frameUrls) {
             console.log('Received frame URLs:', data.frameUrls);
-            setFrameUrls(data.frameUrls);
+            // Duplicate frames to maintain smooth transitions
+            const duplicatedFrames = data.frameUrls.reduce((acc: string[], frame: string) => {
+              // Duplicate each frame 3 times for smoother transitions
+              return [...acc, frame, frame, frame];
+            }, []);
+            setFrameUrls(duplicatedFrames);
           }
         } catch (error) {
           console.error('Error generating frames:', error);
