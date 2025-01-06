@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import type { Subscription } from "@/integrations/supabase/types";
+import type { Subscription, PlanLimits } from "@/integrations/supabase/types";
 
 export const useSubscription = () => {
   const [userId, setUserId] = useState<string | null>(null);

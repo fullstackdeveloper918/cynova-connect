@@ -6,27 +6,6 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface PlanLimits {
-  features: string[];
-  max_duration_minutes: number;
-  max_videos_per_month: number;
-  max_exports_per_month: number;
-}
-
-export interface Subscription {
-  id: string;
-  user_id: string;
-  plan_name: string;
-  status: 'active' | 'canceled' | 'past_due';
-  current_period_start: string | null;
-  current_period_end: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  stripe_subscription_id: string | null;
-  stripe_customer_id: string | null;
-  plan_limits: PlanLimits;
-}
-
 export type Database = {
   public: {
     Tables: {
@@ -317,7 +296,7 @@ export type Database = {
           file_url?: string | null
           id?: string
           original_filename: string
-          status: Database["public"]["Enums"]["video_processing_status"] | null
+          status?: Database["public"]["Enums"]["video_processing_status"] | null
           user_id?: string | null
         }
         Update: {
@@ -465,9 +444,9 @@ export type Database = {
           id?: string
           option_a?: string
           option_b?: string
-          project_id: string
+          project_id?: string
           updated_at?: string | null
-          user_id: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -537,7 +516,7 @@ export type Tables<
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
     ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
         Database[PublicTableNameOrOptions["schema"]]["Views"])
-    : never,
+    : never = never,
 > = PublicTableNameOrOptions extends { schema: keyof Database }
   ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
       Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
