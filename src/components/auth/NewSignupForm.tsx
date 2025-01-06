@@ -51,9 +51,29 @@ export const NewSignupForm = () => {
     console.log("Attempting to sign up with email:", email);
 
     try {
+      // First, check if user exists
+      const { data: existingUser } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('user_id', email)
+        .single();
+
+      if (existingUser) {
+        console.log("User already exists in user_roles table");
+        toast.error("This email is already registered. Please try logging in instead.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Attempt signup
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            email: email,
+          }
+        }
       });
 
       console.log("Signup response:", { data, error });
@@ -62,7 +82,8 @@ export const NewSignupForm = () => {
         console.error("Signup error details:", {
           message: error.message,
           status: error.status,
-          name: error.name
+          name: error.name,
+          stack: error.stack
         });
         
         if (error.message.includes("User already registered")) {
@@ -75,6 +96,20 @@ export const NewSignupForm = () => {
 
       if (data?.user) {
         console.log("User created successfully:", data.user);
+        
+        // Verify user_roles entry was created
+        const { data: userRole, error: roleError } = await supabase
+          .from('user_roles')
+          .select('*')
+          .eq('user_id', data.user.id)
+          .single();
+          
+        console.log("User role check:", { userRole, roleError });
+
+        if (roleError) {
+          console.error("Error checking user role:", roleError);
+        }
+
         toast.success("Account created successfully! Please check your email to verify your account.");
         navigate("/login");
       } else {
