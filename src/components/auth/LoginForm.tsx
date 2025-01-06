@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { AuthError, AuthApiError } from "@supabase/supabase-js";
 
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -12,6 +13,23 @@ export const LoginForm = () => {
   const [isSendingReset, setIsSendingReset] = useState(false);
   const navigate = useNavigate();
 
+  const getErrorMessage = (error: AuthError) => {
+    if (error instanceof AuthApiError) {
+      switch (error.status) {
+        case 400:
+          if (error.message.includes("Invalid login credentials")) {
+            return "Invalid email or password. Please check your credentials and try again.";
+          }
+          break;
+        case 422:
+          return "Invalid email format. Please enter a valid email address.";
+        case 429:
+          return "Too many login attempts. Please try again later.";
+      }
+    }
+    return error.message;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -19,17 +37,13 @@ export const LoginForm = () => {
     try {
       console.log("Attempting login with email:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password
       });
 
       if (error) {
         console.error("Login error:", error);
-        if (error.message === "Invalid login credentials") {
-          toast.error("Account not found. Please sign up first or check your credentials.");
-        } else {
-          toast.error(`Login failed: ${error.message}`);
-        }
+        toast.error(getErrorMessage(error));
         return;
       }
 
@@ -55,7 +69,7 @@ export const LoginForm = () => {
 
     setIsSendingReset(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
