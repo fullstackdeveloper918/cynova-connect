@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { User, Crown } from "lucide-react";
+import { User, Crown, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { UpdatesSection } from "./UpdatesSection";
@@ -8,10 +8,19 @@ import { DashboardHero } from "./DashboardHero";
 import { FeatureCard } from "./FeatureCard";
 import { useUser } from "@/hooks/useUser";
 import { useSubscription } from "@/hooks/useSubscription";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   MessageSquare,
   FileVideo,
   Scissors,
+  Video,
+  Youtube,
   Mic,
 } from "lucide-react";
 
@@ -83,6 +92,23 @@ export const DashboardContent = () => {
   // Special case for test email
   const userName = user?.email === 'inke2@hotmail.com' ? 'Test User' : user?.name;
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/login');
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error logging out",
+        description: "There was a problem logging out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -102,14 +128,30 @@ export const DashboardContent = () => {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <Button
-            onClick={() => navigate("/dashboard/profile")}
-            variant="outline"
-            className="gap-2"
-          >
-            <User className="h-4 w-4" />
-            Profile
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="gap-2"
+              >
+                <User className="h-4 w-4" />
+                Profile
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => navigate("/dashboard/profile")}>
+                <User className="mr-2 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={handleLogout}
+                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             onClick={() => navigate("/plans")}
             variant="default"
