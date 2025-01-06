@@ -7,7 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCredits } from "@/hooks/useCredits";
 import { useSubscription } from "@/hooks/useSubscription";
-import type { Subscription } from "@/integrations/supabase/types";
+import type { Subscription } from "@/integrations/supabase/subscription-types";
 
 interface VideoSegment {
   start: number;

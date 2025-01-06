@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import type { Subscription, PlanLimits } from "@/integrations/supabase/types";
+import type { Subscription, PlanLimits } from "@/integrations/supabase/subscription-types";
 
 export const useSubscription = () => {
   const [userId, setUserId] = useState<string | null>(null);
@@ -30,7 +30,6 @@ export const useSubscription = () => {
 
       if (error) throw error;
       
-      // Cast the plan_limits to PlanLimits type since we know the structure
       if (data) {
         return {
           ...data,
