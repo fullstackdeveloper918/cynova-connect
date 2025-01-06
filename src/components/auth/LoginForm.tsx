@@ -9,6 +9,7 @@ export const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSendingReset, setIsSendingReset] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,6 +46,32 @@ export const LoginForm = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error("Please enter your email address first");
+      return;
+    }
+
+    setIsSendingReset(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        toast.error(`Failed to send reset email: ${error.message}`);
+      } else {
+        toast.success("Password reset email sent! Please check your inbox.");
+      }
+    } catch (error) {
+      console.error("Error sending reset email:", error);
+      toast.error("Failed to send reset email. Please try again later.");
+    } finally {
+      setIsSendingReset(false);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
@@ -60,14 +87,24 @@ export const LoginForm = () => {
             required
             className="mt-1"
             placeholder="Enter your email"
-            disabled={isLoading}
+            disabled={isLoading || isSendingReset}
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-            Password
-          </label>
+          <div className="flex items-center justify-between">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              className="text-sm text-primary hover:underline"
+              disabled={isLoading || isSendingReset}
+            >
+              Forgot password?
+            </button>
+          </div>
           <Input
             id="password"
             type="password"
@@ -76,12 +113,12 @@ export const LoginForm = () => {
             required
             className="mt-1"
             placeholder="Enter your password"
-            disabled={isLoading}
+            disabled={isLoading || isSendingReset}
           />
         </div>
       </div>
 
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      <Button type="submit" className="w-full" disabled={isLoading || isSendingReset}>
         {isLoading ? (
           <span className="flex items-center justify-center">
             <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
