@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { User, Crown, LogOut, MessageSquare, FileVideo, Scissors, Mic, Shield } from "lucide-react";
+import { User, Crown, LogOut, MessageSquare, FileVideo, Scissors, Mic, Shield, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { UpdatesSection } from "./UpdatesSection";
@@ -14,6 +14,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const createSections = [
   {
@@ -83,6 +84,7 @@ export const DashboardContent = () => {
   // Get user name from metadata
   const userName = user?.name || 'User';
   const userEmail = user?.email;
+  const isFreePlan = !isLoadingSubscription && subscription?.plan_name === "Free";
 
   const handleLogout = async () => {
     try {
@@ -179,6 +181,24 @@ export const DashboardContent = () => {
         </div>
       </div>
 
+      {isFreePlan && (
+        <Alert variant="warning" className="bg-yellow-50 border-yellow-200">
+          <AlertCircle className="h-4 w-4 text-yellow-600" />
+          <AlertTitle className="text-yellow-800">Free Plan Limitations</AlertTitle>
+          <AlertDescription className="text-yellow-700">
+            You are currently on the Free plan. To access all features, please{" "}
+            <Button
+              variant="link"
+              className="text-yellow-800 font-semibold p-0 h-auto hover:text-yellow-900"
+              onClick={() => navigate("/plans")}
+            >
+              upgrade to a paid plan
+            </Button>
+            . Unlock premium features and create unlimited videos!
+          </AlertDescription>
+        </Alert>
+      )}
+
       <p className="text-muted-foreground">
         Create and manage your video content with ease.
       </p>
@@ -187,7 +207,23 @@ export const DashboardContent = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {createSections.map((section, index) => (
-          <FeatureCard key={section.id} {...section} index={index} />
+          <FeatureCard 
+            key={section.id} 
+            {...section} 
+            index={index} 
+            isDisabled={isFreePlan}
+            onClick={() => {
+              if (isFreePlan) {
+                toast({
+                  title: "Feature not available",
+                  description: "Please upgrade to a paid plan to access this feature.",
+                  variant: "warning",
+                });
+                return;
+              }
+              navigate(section.path);
+            }}
+          />
         ))}
       </div>
     </div>
