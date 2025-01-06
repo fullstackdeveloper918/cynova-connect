@@ -4,49 +4,63 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { AuthError } from "@supabase/supabase-js";
 
 const Signup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
     if (password !== confirmPassword) {
       toast.error("Passwords do not match");
+      setIsLoading(false);
       return;
     }
 
-    // Store user data in localStorage (temporary solution until Supabase integration)
-    const userData = {
-      email,
-      isAuthenticated: true,
-      createdAt: new Date().toISOString()
-    };
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
 
-    localStorage.setItem("userData", JSON.stringify(userData));
-    
-    toast.success("Account created successfully!");
-    navigate("/dashboard");
+      if (error) throw error;
+
+      if (data.user) {
+        toast.success("Account created successfully! You can now sign in.");
+        navigate("/login");
+      }
+    } catch (error) {
+      const authError = error as AuthError;
+      console.error("Signup error:", authError);
+      
+      if (authError.message.includes("unique constraint")) {
+        toast.error("This email is already registered. Please try logging in instead.");
+      } else {
+        toast.error(authError.message || "Failed to create account. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGoogleSignup = () => {
-    // TODO: Implement Google authentication after Supabase integration
-    toast.info("Google authentication will be implemented after Supabase integration");
-  };
-
-  const createTestAccount = () => {
-    const testUserData = {
-      email: "test@cynova.ai",
-      isAuthenticated: true,
-      createdAt: new Date().toISOString()
-    };
-
-    localStorage.setItem("userData", JSON.stringify(testUserData));
-    toast.success("Test account created! Redirecting to dashboard...");
-    setTimeout(() => navigate("/dashboard"), 1500);
+  const handleGoogleSignup = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+      });
+      
+      if (error) throw error;
+    } catch (error) {
+      const authError = error as AuthError;
+      toast.error(authError.message || "Failed to sign in with Google");
+    }
   };
 
   return (
@@ -77,6 +91,7 @@ const Signup = () => {
                 required
                 className="mt-1"
                 placeholder="Enter your email"
+                disabled={isLoading}
               />
             </div>
 
@@ -92,6 +107,7 @@ const Signup = () => {
                 required
                 className="mt-1"
                 placeholder="Create a password"
+                disabled={isLoading}
               />
             </div>
 
@@ -107,12 +123,13 @@ const Signup = () => {
                 required
                 className="mt-1"
                 placeholder="Confirm your password"
+                disabled={isLoading}
               />
             </div>
           </div>
 
-          <Button type="submit" className="w-full">
-            Sign up
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Creating account..." : "Sign up"}
           </Button>
 
           <div className="relative">
@@ -129,6 +146,7 @@ const Signup = () => {
             variant="outline"
             className="w-full"
             onClick={handleGoogleSignup}
+            disabled={isLoading}
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
               <path
@@ -149,15 +167,6 @@ const Signup = () => {
               />
             </svg>
             Continue with Google
-          </Button>
-
-          <Button 
-            type="button" 
-            variant="outline"
-            className="w-full"
-            onClick={createTestAccount}
-          >
-            Use Test Account
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
