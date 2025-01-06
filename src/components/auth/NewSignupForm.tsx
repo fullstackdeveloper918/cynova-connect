@@ -17,14 +17,33 @@ export const NewSignupForm = () => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase.auth.signUp({
+      // 1. Create auth user
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        }
       });
 
-      if (error) throw error;
+      if (signUpError) throw signUpError;
 
-      if (data.user) {
+      if (authData.user) {
+        // 2. Create initial user credits
+        const { error: creditsError } = await supabase
+          .from('user_credits')
+          .insert([
+            { 
+              user_id: authData.user.id,
+              credits_balance: 50 // Default free tier credits
+            }
+          ]);
+
+        if (creditsError) {
+          console.error("Failed to create initial credits:", creditsError);
+          throw new Error("Failed to set up user account. Please contact support.");
+        }
+
         toast.success("Check your email for the confirmation link!");
         navigate("/login");
       }
@@ -32,6 +51,7 @@ export const NewSignupForm = () => {
       if (error instanceof Error) {
         toast.error(error.message);
       }
+      console.error("Signup error:", error);
     } finally {
       setLoading(false);
     }
@@ -66,6 +86,7 @@ export const NewSignupForm = () => {
           placeholder="••••••••"
           required
           disabled={loading}
+          minLength={6}
         />
       </div>
 
