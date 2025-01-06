@@ -98,7 +98,7 @@ const Plans = () => {
   const [isYearly, setIsYearly] = useState(false);
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState<string | null>(null);
-  const { data: subscription } = useSubscription();
+  const { data: subscription, isLoading: isSubscriptionLoading } = useSubscription();
 
   const handleSubscribe = async (plan: typeof plans[0]) => {
     try {
@@ -147,7 +147,7 @@ const Plans = () => {
         
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-primary mb-4">Choose Your Plan</h1>
-          {subscription?.status === 'active' && (
+          {!isSubscriptionLoading && subscription?.status === 'active' && (
             <p className="text-lg text-muted-foreground mb-4">
               Current plan: {subscription.plan_name}
             </p>
