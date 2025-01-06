@@ -43,10 +43,23 @@ export const useUpdateUser = () => {
   
   return useMutation({
     mutationFn: async (newUser: Partial<User>) => {
-      const currentUser = await getStoredUser();
-      const updatedUser = { ...currentUser, ...newUser };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      return updatedUser;
+      const { data: { user }, error } = await supabase.auth.updateUser({
+        data: { name: newUser.name }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (!user) {
+        throw new Error('Failed to update user');
+      }
+
+      return {
+        id: user.id,
+        name: user.user_metadata?.name || 'User',
+        email: user.email || ''
+      };
     },
     onSuccess: (updatedUser) => {
       queryClient.setQueryData(['user'], updatedUser);
