@@ -58,7 +58,7 @@ export const LoginForm = () => {
     setIsLoading(true);
     try {
       console.log("Attempting login...");
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data: { session }, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim()
       });
@@ -69,10 +69,16 @@ export const LoginForm = () => {
         return;
       }
 
-      if (data.session) {
+      if (session) {
         console.log("Login successful!");
-        toast.success("Successfully logged in!");
-        navigate("/dashboard");
+        // Special handling for admin user
+        if (email.trim() === 'inke2@hotmail.com') {
+          navigate("/admin");
+          toast.success("Welcome back, Admin!");
+        } else {
+          navigate("/dashboard/projects");
+          toast.success("Successfully logged in!");
+        }
       }
     } catch (error) {
       console.error("Unexpected error during login:", error);
