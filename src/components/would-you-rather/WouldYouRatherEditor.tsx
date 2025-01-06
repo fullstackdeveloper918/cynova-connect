@@ -19,14 +19,14 @@ export const WouldYouRatherEditor = () => {
   const [selectedQuestionIndex, setSelectedQuestionIndex] = useState(0);
   const [selectedVoice, setSelectedVoice] = useState("21m00Tcm4TlvDq8ikWAM");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [previewUrls, setPreviewUrls] = useState<Array<{ audioUrl: string; videoUrl?: string }>>([]);
+  const [previewUrls, setPreviewUrls] = useState<Array<{ audioUrl: string; videoUrl?: string } | null>>([]);
   const [scripts, setScripts] = useState<string[]>([]);
   const [currentProcessingIndex, setCurrentProcessingIndex] = useState<number | null>(null);
 
   const handleQuestionsGenerated = (newQuestions: Array<{ optionA: string; optionB: string }>) => {
     setQuestions(newQuestions);
     setSelectedQuestionIndex(0);
-    // Reset preview URLs and scripts when new questions are generated
+    // Initialize preview URLs and scripts arrays with null values for each question
     setPreviewUrls(new Array(newQuestions.length).fill(null));
     setScripts(new Array(newQuestions.length).fill(""));
   };
@@ -67,6 +67,8 @@ export const WouldYouRatherEditor = () => {
 
         if (videoError) throw videoError;
 
+        console.log('Received video data:', videoData);
+
         // Update the preview URLs and scripts arrays
         const newPreviewUrls = [...previewUrls];
         newPreviewUrls[i] = {
@@ -78,6 +80,9 @@ export const WouldYouRatherEditor = () => {
         const newScripts = [...scripts];
         newScripts[i] = videoData.script;
         setScripts(newScripts);
+
+        // Force a re-render by updating the selected question index
+        setSelectedQuestionIndex(i);
 
         console.log(`Creating project for question ${i + 1}`);
         
