@@ -1,69 +1,120 @@
-# Welcome to your Lovable project
+# Cynova Video Platform
 
-## Project info
+A powerful video creation and editing platform built with React, TypeScript, and Supabase.
+
+## Project Info
 
 **URL**: https://lovable.dev/projects/5fcdc4d6-6994-4087-9f5e-92dbf0f6aad0
 
-## How can I edit this code?
+## Tech Stack
 
-There are several ways of editing your application.
+- **Frontend**: React + TypeScript + Vite
+- **UI Components**: shadcn/ui + Tailwind CSS
+- **Backend**: Supabase
+- **State Management**: TanStack Query
+- **Authentication**: Supabase Auth
+- **Database**: PostgreSQL (via Supabase)
 
-**Use Lovable**
+## Getting Started
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/5fcdc4d6-6994-4087-9f5e-92dbf0f6aad0) and start prompting.
+### Prerequisites
 
-Changes made via Lovable will be committed automatically to this repo.
+- Node.js & npm - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Git
+- Supabase project (for backend functionality)
 
-**Use your preferred IDE**
+### Environment Setup
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1. Create a `.env.local` file in the root directory with:
+```sh
+VITE_SUPABASE_URL=your_project_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### Installation
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Clone the repository
+git clone <YOUR_REPO_URL>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Navigate to project directory
+cd cynova
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Development Workflow
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. Create a new branch for your feature/fix
+```sh
+git checkout -b feature/your-feature-name
+```
 
-**Use GitHub Codespaces**
+2. Make your changes and commit them
+```sh
+git add .
+git commit -m "Description of changes"
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+3. Push to GitHub and create a Pull Request
+```sh
+git push origin feature/your-feature-name
+```
 
-## What technologies are used for this project?
+## Project Structure
 
-This project is built with .
+```
+src/
+├── components/     # Reusable UI components
+├── hooks/         # Custom React hooks
+├── pages/         # Page components
+├── integrations/  # Third-party integrations
+└── lib/          # Utility functions
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Available Scripts
 
-## How can I deploy this project?
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build locally
+- `npm run lint` - Run ESLint
 
-Simply open [Lovable](https://lovable.dev/projects/5fcdc4d6-6994-4087-9f5e-92dbf0f6aad0) and click on Share -> Publish.
+## Contributing
 
-## I want to use a custom domain - is that possible?
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+## Database Schema
+
+The project uses Supabase as the backend with the following main tables:
+- projects
+- exports
+- quiz_questions
+- would_you_rather_questions
+- video_segments
+- user_credits
+- subscriptions
+
+For detailed schema information, please refer to the Supabase dashboard.
+
+## Deployment
+
+The project can be deployed using:
+1. Lovable's built-in deployment (recommended)
+2. Custom deployment (Vercel, Netlify, etc.)
+
+For custom domain setup, refer to our [Custom Domains Guide](https://docs.lovable.dev/tips-tricks/custom-domain/).
+
+## Support
+
+For questions or issues:
+1. Create a GitHub issue
+2. Contact the maintainers
+3. Check the [Lovable documentation](https://docs.lovable.dev)
