@@ -10,11 +10,10 @@ import { useUser } from "@/hooks/useUser";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import {
   MessageSquare,
   FileVideo,
@@ -128,8 +127,8 @@ export const DashboardContent = () => {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          <HoverCard openDelay={0} closeDelay={0}>
+            <HoverCardTrigger asChild>
               <Button
                 variant="outline"
                 className="gap-2"
@@ -137,21 +136,24 @@ export const DashboardContent = () => {
                 <User className="h-4 w-4" />
                 Profile
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => navigate("/dashboard/profile")}>
-                <User className="mr-2 h-4 w-4" />
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={handleLogout}
-                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+            </HoverCardTrigger>
+            <HoverCardContent align="end" className="w-48 p-2">
+              <button
+                onClick={() => navigate("/dashboard/profile")}
+                className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-accent"
               >
-                <LogOut className="mr-2 h-4 w-4" />
+                <User className="h-4 w-4" />
+                Settings
+              </button>
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-red-600 hover:bg-red-50"
+              >
+                <LogOut className="h-4 w-4" />
                 Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </button>
+            </HoverCardContent>
+          </HoverCard>
           <Button
             onClick={() => navigate("/plans")}
             variant="default"
