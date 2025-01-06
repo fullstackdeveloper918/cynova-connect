@@ -30,13 +30,13 @@ const Signup = () => {
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/login`,
+          data: {
+            email,
+          }
         }
       });
 
-      if (error) {
-        console.error("Signup error:", error);
-        throw error;
-      }
+      if (error) throw error;
 
       if (data?.user) {
         toast.success("Account created successfully! Please check your email to verify your account.");
@@ -45,17 +45,17 @@ const Signup = () => {
         toast.error("Something went wrong. Please try again.");
       }
     } catch (error) {
+      console.error("Signup error:", error);
       const authError = error as AuthError;
-      console.error("Signup error:", authError);
       
       if (authError.message.includes("Database error")) {
-        toast.error("There was an issue creating your account. Our team has been notified.");
+        toast.error("There was an issue creating your account. Please try again later.");
       } else if (authError.message.includes("unique constraint")) {
         toast.error("This email is already registered. Please try logging in instead.");
       } else if (authError.message.includes("password")) {
         toast.error("Password must be at least 6 characters long.");
       } else {
-        toast.error(authError.message || "Failed to create account. Please try again.");
+        toast.error("Failed to create account. Please try again.");
       }
     } finally {
       setIsLoading(false);
@@ -74,7 +74,8 @@ const Signup = () => {
       if (error) throw error;
     } catch (error) {
       const authError = error as AuthError;
-      toast.error(authError.message || "Failed to sign in with Google");
+      console.error("Google signup error:", authError);
+      toast.error("Failed to sign in with Google. Please try again.");
     }
   };
 
