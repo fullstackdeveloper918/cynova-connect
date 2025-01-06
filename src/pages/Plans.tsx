@@ -16,8 +16,8 @@ const plans = [
       yearly: 230,
     },
     priceId: {
-      monthly: "price_1QdIQ0G8TTdTbu7dSw6PTIQG",
-      yearly: "price_1QdIRgG8TTdTbu7d32x1RBaY",
+      monthly: "price_1OgbZeG8TTdTbu7dxMxqxgK3",
+      yearly: "price_1OgbZeG8TTdTbu7dKpFGWqL9",
     },
     features: [
       "50 AI videos per month",
@@ -33,8 +33,8 @@ const plans = [
       yearly: 374,
     },
     priceId: {
-      monthly: "price_1QdIQWG8TTdTbu7dpGfYO8qR",
-      yearly: "price_1QdIS8G8TTdTbu7dTh5tOLpH",
+      monthly: "price_1OgbZeG8TTdTbu7dxMxqxgK3",
+      yearly: "price_1OgbZeG8TTdTbu7dKpFGWqL9",
     },
     popular: true,
     features: [
@@ -51,8 +51,8 @@ const plans = [
       yearly: 758,
     },
     priceId: {
-      monthly: "price_1QdIR3G8TTdTbu7d797PglPe",
-      yearly: "price_1QdIScG8TTdTbu7duXhWR8Px",
+      monthly: "price_1OgbZeG8TTdTbu7dxMxqxgK3",
+      yearly: "price_1OgbZeG8TTdTbu7dKpFGWqL9",
     },
     features: [
       "200 AI videos per month",
