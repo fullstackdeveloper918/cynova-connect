@@ -35,44 +35,31 @@ export const useSubscription = () => {
       }
 
       // First, try to get the active subscription
-      const { data: activeSubscription, error: activeError } = await supabase
+      const { data: subscriptions, error: subscriptionError } = await supabase
         .from("subscriptions")
         .select("*")
         .eq("user_id", user.id)
-        .eq("status", "active")
-        .maybeSingle();
+        .eq("status", "active");
 
-      if (activeError) {
-        console.error("Error fetching active subscription:", activeError);
-        throw activeError;
+      if (subscriptionError) {
+        console.error("Error fetching subscriptions:", subscriptionError);
+        throw subscriptionError;
       }
 
-      console.log("Active subscription data:", activeSubscription);
+      console.log("Subscriptions found:", subscriptions);
+
+      // Get the most recent active subscription
+      const activeSubscription = subscriptions?.length > 0 
+        ? subscriptions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
+        : null;
 
       if (activeSubscription) {
+        console.log("Active subscription found:", activeSubscription);
         return activeSubscription as Subscription;
       }
 
-      // If no active subscription, check for any subscription
-      const { data: anySubscription, error: anyError } = await supabase
-        .from("subscriptions")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (anyError) {
-        console.error("Error fetching any subscription:", anyError);
-        throw anyError;
-      }
-
-      console.log("Any subscription found:", anySubscription);
-
-      if (anySubscription) {
-        return anySubscription as Subscription;
-      }
-
-      // If no subscription found at all, return free tier
-      console.log("No subscription found, returning free tier");
+      // If no active subscription found, return free tier
+      console.log("No active subscription found, returning free tier");
       return {
         id: "free-tier",
         user_id: user.id,
