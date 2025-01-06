@@ -86,7 +86,7 @@ export const DashboardContent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: user } = useUser();
-  const { data: subscription, isLoading: isLoadingSubscription } = useSubscription();
+  const { data: subscription, isLoading: isLoadingSubscription, error: subscriptionError } = useSubscription();
 
   // Special case for test email
   const userName = user?.email === 'inke2@hotmail.com' ? 'Test User' : user?.name;
@@ -108,6 +108,16 @@ export const DashboardContent = () => {
     }
   };
 
+  // Handle subscription error
+  if (subscriptionError) {
+    console.error('Subscription error:', subscriptionError);
+    toast({
+      title: "Error loading subscription",
+      description: "There was a problem loading your subscription. Please refresh the page.",
+      variant: "destructive",
+    });
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -120,6 +130,8 @@ export const DashboardContent = () => {
             <span className="text-muted-foreground">
               {isLoadingSubscription ? (
                 "Loading plan..."
+              ) : subscriptionError ? (
+                "Error loading plan"
               ) : (
                 `Current Plan: ${subscription?.plan_name || "Free"}`
               )}
