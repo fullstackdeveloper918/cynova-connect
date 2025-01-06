@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { User, Crown, LogOut } from "lucide-react";
+import { User, Crown, LogOut, MessageSquare, FileVideo, Scissors, Mic } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { UpdatesSection } from "./UpdatesSection";
