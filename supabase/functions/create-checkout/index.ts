@@ -20,6 +20,9 @@ serve(async (req) => {
       throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
     }
     
+    // Add logging to check the key type
+    console.log('Stripe key type:', stripeSecretKey.startsWith('sk_test_') ? 'TEST MODE' : 'LIVE MODE');
+    
     if (!stripeSecretKey.startsWith('sk_')) {
       throw new Error('Invalid STRIPE_SECRET_KEY format. Must use secret key starting with sk_');
     }
