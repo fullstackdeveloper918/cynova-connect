@@ -27,16 +27,43 @@ export const useSubscription = () => {
   return useQuery({
     queryKey: ["subscription", user?.id],
     queryFn: async () => {
+      console.log("Fetching subscription for user:", user?.id);
+      
       const { data, error } = await supabase
         .from("subscriptions")
         .select("*")
         .eq("user_id", user?.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
+        console.error("Subscription fetch error:", error);
         throw error;
       }
 
+      // If no subscription is found, return a default free tier subscription
+      if (!data) {
+        console.log("No subscription found, returning free tier");
+        return {
+          id: "free-tier",
+          user_id: user?.id,
+          plan_name: "Free",
+          status: "active" as const,
+          current_period_start: new Date().toISOString(),
+          current_period_end: null,
+          stripe_subscription_id: null,
+          stripe_customer_id: null,
+          plan_limits: {
+            features: ["chatgpt_video", "fake_text"],
+            max_duration_minutes: 10,
+            max_videos_per_month: 20,
+            max_exports_per_month: 10,
+          },
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } as Subscription;
+      }
+
+      console.log("Subscription found:", data);
       return data as Subscription;
     },
     enabled: !!user?.id,
