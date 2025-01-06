@@ -9,15 +9,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-  apiVersion: '2023-10-16',
-});
-
-const supabaseAdmin = createClient(
-  Deno.env.get('SUPABASE_URL') ?? '',
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-);
-
 serve(async (req) => {
   const startTime = new Date().toISOString();
   console.log(`[${startTime}] Webhook received`);
@@ -43,12 +34,22 @@ serve(async (req) => {
       throw new Error('Webhook secret not configured');
     }
 
+    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+      apiVersion: '2023-10-16',
+    });
+
     console.log('Attempting to construct Stripe event...');
-    const event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      webhookSecret
-    );
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(
+        body,
+        signature,
+        webhookSecret
+      );
+    } catch (err) {
+      console.error('Error constructing event:', err);
+      throw new Error(`Webhook Error: ${err.message}`);
+    }
 
     console.log('Event constructed successfully:', {
       type: event.type,
@@ -56,30 +57,46 @@ serve(async (req) => {
       created: new Date(event.created * 1000).toISOString(),
     });
 
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
     let result;
-    switch (event.type) {
-      case 'checkout.session.completed':
-        result = await handleCheckoutCompleted(
-          event.data.object as Stripe.Checkout.Session,
-          stripe,
-          supabaseAdmin
-        );
-        break;
-      case 'customer.subscription.updated':
-        result = await handleSubscriptionUpdated(
-          event.data.object as Stripe.Subscription,
-          supabaseAdmin
-        );
-        break;
-      case 'customer.subscription.deleted':
-        result = await handleSubscriptionDeleted(
-          event.data.object as Stripe.Subscription,
-          supabaseAdmin
-        );
-        break;
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
-        result = { status: 'success', message: 'Unhandled event type' };
+    try {
+      switch (event.type) {
+        case 'checkout.session.completed':
+          result = await handleCheckoutCompleted(
+            event.data.object as Stripe.Checkout.Session,
+            stripe,
+            supabaseAdmin
+          );
+          break;
+        case 'customer.subscription.updated':
+          result = await handleSubscriptionUpdated(
+            event.data.object as Stripe.Subscription,
+            supabaseAdmin
+          );
+          break;
+        case 'customer.subscription.deleted':
+          result = await handleSubscriptionDeleted(
+            event.data.object as Stripe.Subscription,
+            supabaseAdmin
+          );
+          break;
+        default:
+          console.log(`Unhandled event type: ${event.type}`);
+          result = { status: 'success', message: 'Unhandled event type' };
+      }
+    } catch (error) {
+      console.error('Error processing webhook event:', error);
+      throw error;
     }
 
     const endTime = new Date().toISOString();
@@ -93,7 +110,10 @@ serve(async (req) => {
     const errorTime = new Date().toISOString();
     console.error(`[${errorTime}] Error processing webhook:`, err);
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ 
+        error: err.message,
+        details: err.stack
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
