@@ -40,9 +40,9 @@ export const useSubscription = () => {
         .select("*")
         .eq("user_id", user.id)
         .eq("status", "active")
-        .single();
+        .maybeSingle();
 
-      if (activeError && activeError.code !== 'PGRST116') {
+      if (activeError) {
         console.error("Error fetching active subscription:", activeError);
         throw activeError;
       }
@@ -58,9 +58,9 @@ export const useSubscription = () => {
         .from("subscriptions")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (anyError && anyError.code !== 'PGRST116') {
+      if (anyError) {
         console.error("Error fetching any subscription:", anyError);
         throw anyError;
       }
