@@ -40,51 +40,23 @@ export const NewSignupForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Starting signup process...");
     
     if (!validateForm()) {
-      console.log("Form validation failed");
       return;
     }
 
     setIsLoading(true);
-    console.log("Attempting to sign up with email:", email);
+    console.log("Starting signup process for email:", email);
 
     try {
-      // First, check if user exists
-      const { data: existingUser } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('user_id', email)
-        .single();
-
-      if (existingUser) {
-        console.log("User already exists in user_roles table");
-        toast.error("This email is already registered. Please try logging in instead.");
-        setIsLoading(false);
-        return;
-      }
-
       // Attempt signup
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            email: email,
-          }
-        }
       });
 
-      console.log("Signup response:", { data, error });
-
       if (error) {
-        console.error("Signup error details:", {
-          message: error.message,
-          status: error.status,
-          name: error.name,
-          stack: error.stack
-        });
+        console.error("Signup error:", error);
         
         if (error.message.includes("User already registered")) {
           toast.error("This email is already registered. Please try logging in instead.");
@@ -95,7 +67,10 @@ export const NewSignupForm = () => {
       }
 
       if (data?.user) {
-        console.log("User created successfully:", data.user);
+        console.log("User created successfully:", data.user.id);
+        
+        // Wait a moment for the trigger to create the role
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Verify user_roles entry was created
         const { data: userRole, error: roleError } = await supabase
@@ -104,25 +79,22 @@ export const NewSignupForm = () => {
           .eq('user_id', data.user.id)
           .single();
           
-        console.log("User role check:", { userRole, roleError });
+        console.log("User role verification:", { userRole, roleError });
 
         if (roleError) {
-          console.error("Error checking user role:", roleError);
+          console.error("Warning: Could not verify user role creation:", roleError);
+          // Continue anyway as the trigger might still be processing
         }
 
         toast.success("Account created successfully! Please check your email to verify your account.");
         navigate("/login");
       } else {
         console.error("No user data in response");
-        toast.error("No response from server. Please try again.");
+        toast.error("An unexpected error occurred. Please try again.");
       }
     } catch (error) {
       const err = error as AuthError;
-      console.error("Signup error:", {
-        name: err.name,
-        message: err.message,
-        stack: err.stack
-      });
+      console.error("Unexpected error during signup:", err);
       toast.error("An unexpected error occurred. Please try again later.");
     } finally {
       setIsLoading(false);
