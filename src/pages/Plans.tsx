@@ -12,8 +12,8 @@ const plans = [
   {
     name: "Starter",
     price: {
-      monthly: 19,
-      yearly: 159,
+      monthly: 24,
+      yearly: 230,
     },
     priceId: {
       monthly: "price_1QdIQ0G8TTdTbu7dSw6PTIQG",
@@ -29,8 +29,8 @@ const plans = [
   {
     name: "Pro",
     price: {
-      monthly: 29,
-      yearly: 243,
+      monthly: 39,
+      yearly: 374,
     },
     priceId: {
       monthly: "price_1QdIQWG8TTdTbu7dpGfYO8qR",
@@ -47,8 +47,8 @@ const plans = [
   {
     name: "Premium",
     price: {
-      monthly: 49,
-      yearly: 411,
+      monthly: 79,
+      yearly: 758,
     },
     priceId: {
       monthly: "price_1QdIR3G8TTdTbu7d797PglPe",
