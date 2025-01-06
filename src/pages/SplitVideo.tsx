@@ -1,5 +1,4 @@
 import { VideoSplitter } from "@/components/split/VideoSplitter";
-import { CreditsDisplay } from "@/components/credits/CreditsDisplay";
 import {
   SidebarProvider,
   Sidebar,
@@ -35,7 +34,6 @@ const SplitVideo = () => {
                   Upload a video and split it into multiple segments
                 </p>
               </div>
-              <CreditsDisplay />
               <VideoSplitter />
             </div>
           </div>
