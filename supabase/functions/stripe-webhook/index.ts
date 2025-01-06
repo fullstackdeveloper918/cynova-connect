@@ -12,40 +12,66 @@ const supabaseAdmin = createClient(
 );
 
 serve(async (req) => {
+  const startTime = new Date().toISOString();
+  console.log(`[${startTime}] Webhook received`);
+  
   try {
     const signature = req.headers.get('stripe-signature');
-    if (!signature) throw new Error('No signature found');
+    if (!signature) {
+      console.error('No stripe signature found in request headers');
+      throw new Error('No signature found');
+    }
 
     const body = await req.text();
+    console.log('Request body received, length:', body.length);
+    
     const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
-    if (!webhookSecret) throw new Error('Webhook secret not configured');
+    if (!webhookSecret) {
+      console.error('STRIPE_WEBHOOK_SECRET not configured in environment');
+      throw new Error('Webhook secret not configured');
+    }
 
+    console.log('Attempting to construct Stripe event...');
     const event = stripe.webhooks.constructEvent(
       body,
       signature,
       webhookSecret
     );
 
-    console.log('Processing webhook event:', event.type);
+    console.log('Event constructed successfully:', {
+      type: event.type,
+      id: event.id,
+      created: new Date(event.created * 1000).toISOString(),
+    });
 
     switch (event.type) {
       case 'checkout.session.completed': {
         console.log('Processing checkout.session.completed event');
         const session = event.data.object as Stripe.Checkout.Session;
+        
+        console.log('Session details:', {
+          id: session.id,
+          customer: session.customer,
+          subscription: session.subscription,
+          payment_status: session.payment_status,
+        });
+
         const customerId = session.customer as string;
         const subscriptionId = session.subscription as string;
 
-        console.log('Customer ID:', customerId);
-        console.log('Subscription ID:', subscriptionId);
-
         // Get customer's email
+        console.log('Retrieving customer details for ID:', customerId);
         const customer = await stripe.customers.retrieve(customerId);
         const email = customer.email;
-        if (!email) throw new Error('No email found for customer');
         
-        console.log('Customer email:', email);
+        if (!email) {
+          console.error('No email found for customer:', customerId);
+          throw new Error('No email found for customer');
+        }
+        console.log('Customer email found:', email);
 
         // Get user id from email
+        console.log('Looking up user by email in Supabase...');
         const { data: userData, error: userError } = await supabaseAdmin
           .from('auth.users')
           .select('id')
@@ -54,16 +80,19 @@ serve(async (req) => {
 
         if (userError) {
           console.error('Error finding user:', userError);
-          throw new Error('User not found');
+          throw new Error(`User not found: ${userError.message}`);
         }
-
+        if (!userData) {
+          console.error('No user found for email:', email);
+          throw new Error('User not found in database');
+        }
         console.log('Found user:', userData);
 
         // Get subscription details
+        console.log('Retrieving subscription details for ID:', subscriptionId);
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const priceId = subscription.items.data[0].price.id;
-
-        console.log('Price ID:', priceId);
+        console.log('Price ID from subscription:', priceId);
 
         // Map price ID to plan name
         const planMap: Record<string, string> = {
@@ -75,21 +104,29 @@ serve(async (req) => {
           'price_1QdIScG8TTdTbu7duXhWR8Px': 'Premium',
         };
 
-        const planName = planMap[priceId] || 'Free';
-        console.log('Plan name:', planName);
+        const planName = planMap[priceId];
+        if (!planName) {
+          console.error('Unknown price ID:', priceId);
+          throw new Error('Unknown price ID');
+        }
+        console.log('Mapped to plan name:', planName);
+
+        // Prepare subscription data
+        const subscriptionData = {
+          user_id: userData.id,
+          plan_name: planName,
+          status: 'active',
+          stripe_subscription_id: subscriptionId,
+          stripe_customer_id: customerId,
+          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        };
+        console.log('Preparing to upsert subscription:', subscriptionData);
 
         // Update or insert subscription
         const { error: subError } = await supabaseAdmin
           .from('subscriptions')
-          .upsert({
-            user_id: userData.id,
-            plan_name: planName,
-            status: 'active',
-            stripe_subscription_id: subscriptionId,
-            stripe_customer_id: customerId,
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-          });
+          .upsert(subscriptionData);
 
         if (subError) {
           console.error('Error upserting subscription:', subError);
@@ -101,6 +138,7 @@ serve(async (req) => {
       }
 
       case 'customer.subscription.updated': {
+        console.log('Processing subscription.updated event');
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
 
@@ -135,6 +173,7 @@ serve(async (req) => {
       }
 
       case 'customer.subscription.deleted': {
+        console.log('Processing subscription.deleted event');
         const subscription = event.data.object as Stripe.Subscription;
         
         // Update subscription status to canceled
@@ -150,12 +189,16 @@ serve(async (req) => {
       }
     }
 
+    const endTime = new Date().toISOString();
+    console.log(`[${endTime}] Webhook processed successfully`);
+
     return new Response(JSON.stringify({ received: true }), {
       headers: { 'Content-Type': 'application/json' },
       status: 200,
     });
   } catch (err) {
-    console.error('Error processing webhook:', err);
+    const errorTime = new Date().toISOString();
+    console.error(`[${errorTime}] Error processing webhook:`, err);
     return new Response(
       JSON.stringify({ error: err.message }),
       {
