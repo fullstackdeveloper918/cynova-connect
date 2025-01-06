@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
 import type { QuizQuestion } from "./QuizVideoEditor";
 import { supabase } from "@/integrations/supabase/client";
+import { QuestionDisplay } from "./QuestionDisplay";
+import { GameplayVideo } from "./GameplayVideo";
 
 interface QuizPreviewProps {
   questions: QuizQuestion[];
@@ -24,38 +26,25 @@ export const QuizPreview = ({
   const audioRef = useRef<HTMLAudioElement>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [showAnswers, setShowAnswers] = useState(false);
-  const [countdown, setCountdown] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [previewAudioUrl, setPreviewAudioUrl] = useState<string | null>(null);
 
   const currentQuestion = questions[currentQuestionIndex];
 
   useEffect(() => {
-    if (countdown === null) return;
-    
-    if (countdown > 0) {
-      // Play tick sound
-      if (audioRef.current) {
-        audioRef.current.play();
-      }
-      
-      const timer = setTimeout(() => {
-        setCountdown(countdown - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else {
-      setShowAnswers(true);
-      
-      // After showing answers, wait 3 seconds and move to next question
-      const nextQuestionTimer = setTimeout(() => {
-        if (currentQuestionIndex < questions.length - 1) {
-          handleQuestionChange('next');
-        }
-      }, 3000);
-      
-      return () => clearTimeout(nextQuestionTimer);
+    if (!isPlaying) {
+      setShowAnswers(false);
+      setPreviewAudioUrl(null);
+      return;
     }
-  }, [countdown, currentQuestionIndex, questions.length]);
+
+    const playQuestion = async () => {
+      setShowAnswers(false);
+      await generateAudioNarration();
+    };
+
+    playQuestion();
+  }, [currentQuestionIndex, isPlaying]);
 
   const generateAudioNarration = async () => {
     if (!currentQuestion) return;
@@ -87,7 +76,7 @@ export const QuizPreview = ({
 
   const handleQuestionChange = (direction: 'next' | 'prev') => {
     setShowAnswers(false);
-    setCountdown(null);
+    setPreviewAudioUrl(null);
     setIsPlaying(false);
     if (direction === 'next') {
       setCurrentQuestionIndex(Math.min(questions.length - 1, currentQuestionIndex + 1));
@@ -96,16 +85,8 @@ export const QuizPreview = ({
     }
   };
 
-  const handlePlay = async () => {
-    if (!isPlaying) {
-      setIsPlaying(true);
-      await generateAudioNarration();
-      setCountdown(3);
-    } else {
-      setIsPlaying(false);
-      setCountdown(null);
-      setShowAnswers(false);
-    }
+  const handlePlay = () => {
+    setIsPlaying(!isPlaying);
   };
 
   return (
@@ -124,65 +105,14 @@ export const QuizPreview = ({
           <div className="absolute inset-0 flex flex-col cursor-pointer" onClick={handlePlay}>
             {/* Top half - Question display */}
             <div className="flex-1 bg-gradient-to-b from-purple-900 to-purple-800 p-6 flex items-center justify-center text-white">
-              <div className="text-center space-y-4">
-                <h3 className="text-xl font-bold">{currentQuestion?.question}</h3>
-                
-                {/* Countdown display */}
-                {countdown !== null && !showAnswers && (
-                  <div className="text-4xl font-bold animate-pulse">
-                    {countdown}
-                  </div>
-                )}
-                
-                {/* Options display */}
-                {showAnswers && (
-                  currentQuestion?.type === "multiple_choice" ? (
-                    <div className="grid grid-cols-2 gap-3">
-                      {currentQuestion.options?.map((option, index) => (
-                        <div
-                          key={index}
-                          className={`p-3 rounded-lg cursor-pointer transition-colors text-sm ${
-                            option === currentQuestion.correctAnswer
-                              ? "bg-green-500/50"
-                              : "bg-white/10"
-                          }`}
-                        >
-                          {option}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex justify-center gap-4">
-                      {["True", "False"].map((option) => (
-                        <div
-                          key={option}
-                          className={`px-6 py-3 rounded-lg cursor-pointer transition-colors ${
-                            option === currentQuestion.correctAnswer
-                              ? "bg-green-500/50"
-                              : "bg-white/10"
-                          }`}
-                        >
-                          {option}
-                        </div>
-                      ))}
-                    </div>
-                  )
-                )}
-              </div>
+              <QuestionDisplay 
+                question={currentQuestion} 
+                showAnswers={showAnswers} 
+              />
             </div>
 
             {/* Bottom half - Gameplay */}
-            {gameplayUrl && (
-              <div className="flex-1 bg-black">
-                <video
-                  src={gameplayUrl}
-                  autoPlay
-                  muted
-                  loop
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
+            <GameplayVideo url={gameplayUrl} />
 
             {/* Play/Pause indicator */}
             <div className="absolute bottom-4 left-4 text-white text-sm bg-black/50 px-3 py-1 rounded-full">
@@ -203,9 +133,17 @@ export const QuizPreview = ({
             autoPlay
             className="hidden"
             onEnded={() => {
-              if (isPlaying) {
-                setCountdown(3);
-              }
+              // Show answers after audio finishes playing
+              setShowAnswers(true);
+              
+              // Wait 3 seconds before moving to next question
+              setTimeout(() => {
+                if (currentQuestionIndex < questions.length - 1) {
+                  handleQuestionChange('next');
+                } else {
+                  setIsPlaying(false);
+                }
+              }, 3000);
             }}
           />
         )}
