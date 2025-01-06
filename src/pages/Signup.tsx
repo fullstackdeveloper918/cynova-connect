@@ -28,13 +28,21 @@ const Signup = () => {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: window.location.origin + '/login'
+        }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Signup error:", error);
+        throw error;
+      }
 
-      if (data.user) {
-        toast.success("Account created successfully! You can now sign in.");
+      if (data?.user) {
+        toast.success("Account created successfully! Please check your email to verify your account.");
         navigate("/login");
+      } else {
+        toast.error("Something went wrong. Please try again.");
       }
     } catch (error) {
       const authError = error as AuthError;
@@ -42,6 +50,8 @@ const Signup = () => {
       
       if (authError.message.includes("unique constraint")) {
         toast.error("This email is already registered. Please try logging in instead.");
+      } else if (authError.message.includes("password")) {
+        toast.error("Password must be at least 6 characters long.");
       } else {
         toast.error(authError.message || "Failed to create account. Please try again.");
       }
@@ -54,6 +64,9 @@ const Signup = () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/dashboard'
+        }
       });
       
       if (error) throw error;
@@ -108,6 +121,7 @@ const Signup = () => {
                 className="mt-1"
                 placeholder="Create a password"
                 disabled={isLoading}
+                minLength={6}
               />
             </div>
 
@@ -124,6 +138,7 @@ const Signup = () => {
                 className="mt-1"
                 placeholder="Confirm your password"
                 disabled={isLoading}
+                minLength={6}
               />
             </div>
           </div>
