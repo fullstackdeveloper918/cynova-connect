@@ -59,7 +59,7 @@ export const useSubscription = () => {
           plan_name: "Premium",
           status: "active" as const,
           current_period_start: now.toISOString(),
-          current_period_end: addMonths(now, 1).toISOString(), // Set next billing date to 1 month from now
+          current_period_end: addMonths(now, 1).toISOString(),
           stripe_subscription_id: null,
           stripe_customer_id: null,
           plan_limits: {
@@ -76,14 +76,13 @@ export const useSubscription = () => {
       if (!subscription) {
         console.log("No active subscription found, returning free tier");
         const now = new Date();
-        // Return free tier subscription with appropriate dates
         return {
           id: "free-tier",
           user_id: user.id,
           plan_name: "Free",
           status: "active" as const,
           current_period_start: now.toISOString(),
-          current_period_end: addMonths(now, 1).toISOString(), // Set next billing date to 1 month from now
+          current_period_end: addMonths(now, 1).toISOString(),
           stripe_subscription_id: null,
           stripe_customer_id: null,
           plan_limits: {
@@ -100,9 +99,9 @@ export const useSubscription = () => {
       console.log("Active subscription found:", subscription);
       return subscription as Subscription;
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    staleTime: 1000 * 60 * 60, // Cache for 1 hour instead of 5 minutes
+    refetchOnMount: false, // Don't refetch on mount
+    refetchOnWindowFocus: false, // Don't refetch on window focus
     retry: 3,
   });
 };
