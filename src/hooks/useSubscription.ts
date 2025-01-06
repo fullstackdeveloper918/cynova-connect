@@ -40,6 +40,8 @@ export const useSubscription = () => {
         throw error;
       }
 
+      console.log("Subscription data:", data);
+
       // If no subscription is found, return a default free tier subscription
       if (!data) {
         console.log("No subscription found, returning free tier");
@@ -63,7 +65,6 @@ export const useSubscription = () => {
         } as Subscription;
       }
 
-      console.log("Subscription found:", data);
       return data as Subscription;
     },
     enabled: !!user?.id,

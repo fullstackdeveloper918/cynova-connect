@@ -102,8 +102,13 @@ const Plans = () => {
 
   const handleSubscribe = async (plan: typeof plans[0]) => {
     try {
+      if (!subscription) {
+        console.error("No subscription data available");
+        return;
+      }
+
       // Check if user is already subscribed to this plan
-      if (subscription?.plan_name === plan.name && subscription?.status === 'active') {
+      if (subscription.plan_name === plan.name && subscription.status === 'active') {
         toast.error("You are already subscribed to this plan");
         return;
       }
@@ -115,7 +120,7 @@ const Plans = () => {
         body: { 
           priceId, 
           mode: 'subscription',
-          currentPlan: subscription?.plan_name
+          currentPlan: subscription.plan_name
         }
       });
 
@@ -147,7 +152,7 @@ const Plans = () => {
         
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-primary mb-4">Choose Your Plan</h1>
-          {!isSubscriptionLoading && subscription?.status === 'active' && (
+          {!isSubscriptionLoading && subscription && subscription.status === 'active' && (
             <p className="text-lg text-muted-foreground mb-4">
               Current plan: {subscription.plan_name}
             </p>
