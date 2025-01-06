@@ -33,6 +33,15 @@ export const routes = [
     element: <Signup />,
   },
   {
+    path: "/reset-password",
+    element: (
+      <PlaceholderPage
+        title="Reset Password"
+        description="Please check your email for the password reset link."
+      />
+    ),
+  },
+  {
     path: "/dashboard",
     element: <UserDashboard />,
   },
