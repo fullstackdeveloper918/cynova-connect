@@ -8,14 +8,26 @@ export const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoading && role !== "admin") {
-      toast.error("You don't have permission to access the admin panel");
-      navigate("/dashboard");
-    }
+    const checkAdminAccess = async () => {
+      // Wait for role to be loaded
+      if (!isLoading && role !== "admin") {
+        console.log("User role:", role); // Debug log
+        toast.error("You don't have permission to access the admin panel");
+        navigate("/dashboard");
+      }
+    };
+
+    checkAdminAccess();
   }, [role, navigate, isLoading]);
 
-  // Don't render anything while checking the role
-  if (isLoading) return null;
+  // Show loading state while checking role
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
   
   // Only render children if user is admin
   if (role !== "admin") return null;

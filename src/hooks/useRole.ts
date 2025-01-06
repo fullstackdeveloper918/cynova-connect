@@ -10,6 +10,8 @@ export const useRole = () => {
   return useQuery({
     queryKey: ['role', user?.id],
     queryFn: async () => {
+      console.log("Fetching role for user:", user?.id); // Debug log
+      
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -21,6 +23,7 @@ export const useRole = () => {
         return 'user' as UserRole; // Default to user role if there's an error
       }
 
+      console.log("Role data:", data); // Debug log
       return (data?.role || 'user') as UserRole;
     },
     enabled: !!user?.id,
