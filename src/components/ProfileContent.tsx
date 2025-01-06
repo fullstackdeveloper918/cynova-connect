@@ -1,12 +1,14 @@
 import { useState } from "react";
+import { Settings, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
-import { User, Lock, CreditCard, Shield, Users, Settings } from "lucide-react";
 import { useUser, useUpdateUser } from "@/hooks/useUser";
 import { useRole } from "@/hooks/useRole";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
+import { PersonalInfoCard } from "./profile/PersonalInfoCard";
+import { SecurityCard } from "./profile/SecurityCard";
+import { SubscriptionCard } from "./profile/SubscriptionCard";
 
 export const ProfileContent = () => {
   const { data: user } = useUser();
@@ -67,99 +69,24 @@ export const ProfileContent = () => {
         </TabsList>
 
         <TabsContent value="profile" className="space-y-8">
-          <Card className="p-6">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="bg-primary/10 p-4 rounded-full">
-                <User className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold">Personal Information</h2>
-                <p className="text-muted-foreground">Update your personal details</p>
-              </div>
-            </div>
-            
-            <form onSubmit={handleUpdateProfile} className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Name</label>
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Email</label>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Role</label>
-                <div className="flex items-center gap-2 mt-1">
-                  <Shield className="w-4 h-4 text-primary" />
-                  <span className="capitalize">{role || 'user'}</span>
-                  {role === 'admin' && (
-                    <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                      Full Access
-                    </span>
-                  )}
-                </div>
-              </div>
-              <Button type="submit">Update Profile</Button>
-            </form>
-          </Card>
+          <PersonalInfoCard
+            name={name}
+            email={email}
+            role={role}
+            onNameChange={setName}
+            onEmailChange={setEmail}
+            onSubmit={handleUpdateProfile}
+          />
 
-          <Card className="p-6">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="bg-primary/10 p-4 rounded-full">
-                <Lock className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold">Password</h2>
-                <p className="text-muted-foreground">Change your password</p>
-              </div>
-            </div>
-            
-            <form onSubmit={handleUpdatePassword} className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Current Password</label>
-                <Input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">New Password</label>
-                <Input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <Button type="submit">Update Password</Button>
-            </form>
-          </Card>
+          <SecurityCard
+            currentPassword={currentPassword}
+            newPassword={newPassword}
+            onCurrentPasswordChange={setCurrentPassword}
+            onNewPasswordChange={setNewPassword}
+            onSubmit={handleUpdatePassword}
+          />
 
-          <Card className="p-6">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="bg-primary/10 p-4 rounded-full">
-                <CreditCard className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold">Subscription</h2>
-                <p className="text-muted-foreground">Current plan: Pro</p>
-              </div>
-            </div>
-            <Button variant="outline" onClick={() => window.location.href = '/plans'}>
-              Upgrade Plan
-            </Button>
-          </Card>
+          <SubscriptionCard />
         </TabsContent>
 
         <TabsContent value="usage" className="space-y-4">
