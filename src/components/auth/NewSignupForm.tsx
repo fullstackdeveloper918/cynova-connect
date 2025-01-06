@@ -22,7 +22,7 @@ export const NewSignupForm = () => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase.auth.signUp({
+      const { data: { user }, error } = await supabase.auth.signUp({
         email,
         password,
       });
@@ -31,7 +31,7 @@ export const NewSignupForm = () => {
         throw error;
       }
 
-      if (data) {
+      if (user) {
         toast.success("Check your email for the confirmation link!");
         navigate("/login");
       }
