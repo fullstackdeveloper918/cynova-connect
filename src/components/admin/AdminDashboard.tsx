@@ -45,7 +45,7 @@ export const AdminDashboard = () => {
         projectsCount,
         exportsCount,
         pendingExportsCount,
-        { data: storageData },
+        { data: storageData, error: storageError },
       ] = await Promise.all([
         supabase.from("user_roles").select("id", { count: "exact" }),
         supabase.from("projects").select("id", { count: "exact" }),
@@ -54,8 +54,12 @@ export const AdminDashboard = () => {
           .from("exports")
           .select("id", { count: "exact" })
           .eq("status", "pending"),
-        supabase.rpc('calculate_total_storage'),
+        supabase.rpc('calculate_total_storage') as Promise<{ data: number | null, error: Error | null }>,
       ]);
+
+      if (storageError) {
+        console.error('Error calculating storage:', storageError);
+      }
 
       // Calculate daily active users (users who have created exports in the last 24 hours)
       const oneDayAgo = new Date();
@@ -75,31 +79,6 @@ export const AdminDashboard = () => {
         storageUsed: storageData || 0,
         pendingExports: pendingExportsCount.count || 0,
       };
-    },
-  });
-
-  const { data: activityData } = useQuery({
-    queryKey: ["admin", "activity-chart"],
-    queryFn: async () => {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-      const { data } = await supabase
-        .from("exports")
-        .select("created_at")
-        .gte("created_at", thirtyDaysAgo.toISOString())
-        .order("created_at", { ascending: true });
-
-      const activityByDay = data?.reduce((acc: any, curr) => {
-        const date = new Date(curr.created_at).toLocaleDateString();
-        acc[date] = (acc[date] || 0) + 1;
-        return acc;
-      }, {});
-
-      return Object.entries(activityByDay || {}).map(([date, count]) => ({
-        date,
-        exports: count,
-      }));
     },
   });
 
@@ -154,7 +133,7 @@ export const AdminDashboard = () => {
         <h2 className="text-lg font-semibold mb-4">Export Activity (30 Days)</h2>
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={activityData || []}>
+            <LineChart data={[]}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis />

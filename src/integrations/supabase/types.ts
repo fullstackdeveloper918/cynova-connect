@@ -463,6 +463,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_total_storage: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       cleanup_expired_videos: {
         Args: Record<PropertyKey, never>
         Returns: undefined
