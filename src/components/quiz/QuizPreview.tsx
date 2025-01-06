@@ -27,22 +27,21 @@ export const QuizPreview = ({
   const [showAnswers, setShowAnswers] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [previewAudioUrl, setPreviewAudioUrl] = useState<string | null>(null);
-  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
 
   const currentQuestion = questions[currentQuestionIndex];
 
+  // Reset states when playing state changes
   useEffect(() => {
     if (!isPlaying) {
       setShowAnswers(false);
       setPreviewAudioUrl(null);
-      setIsAudioPlaying(false);
       return;
     }
 
     const playQuestion = async () => {
       setShowAnswers(false);
-      setIsAudioPlaying(false);
+      setIsAudioLoading(true);
       await generateAudioNarration();
     };
 
@@ -59,6 +58,7 @@ export const QuizPreview = ({
     }`;
 
     try {
+      console.log("Generating audio for question:", questionText);
       const { data, error } = await supabase.functions.invoke("generate-video-preview", {
         body: { 
           script: questionText,
@@ -70,19 +70,20 @@ export const QuizPreview = ({
       if (error) throw error;
       
       if (data.previewUrl?.audioUrl) {
+        console.log("Audio URL received:", data.previewUrl.audioUrl);
         setPreviewAudioUrl(data.previewUrl.audioUrl);
-        setIsAudioPlaying(true);
       }
     } catch (error) {
       console.error("Error generating audio narration:", error);
       setIsPlaying(false);
+    } finally {
+      setIsAudioLoading(false);
     }
   };
 
   const handleQuestionChange = (direction: 'next' | 'prev') => {
     setShowAnswers(false);
     setPreviewAudioUrl(null);
-    setIsAudioPlaying(false);
     setIsPlaying(false);
     if (direction === 'next') {
       setCurrentQuestionIndex(Math.min(questions.length - 1, currentQuestionIndex + 1));
@@ -93,6 +94,20 @@ export const QuizPreview = ({
 
   const handlePlay = () => {
     setIsPlaying(!isPlaying);
+  };
+
+  const handleAudioEnd = () => {
+    console.log("Audio ended, showing answers");
+    setShowAnswers(true);
+    // Wait for 3 seconds after showing answers before moving to next question
+    setTimeout(() => {
+      if (currentQuestionIndex < questions.length - 1) {
+        handleQuestionChange('next');
+        setIsPlaying(true); // Keep playing for next question
+      } else {
+        setIsPlaying(false); // Stop at the end
+      }
+    }, 3000);
   };
 
   return (
@@ -114,7 +129,8 @@ export const QuizPreview = ({
               {currentQuestion && (
                 <QuestionDisplay 
                   question={currentQuestion} 
-                  showAnswers={showAnswers} 
+                  showAnswers={showAnswers}
+                  isLoading={isAudioLoading}
                 />
               )}
             </div>
@@ -129,25 +145,14 @@ export const QuizPreview = ({
           </div>
         )}
 
-        {/* Audio elements */}
+        {/* Audio element */}
         {previewAudioUrl && (
           <audio
+            key={previewAudioUrl} // Force new audio element on URL change
             src={previewAudioUrl}
             autoPlay
             className="hidden"
-            onPlay={() => setIsAudioPlaying(true)}
-            onEnded={() => {
-              setIsAudioPlaying(false);
-              setShowAnswers(true);
-              // Wait for 3 seconds after showing answers before moving to next question
-              setTimeout(() => {
-                if (currentQuestionIndex < questions.length - 1) {
-                  handleQuestionChange('next');
-                } else {
-                  setIsPlaying(false);
-                }
-              }, 3000);
-            }}
+            onEnded={handleAudioEnd}
           />
         )}
       </div>

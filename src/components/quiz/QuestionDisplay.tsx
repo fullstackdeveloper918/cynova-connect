@@ -3,9 +3,10 @@ import { QuizQuestion } from "./QuizVideoEditor";
 interface QuestionDisplayProps {
   question: QuizQuestion;
   showAnswers: boolean;
+  isLoading?: boolean;
 }
 
-export const QuestionDisplay = ({ question, showAnswers }: QuestionDisplayProps) => {
+export const QuestionDisplay = ({ question, showAnswers, isLoading }: QuestionDisplayProps) => {
   if (!question) return null;
 
   return (
@@ -19,7 +20,7 @@ export const QuestionDisplay = ({ question, showAnswers }: QuestionDisplayProps)
               <div
                 key={index}
                 className={`p-3 rounded-lg transition-colors text-sm ${
-                  option === question.correctAnswer
+                  showAnswers && option === question.correctAnswer
                     ? "bg-green-500/50"
                     : "bg-white/10"
                 }`}
@@ -34,7 +35,7 @@ export const QuestionDisplay = ({ question, showAnswers }: QuestionDisplayProps)
               <div
                 key={option}
                 className={`px-6 py-3 rounded-lg transition-colors ${
-                  option === question.correctAnswer
+                  showAnswers && option === question.correctAnswer
                     ? "bg-green-500/50"
                     : "bg-white/10"
                 }`}
@@ -45,6 +46,10 @@ export const QuestionDisplay = ({ question, showAnswers }: QuestionDisplayProps)
           </div>
         )}
       </div>
+
+      {isLoading && (
+        <div className="text-sm text-gray-400">Loading question...</div>
+      )}
     </div>
   );
 };
