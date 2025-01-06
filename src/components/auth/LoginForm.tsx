@@ -17,11 +17,6 @@ export const LoginForm = () => {
     console.log("Auth error details:", error);
     
     if (error instanceof AuthApiError) {
-      // Check for provider disabled error
-      if (error.status === 422 && error.message.includes("Email logins are disabled")) {
-        return "Email/password login is currently disabled. Please contact support or try using social login.";
-      }
-      
       // Check for invalid credentials
       if (error.message.includes("Invalid login credentials")) {
         return "Invalid email or password. Please check your credentials and try again.";
@@ -46,8 +41,7 @@ export const LoginForm = () => {
       console.error("Unexpected auth error:", {
         status: error.status,
         message: error.message,
-        name: error.name,
-        code: error.message
+        name: error.name
       });
     }
     
