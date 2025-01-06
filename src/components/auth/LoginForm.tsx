@@ -20,6 +20,9 @@ export const LoginForm = () => {
           if (error.message.includes("Invalid login credentials")) {
             return "Invalid email or password. Please check your credentials and try again.";
           }
+          if (error.message.includes("Email not confirmed")) {
+            return "Please verify your email address before signing in.";
+          }
           break;
         case 422:
           return "Invalid email format. Please enter a valid email address.";
@@ -27,18 +30,22 @@ export const LoginForm = () => {
           return "Too many login attempts. Please try again later.";
       }
     }
-    return error.message;
+    return "An unexpected error occurred. Please try again.";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    if (!email.trim() || !password.trim()) {
+      toast.error("Please enter both email and password");
+      return;
+    }
     
+    setIsLoading(true);
     try {
-      console.log("Attempting login with email:", email);
+      console.log("Attempting login with email:", email.trim());
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
-        password
+        password: password.trim()
       });
 
       if (error) {
@@ -62,7 +69,7 @@ export const LoginForm = () => {
 
   const handleForgotPassword = async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!email) {
+    if (!email.trim()) {
       toast.error("Please enter your email address first");
       return;
     }

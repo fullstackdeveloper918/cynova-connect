@@ -7,6 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCredits } from "@/hooks/useCredits";
 import { useSubscription } from "@/hooks/useSubscription";
+import type { Subscription } from "@/integrations/supabase/types";
 
 interface VideoSegment {
   start: number;
@@ -79,8 +80,8 @@ export const VideoSplitter = () => {
       }
 
       // Check plan limits
-      const maxDuration = subscription?.plan_limits?.max_duration_minutes || 30;
-      if (file.size > maxDuration * 60 * 1024 * 1024) { // Rough estimate: 1MB per second
+      const maxDuration = (subscription as Subscription)?.plan_limits?.max_duration_minutes || 30;
+      if (file.size > maxDuration * 60 * 1024 * 1024) {
         toast({
           title: "Video too long",
           description: `Your plan allows videos up to ${maxDuration} minutes`,

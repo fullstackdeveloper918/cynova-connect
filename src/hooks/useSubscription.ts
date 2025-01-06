@@ -1,39 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useUser } from "./useUser";
 
 export const useSubscription = () => {
-  const { data: user, isLoading: isLoadingUser } = useUser();
+  const { data: session } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
 
   return useQuery({
-    queryKey: ['subscription', user?.id],
+    queryKey: ['subscription', userId],
     queryFn: async () => {
-      console.log("Fetching subscription for user:", user?.id);
+      if (!userId) return null;
       
-      if (!user?.id || user.id === 'default-id') {
-        console.log("No valid user ID available");
-        return null;
-      }
-
       const { data, error } = await supabase
         .from('subscriptions')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (error) {
-        console.error("Error fetching subscriptions:", error);
-        throw error;
-      }
-
+      if (error) throw error;
       return data;
     },
-    enabled: !isLoadingUser && !!user?.id && user.id !== 'default-id',
-    staleTime: 1000 * 60 * 60, // Cache for 1 hour
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
+    enabled: !!userId,
   });
 };
