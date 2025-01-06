@@ -80,8 +80,8 @@ export const DashboardContent = () => {
   const { data: user, isLoading: isLoadingUser } = useUser();
   const { data: subscription, isLoading: isLoadingSubscription, error: subscriptionError } = useSubscription();
 
-  // Special case for test email
-  const userName = user?.email === 'inke2@hotmail.com' ? 'Test User' : user?.user_metadata?.name || user?.name || 'User';
+  // Get user name from metadata, fallback to email, then to 'User'
+  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'User';
 
   const handleLogout = async () => {
     try {
