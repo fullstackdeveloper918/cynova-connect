@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { Features } from "@/components/Features";
 import { HowItWorks } from "@/components/HowItWorks";
@@ -6,7 +8,8 @@ import { Footer } from "@/components/Footer";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MessageSquare, FileVideo, Scissors, Mic, Sparkles } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const plans = [
   {
@@ -44,6 +47,46 @@ const plans = [
 
 const Index = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN') {
+        navigate('/dashboard/projects');
+      } else if (event === 'SIGNED_OUT') {
+        navigate('/');
+      } else if (event === 'TOKEN_REFRESHED') {
+        console.log('Token refreshed successfully');
+      } else if (event === 'USER_UPDATED') {
+        console.log('User updated');
+      }
+    });
+
+    // Check initial session
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error checking session:', error);
+          toast.error('Session error. Please try logging in again.');
+          navigate('/login');
+          return;
+        }
+        if (session) {
+          navigate('/dashboard/projects');
+        }
+      } catch (error) {
+        console.error('Unexpected error checking session:', error);
+        toast.error('An unexpected error occurred. Please try again.');
+      }
+    };
+
+    checkSession();
+
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   return (
     <div className="relative max-w-[1920px] mx-auto">
