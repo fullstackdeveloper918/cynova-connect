@@ -54,7 +54,7 @@ export const AdminDashboard = () => {
           .from("exports")
           .select("id", { count: "exact" })
           .eq("status", "pending"),
-        supabase.rpc('calculate_total_storage') as Promise<{ data: number | null, error: Error | null }>,
+        supabase.rpc('calculate_total_storage'),
       ]);
 
       if (storageError) {
@@ -69,7 +69,7 @@ export const AdminDashboard = () => {
         .from("exports")
         .select("user_id", { count: "exact", head: true })
         .gte("created_at", oneDayAgo.toISOString())
-        .not("user_id", "eq", null);
+        .not("user_id", "is", null);
 
       return {
         totalUsers: usersCount.count || 0,
