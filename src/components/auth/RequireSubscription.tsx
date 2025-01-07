@@ -49,22 +49,29 @@ export const RequireSubscription = ({ children }: RequireSubscriptionProps) => {
     );
   }
 
-  // If not subscribed, show upgrade message
+  // If not subscribed, show upgrade message with transparent overlay
   if (!isSubscribed) {
     return (
-      <div className="flex flex-col items-center justify-center space-y-4 p-8 backdrop-blur-xl bg-white/5 border border-white/10 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.3)] rounded-lg">
-        <Alert variant="destructive" className="max-w-md bg-transparent border-red-500/20">
-          <Crown className="h-4 w-4" />
-          <AlertDescription>
-            This feature is only available for premium users. Please upgrade your plan to access this feature.
-          </AlertDescription>
-        </Alert>
-        <Button 
-          onClick={() => navigate("/plans")} 
-          className="mt-4"
-        >
-          Upgrade Now
-        </Button>
+      <div className="relative">
+        <div className="opacity-30 pointer-events-none">
+          {children}
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm">
+          <div className="bg-background/20 border border-white/10 rounded-lg p-8 shadow-lg backdrop-blur-md">
+            <Alert variant="destructive" className="max-w-md bg-transparent border-red-500/20">
+              <Crown className="h-4 w-4" />
+              <AlertDescription>
+                This feature is only available for premium users. Please upgrade your plan to access this feature.
+              </AlertDescription>
+            </Alert>
+            <Button 
+              onClick={() => navigate("/plans")} 
+              className="mt-4 w-full"
+            >
+              Upgrade Now
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
