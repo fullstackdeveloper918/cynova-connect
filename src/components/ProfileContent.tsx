@@ -121,11 +121,33 @@ export const ProfileContent = () => {
       </div>
       
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="mb-8 w-full flex overflow-x-auto">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="billing">Billing</TabsTrigger>
-          <TabsTrigger value="usage">Usage</TabsTrigger>
-          {role === 'admin' && <TabsTrigger value="admin">Admin Tools</TabsTrigger>}
+        <TabsList className="mb-8 w-full flex overflow-x-auto bg-transparent border-b">
+          <TabsTrigger 
+            value="profile" 
+            className="flex-1 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-8"
+          >
+            Profile
+          </TabsTrigger>
+          <TabsTrigger 
+            value="billing"
+            className="flex-1 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-8"
+          >
+            Billing
+          </TabsTrigger>
+          <TabsTrigger 
+            value="usage"
+            className="flex-1 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-8"
+          >
+            Usage
+          </TabsTrigger>
+          {role === 'admin' && (
+            <TabsTrigger 
+              value="admin"
+              className="flex-1 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-8"
+            >
+              Admin Tools
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="profile" className="space-y-8">
