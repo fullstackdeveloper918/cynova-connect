@@ -14,19 +14,18 @@ export const RequireSubscription = ({ children }: RequireSubscriptionProps) => {
   const navigate = useNavigate();
   const { data: subscription, isLoading, error } = useSubscription();
 
+  const isSubscribed = !isLoading && subscription?.plan_name !== "Free";
+
   useEffect(() => {
-    if (!isLoading && !error) {
-      const isSubscribed = subscription?.plan_name !== "Free";
-      if (!isSubscribed) {
-        toast({
-          title: "Subscription Required",
-          description: "This feature requires a paid subscription",
-          variant: "destructive",
-        });
-        navigate("/plans");
-      }
+    if (!isLoading && !error && !isSubscribed) {
+      toast({
+        title: "Subscription Required",
+        description: "This feature requires a paid subscription",
+        variant: "destructive",
+      });
+      navigate("/plans");
     }
-  }, [subscription, isLoading, error, navigate]);
+  }, [isLoading, error, isSubscribed, navigate]);
 
   if (isLoading) {
     return (
@@ -35,8 +34,6 @@ export const RequireSubscription = ({ children }: RequireSubscriptionProps) => {
       </div>
     );
   }
-
-  const isSubscribed = subscription?.plan_name !== "Free";
 
   if (!isSubscribed) {
     return (

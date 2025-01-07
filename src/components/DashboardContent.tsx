@@ -57,6 +57,7 @@ export const DashboardContent = () => {
 
       <UpdatesSection />
 
+      {/* Wrap FeatureGrid with RequireSubscription */}
       <RequireSubscription>
         <FeatureGrid isFreePlan={isFreePlan} />
       </RequireSubscription>
