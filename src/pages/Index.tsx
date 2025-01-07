@@ -109,17 +109,19 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Special Offer Banner */}
+        {/* Star Rating */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="max-w-4xl mx-auto mt-12 px-4"
+          className="max-w-4xl mx-auto mt-12 px-4 text-center"
         >
-          <div className="bg-accent/50 backdrop-blur-sm border border-accent rounded-lg p-4 text-center">
-            <p className="text-accent-foreground">
-              <span className="font-semibold">Special Launch Offer:</span> Get 50% off on all premium plans for a limited time!
-            </p>
+          <div className="flex justify-center items-center space-x-1 text-primary text-2xl font-medium">
+            <Star className="w-8 h-8 fill-primary" />
+            <Star className="w-8 h-8 fill-primary" />
+            <Star className="w-8 h-8 fill-primary" />
+            <Star className="w-8 h-8 fill-primary" />
+            <Star className="w-8 h-8 fill-primary" />
           </div>
         </motion.div>
       </section>
