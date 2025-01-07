@@ -69,7 +69,7 @@ export const ProfileContent = () => {
       );
     }
 
-    const limits = subscription.plan_limits || {};
+    const limits = subscription.plan_limits || { max_videos_per_month: 0, max_duration_minutes: 0 };
     return (
       <Card className="p-6">
         <h2 className="text-xl font-semibold mb-6">Resource Usage</h2>
