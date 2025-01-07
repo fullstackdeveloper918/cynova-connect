@@ -23,9 +23,10 @@ export const RequireSubscription = ({ children }: RequireSubscriptionProps) => {
           description: "This feature requires a paid subscription",
           variant: "destructive",
         });
+        navigate("/plans");
       }
     }
-  }, [subscription, isLoading, error]);
+  }, [subscription, isLoading, error, navigate]);
 
   if (isLoading) {
     return (

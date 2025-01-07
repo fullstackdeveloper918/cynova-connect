@@ -18,7 +18,6 @@ export const DashboardContent = () => {
     error: subscriptionError 
   } = useSubscription();
 
-  // Get user name from metadata
   const userName = user?.name || 'User';
   const userEmail = user?.email;
   const isFreePlan = !isLoadingSubscription && subscription?.plan_name === "Free";
