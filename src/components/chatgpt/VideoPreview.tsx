@@ -153,7 +153,7 @@ export const VideoPreview = ({
   return (
     <div className="space-y-4">
       <div 
-        className="aspect-[9/16] w-full max-w-[450px] mx-auto rounded-lg bg-gray-50 overflow-hidden relative cursor-pointer group"
+        className="w-full max-w-[350px] mx-auto rounded-lg overflow-hidden relative cursor-pointer group shadow-lg"
         onClick={handlePlayPause}
       >
         {previewUrl ? (
