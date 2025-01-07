@@ -4,6 +4,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Crown } from "lucide-react";
+import { toast } from "sonner";
 
 interface RequireSubscriptionProps {
   children: React.ReactNode;
@@ -11,9 +12,16 @@ interface RequireSubscriptionProps {
 
 export const RequireSubscription = ({ children }: RequireSubscriptionProps) => {
   const navigate = useNavigate();
-  const { data: subscription, isLoading } = useSubscription();
+  const { data: subscription, isLoading, error } = useSubscription();
 
-  const isSubscribed = subscription?.plan_name !== "Free";
+  useEffect(() => {
+    if (!isLoading && !error) {
+      const isSubscribed = subscription?.plan_name !== "Free";
+      if (!isSubscribed) {
+        toast.error("This feature requires a paid subscription");
+      }
+    }
+  }, [subscription, isLoading, error]);
 
   if (isLoading) {
     return (
@@ -22,6 +30,8 @@ export const RequireSubscription = ({ children }: RequireSubscriptionProps) => {
       </div>
     );
   }
+
+  const isSubscribed = subscription?.plan_name !== "Free";
 
   if (!isSubscribed) {
     return (
@@ -32,7 +42,10 @@ export const RequireSubscription = ({ children }: RequireSubscriptionProps) => {
             This feature is only available for premium users. Please upgrade your plan to access this feature.
           </AlertDescription>
         </Alert>
-        <Button onClick={() => navigate("/plans")} className="mt-4">
+        <Button 
+          onClick={() => navigate("/plans")} 
+          className="mt-4 bg-primary hover:bg-primary/90"
+        >
           Upgrade Now
         </Button>
       </div>

@@ -48,7 +48,7 @@ export const routes = [
   },
   {
     path: "/dashboard/editor",
-    element: <Editor />,
+    element: <RequireSubscription><Editor /></RequireSubscription>,
   },
   {
     path: "/plans",
@@ -60,65 +60,52 @@ export const routes = [
   },
   {
     path: "/dashboard/projects",
-    element: <Projects />,
+    element: <RequireSubscription><Projects /></RequireSubscription>,
   },
   {
     path: "/dashboard/exports",
-    element: <Exports />,
+    element: <RequireSubscription><Exports /></RequireSubscription>,
   },
   {
     path: "/dashboard/chatgpt",
-    element: <ChatGPTVideo />,
+    element: <RequireSubscription><ChatGPTVideo /></RequireSubscription>,
   },
   {
     path: "/dashboard/faketext",
-    element: <FakeTextVideo />,
+    element: <RequireSubscription><FakeTextVideo /></RequireSubscription>,
   },
   {
     path: "/dashboard/reddit",
-    element: <RedditVideo />,
+    element: <RequireSubscription><RedditVideo /></RequireSubscription>,
   },
   {
     path: "/dashboard/split",
-    element: <SplitVideo />,
+    element: <RequireSubscription><SplitVideo /></RequireSubscription>,
   },
   {
     path: "/dashboard/voiceover",
-    element: (
+    element: <RequireSubscription>
       <PlaceholderPage
         title="Voiceover Videos"
         description="Add professional AI voiceovers to your content."
       />
-    ),
+    </RequireSubscription>,
   },
   {
     path: "/dashboard/would-you-rather",
-    element: <WouldYouRatherVideo />,
+    element: <RequireSubscription><WouldYouRatherVideo /></RequireSubscription>,
   },
   {
     path: "/dashboard/quiz",
-    element: <Quiz />,
+    element: <RequireSubscription><Quiz /></RequireSubscription>,
   },
   {
     path: "/dashboard/tiktok",
-    element: <TikTokDownloader />,
+    element: <RequireSubscription><TikTokDownloader /></RequireSubscription>,
   },
   {
     path: "/dashboard/youtube",
-    element: <YouTubeDownloader />,
-  },
-  {
-    path: "/dashboard/support",
-    element: (
-      <PlaceholderPage
-        title="Support"
-        description="Get help and support for all Cynova features and services."
-      />
-    ),
-  },
-  {
-    path: "/dashboard/affiliate",
-    element: <Affiliate />,
+    element: <RequireSubscription><YouTubeDownloader /></RequireSubscription>,
   },
   {
     path: "/admin",

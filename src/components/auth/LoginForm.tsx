@@ -27,6 +27,11 @@ export const LoginForm = () => {
         return "Please verify your email address before signing in.";
       }
       
+      // Check for user not found
+      if (error.message.includes("user_not_found")) {
+        return "No user found with these credentials.";
+      }
+      
       // Handle rate limiting
       if (error.status === 429) {
         return "Too many login attempts. Please try again later.";
@@ -76,7 +81,7 @@ export const LoginForm = () => {
           navigate("/admin");
           toast.success("Welcome back, Admin!");
         } else {
-          navigate("/dashboard/projects");
+          navigate("/dashboard"); // Changed from /dashboard/projects to /dashboard
           toast.success("Successfully logged in!");
         }
       }

@@ -7,6 +7,7 @@ import { useUser } from "@/hooks/useUser";
 import { useSubscription } from "@/hooks/useSubscription";
 import { WelcomeHeader } from "./dashboard/WelcomeHeader";
 import { FeatureGrid } from "./dashboard/FeatureGrid";
+import { RequireSubscription } from "./auth/RequireSubscription";
 
 export const DashboardContent = () => {
   const navigate = useNavigate();
@@ -57,7 +58,9 @@ export const DashboardContent = () => {
 
       <UpdatesSection />
 
-      <FeatureGrid isFreePlan={isFreePlan} />
+      <RequireSubscription>
+        <FeatureGrid isFreePlan={isFreePlan} />
+      </RequireSubscription>
     </div>
   );
 };
