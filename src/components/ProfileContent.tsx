@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { useUser, useUpdateUser } from "@/hooks/useUser";
 import { useRole } from "@/hooks/useRole";
+import { useSubscription } from "@/hooks/useSubscription";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { PersonalInfoCard } from "./profile/PersonalInfoCard";
