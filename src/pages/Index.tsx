@@ -3,45 +3,31 @@ import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { Features } from "@/components/Features";
 import { HowItWorks } from "@/components/HowItWorks";
-import { Hero } from "@/components/Hero";
+import { Newsletter } from "@/components/Newsletter";
 import { Footer } from "@/components/Footer";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, MessageSquare, FileVideo, Scissors, Mic, Sparkles } from "lucide-react";
+import { ArrowRight, Star, Quote } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
-const plans = [
+const testimonials = [
   {
-    name: "Starter",
-    price: 19,
-    features: [
-      "50 AI videos per month",
-      "40 minutes of exporting",
-      "30 minutes of voiceover",
-      "100 AI Images",
-    ],
+    name: "Sarah Johnson",
+    role: "Content Creator",
+    quote: "This platform has revolutionized how I create videos. The AI features are incredible!",
+    rating: 5,
   },
   {
-    name: "Pro",
-    price: 29,
-    popular: true,
-    features: [
-      "100 AI videos per month",
-      "2 hours of export",
-      "150 voiceover minutes",
-      "300 AI Images",
-    ],
+    name: "Michael Chen",
+    role: "YouTuber",
+    quote: "The automated video generation saves me hours of work. Absolutely worth it!",
+    rating: 5,
   },
   {
-    name: "Premium",
-    price: 49,
-    features: [
-      "200 AI videos per month",
-      "3 hours of export",
-      "200 voiceover minutes",
-      "500 AI Images",
-    ],
+    name: "Emma Davis",
+    role: "Marketing Manager",
+    quote: "Perfect for creating engaging social media content quickly and efficiently.",
+    rating: 5,
   },
 ];
 
@@ -52,136 +38,145 @@ const Index = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN') {
         navigate('/dashboard/projects');
-      } else if (event === 'SIGNED_OUT') {
-        navigate('/');
-      } else if (event === 'TOKEN_REFRESHED') {
-        console.log('Token refreshed successfully');
-      } else if (event === 'USER_UPDATED') {
-        console.log('User updated');
       }
     });
 
-    // Check initial session
     const checkSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Error checking session:', error);
-          toast.error('Session error. Please try logging in again.');
-          navigate('/login');
-          return;
-        }
         if (session) {
           navigate('/dashboard/projects');
         }
       } catch (error) {
-        console.error('Unexpected error checking session:', error);
-        toast.error('An unexpected error occurred. Please try again.');
+        console.error('Error checking session:', error);
       }
     };
 
     checkSession();
 
-    // Cleanup subscription
     return () => {
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, [navigate]);
 
   return (
     <div className="relative max-w-[1920px] mx-auto">
       <Navigation />
-      <Hero />
+      
+      {/* Hero Section */}
+      <section className="relative pt-32 pb-20 overflow-hidden bg-gradient-to-b from-accent/30 to-background">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
+            >
+              Create Engaging Videos with AI
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-xl md:text-2xl text-muted-foreground mb-8"
+            >
+              Transform your content into captivating videos using our AI-powered platform. No experience needed.
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center"
+            >
+              <Button 
+                size="lg" 
+                onClick={() => navigate("/signup")}
+                className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg"
+              >
+                Get Started Free
+                <ArrowRight className="ml-2" />
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => navigate("/plans")}
+                className="px-8 py-6 text-lg"
+              >
+                View Pricing
+              </Button>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Special Offer Banner */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="max-w-4xl mx-auto mt-12 px-4"
+        >
+          <div className="bg-accent/50 backdrop-blur-sm border border-accent rounded-lg p-4 text-center">
+            <p className="text-accent-foreground">
+              <span className="font-semibold">Special Launch Offer:</span> Get 50% off on all premium plans for a limited time!
+            </p>
+          </div>
+        </motion.div>
+      </section>
+
       <Features />
       <HowItWorks />
-      
-      {/* Plans Section */}
-      <section id="pricing-section" className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4 max-w-7xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <span className="text-primary font-medium mb-3 block">Pricing</span>
-            <h2 className="text-2xl md:text-3xl font-bold mb-3">Choose Your Plan</h2>
-            <p className="text-base text-muted-foreground">
-              Select the perfect plan for your content creation needs
-            </p>
-          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {plans.map((plan, index) => (
+      {/* Testimonials Section */}
+      <section className="py-20 bg-gradient-to-b from-background to-accent/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <motion.span
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="text-primary font-medium mb-4 block"
+            >
+              Testimonials
+            </motion.span>
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
+            >
+              What Our Users Say
+            </motion.h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
               <motion.div
-                key={plan.name}
+                key={testimonial.name}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className={`relative rounded-xl border ${
-                  plan.popular ? "border-primary shadow-lg" : "border-accent"
-                } bg-card p-6`}
+                className="bg-card p-6 rounded-xl shadow-lg border border-accent relative"
               >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium">
-                    Most Popular
-                  </div>
-                )}
-                <div className="text-center mb-4">
-                  <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
-                  <div className="text-3xl font-bold mb-2">
-                    ${plan.price}
-                    <span className="text-base text-muted-foreground">/month</span>
-                  </div>
-                </div>
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2 text-sm">
-                      <ArrowRight className="h-4 w-4 text-primary" />
-                      <span>{feature}</span>
-                    </li>
+                <Quote className="absolute top-4 right-4 h-8 w-8 text-accent opacity-50" />
+                <div className="flex items-center gap-2 mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-primary text-primary" />
                   ))}
-                </ul>
-                <Button
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                  onClick={() => navigate("/signup")}
-                >
-                  Get Started
-                </Button>
+                </div>
+                <p className="text-muted-foreground mb-4">{testimonial.quote}</p>
+                <div>
+                  <p className="font-semibold">{testimonial.name}</p>
+                  <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-b from-background to-accent">
-        <div className="container mx-auto px-4 text-center max-w-5xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-3xl mx-auto"
-          >
-            <h2 className="text-2xl md:text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Ready to Create Amazing Videos?
-            </h2>
-            <p className="text-base text-muted-foreground mb-6">
-              Join thousands of creators who are already using Cynova to create engaging content.
-            </p>
-            <Button
-              size="lg"
-              onClick={() => navigate("/signup")}
-              className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white px-6"
-            >
-              Get Started Now
-              <Sparkles className="ml-2 h-4 w-4" />
-            </Button>
-          </motion.div>
-        </div>
-      </section>
-
+      <Newsletter />
       <Footer />
     </div>
   );
