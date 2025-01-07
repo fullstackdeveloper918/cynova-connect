@@ -19,6 +19,7 @@ import WouldYouRatherVideo from "@/pages/WouldYouRatherVideo";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import UserManagement from "@/pages/admin/UserManagement";
 import Quiz from "@/pages/Quiz";
+import { RequireSubscription } from "@/components/auth/RequireSubscription";
 
 export const routes = [
   {

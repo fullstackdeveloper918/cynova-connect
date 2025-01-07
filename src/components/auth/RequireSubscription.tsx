@@ -4,7 +4,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Crown } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 
 interface RequireSubscriptionProps {
   children: React.ReactNode;
@@ -18,7 +18,11 @@ export const RequireSubscription = ({ children }: RequireSubscriptionProps) => {
     if (!isLoading && !error) {
       const isSubscribed = subscription?.plan_name !== "Free";
       if (!isSubscribed) {
-        toast.error("This feature requires a paid subscription");
+        toast({
+          title: "Subscription Required",
+          description: "This feature requires a paid subscription",
+          variant: "destructive",
+        });
       }
     }
   }, [subscription, isLoading, error]);
