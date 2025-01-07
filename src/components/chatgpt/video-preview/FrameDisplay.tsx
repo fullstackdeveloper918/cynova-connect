@@ -1,5 +1,4 @@
 import { Video } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 
 interface FrameDisplayProps {
   isLoading: boolean;
@@ -22,40 +21,6 @@ export const FrameDisplay = ({
   currentTime,
   onClick,
 }: FrameDisplayProps) => {
-  const imageRefs = useRef<HTMLImageElement[]>([]);
-  const [showResults, setShowResults] = useState(false);
-  const [timer, setTimer] = useState(2);
-
-  // Preload images
-  useEffect(() => {
-    frameUrls.forEach((url, index) => {
-      const img = new Image();
-      img.src = url;
-      imageRefs.current[index] = img;
-    });
-  }, [frameUrls]);
-
-  // Timer effect
-  useEffect(() => {
-    if (isPlaying && timer > 0) {
-      const interval = setInterval(() => {
-        setTimer((prev) => prev - 1);
-      }, 1000);
-
-      return () => clearInterval(interval);
-    } else if (timer === 0) {
-      setShowResults(true);
-    }
-  }, [isPlaying, timer]);
-
-  // Reset timer when video is restarted
-  useEffect(() => {
-    if (!isPlaying) {
-      setTimer(2);
-      setShowResults(false);
-    }
-  }, [isPlaying]);
-
   if (!frameUrls.length) {
     return (
       <div className="absolute inset-0 flex items-center justify-center">
@@ -63,11 +28,6 @@ export const FrameDisplay = ({
       </div>
     );
   }
-
-  // Split the caption into option A and option B
-  const options = currentCaption.split(" OR ");
-  const optionA = options[0]?.replace("Would you rather ", "");
-  const optionB = options[1]?.replace("?", "");
 
   return (
     <>
@@ -77,69 +37,25 @@ export const FrameDisplay = ({
         </div>
       ) : (
         <div className="relative w-full h-full">
-          {/* Split background with red top and blue bottom */}
-          <div className="absolute inset-0 flex flex-col">
-            <div className="flex-1 bg-[#ea384c] flex flex-col items-center justify-center p-4 space-y-4">
-              <div className="text-white text-xl font-medium text-center max-w-lg">
-                {optionA}
-              </div>
-              {/* Small image container for option A */}
-              <div className="w-24 h-24 relative overflow-hidden rounded-lg">
-                {frameUrls[currentFrameIndex] && (
-                  <img
-                    src={frameUrls[currentFrameIndex]}
-                    alt="Option A visualization"
-                    className="absolute inset-0 w-full h-full object-cover opacity-90"
-                  />
-                )}
-              </div>
-            </div>
-            <div className="flex-1 bg-[#0EA5E9] flex flex-col items-center justify-center p-4 space-y-4">
-              <div className="text-white text-xl font-medium text-center max-w-lg">
-                {optionB}
-              </div>
-              {/* Small image container for option B */}
-              <div className="w-24 h-24 relative overflow-hidden rounded-lg">
-                {frameUrls[currentFrameIndex] && (
-                  <img
-                    src={frameUrls[currentFrameIndex]}
-                    alt="Option B visualization"
-                    className="absolute inset-0 w-full h-full object-cover opacity-90"
-                  />
-                )}
-              </div>
+          {/* Main video frame */}
+          <div className="absolute inset-0">
+            {frameUrls[currentFrameIndex] && (
+              <img
+                src={frameUrls[currentFrameIndex]}
+                alt="Video frame"
+                className="w-full h-full object-cover"
+              />
+            )}
+          </div>
+
+          {/* Caption overlay */}
+          <div className="absolute bottom-16 left-0 right-0 p-4">
+            <div className="bg-black/50 text-white p-3 rounded-lg text-center mx-auto max-w-[80%]">
+              {currentCaption}
             </div>
           </div>
           
-          {/* Timer overlay */}
-          {isPlaying && timer > 0 && (
-            <div 
-              className="absolute inset-0 flex items-center justify-center bg-black/50"
-              style={{ zIndex: 2 }}
-            >
-              <div className="text-white text-6xl font-bold animate-pulse">
-                {timer}
-              </div>
-            </div>
-          )}
-
-          {/* Results overlay */}
-          {showResults && (
-            <div 
-              className="absolute inset-0 flex items-center justify-center bg-black/50"
-              style={{ zIndex: 2 }}
-            >
-              <div className="text-white text-4xl font-bold text-center space-y-4">
-                <div>Results</div>
-                <div className="text-2xl">
-                  Option A: 65%<br />
-                  Option B: 35%
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Controls overlay with highest z-index */}
+          {/* Controls overlay */}
           <div 
             className="absolute inset-0 flex flex-col justify-end p-4"
             style={{ zIndex: 3 }}
