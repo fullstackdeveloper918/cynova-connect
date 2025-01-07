@@ -101,7 +101,6 @@ export const VideoPreview = ({
         setCurrentTime(time);
         
         // Calculate which chunk should be shown based on current time
-        // Using duration to evenly space captions throughout the video
         const progress = time / duration;
         const chunkIndex = Math.min(
           Math.floor(progress * captionChunks.length),
@@ -153,8 +152,9 @@ export const VideoPreview = ({
   return (
     <div className="space-y-4">
       <div 
-        className="w-full max-w-[350px] mx-auto rounded-lg overflow-hidden relative cursor-pointer group shadow-lg"
+        className="w-full max-w-[350px] mx-auto rounded-lg overflow-hidden relative cursor-pointer group"
         onClick={handlePlayPause}
+        style={{ aspectRatio: '9/16' }}
       >
         {previewUrl ? (
           <>
