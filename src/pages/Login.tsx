@@ -22,7 +22,7 @@ const Login = () => {
             navigate("/admin");
             return;
           }
-          navigate("/dashboard/projects");
+          navigate("/dashboard");
         }
       } catch (error) {
         console.error("Error checking session:", error);

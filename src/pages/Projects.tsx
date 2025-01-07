@@ -13,6 +13,7 @@ import {
 import { SidebarNavigation } from "@/components/sidebar/SidebarNavigation";
 import { ProjectsGrid } from "@/components/ProjectsGrid";
 import { useToast } from "@/hooks/use-toast";
+import { RequireSubscription } from "@/components/auth/RequireSubscription";
 
 const Projects = () => {
   const navigate = useNavigate();
@@ -70,57 +71,59 @@ const Projects = () => {
             <SidebarTrigger />
           </div>
           
-          <div className="p-6">
-            <div className="max-w-7xl mx-auto space-y-8">
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <h1 className="text-3xl font-bold tracking-tight">My Projects</h1>
-                  <p className="text-muted-foreground">
-                    Manage and organize all your Cynova video projects
-                  </p>
+          <RequireSubscription>
+            <div className="p-6">
+              <div className="max-w-7xl mx-auto space-y-8">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <h1 className="text-3xl font-bold tracking-tight">My Projects</h1>
+                    <p className="text-muted-foreground">
+                      Manage and organize all your Cynova video projects
+                    </p>
+                  </div>
+                  <Button onClick={() => navigate("/dashboard/editor")} className="hidden sm:flex">
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Project
+                  </Button>
                 </div>
-                <Button onClick={() => navigate("/dashboard/editor")} className="hidden sm:flex">
+
+                {/* Mobile Create Button */}
+                <Button 
+                  onClick={() => navigate("/dashboard/editor")} 
+                  className="w-full sm:hidden"
+                >
                   <Plus className="mr-2 h-4 w-4" />
                   New Project
                 </Button>
+
+                {/* Content */}
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                  </div>
+                ) : error ? (
+                  <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                    <Folder className="h-16 w-16 text-muted-foreground" />
+                    <p className="text-muted-foreground">Failed to load projects</p>
+                    <Button onClick={() => window.location.reload()} variant="outline">
+                      Try Again
+                    </Button>
+                  </div>
+                ) : projects?.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                    <Folder className="h-16 w-16 text-muted-foreground" />
+                    <p className="text-muted-foreground">No projects yet</p>
+                    <Button onClick={() => navigate("/dashboard/editor")} variant="outline">
+                      Create Your First Project
+                    </Button>
+                  </div>
+                ) : (
+                  <ProjectsGrid projects={projects} />
+                )}
               </div>
-
-              {/* Mobile Create Button */}
-              <Button 
-                onClick={() => navigate("/dashboard/editor")} 
-                className="w-full sm:hidden"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                New Project
-              </Button>
-
-              {/* Content */}
-              {isLoading ? (
-                <div className="flex items-center justify-center h-64">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-                </div>
-              ) : error ? (
-                <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                  <Folder className="h-16 w-16 text-muted-foreground" />
-                  <p className="text-muted-foreground">Failed to load projects</p>
-                  <Button onClick={() => window.location.reload()} variant="outline">
-                    Try Again
-                  </Button>
-                </div>
-              ) : projects?.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                  <Folder className="h-16 w-16 text-muted-foreground" />
-                  <p className="text-muted-foreground">No projects yet</p>
-                  <Button onClick={() => navigate("/dashboard/editor")} variant="outline">
-                    Create Your First Project
-                  </Button>
-                </div>
-              ) : (
-                <ProjectsGrid projects={projects} />
-              )}
             </div>
-          </div>
+          </RequireSubscription>
         </main>
       </div>
     </SidebarProvider>
