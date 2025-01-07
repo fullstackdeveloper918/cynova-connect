@@ -98,35 +98,43 @@ const Plans = () => {
   const [isYearly, setIsYearly] = useState(false);
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState<string | null>(null);
-  const { data: subscription, isLoading: isSubscriptionLoading } = useSubscription();
+  const { data: subscription } = useSubscription();
 
   const handleSubscribe = async (plan: typeof plans[0]) => {
     try {
-      if (!subscription) {
-        console.error("No subscription data available");
+      setIsLoading(plan.name);
+      
+      // Get the current user session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error("Please log in to subscribe");
+        navigate("/login");
         return;
       }
 
       // Check if user is already subscribed to this plan
-      if (subscription.plan_name === plan.name && subscription.status === 'active') {
+      if (subscription?.plan_name === plan.name && subscription?.status === 'active') {
         toast.error("You are already subscribed to this plan");
         return;
       }
 
-      setIsLoading(plan.name);
       const priceId = isYearly ? plan.priceId.yearly : plan.priceId.monthly;
       
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { 
-          priceId, 
+          priceId,
           mode: 'subscription',
-          currentPlan: subscription.plan_name
+          currentPlan: subscription?.plan_name
         }
       });
 
       if (error) throw error;
+
       if (data?.url) {
         window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
       }
     } catch (error) {
       console.error('Error:', error);
