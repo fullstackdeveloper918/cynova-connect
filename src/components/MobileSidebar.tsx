@@ -5,10 +5,13 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { SidebarNavigation } from "@/components/sidebar/SidebarNavigation";
-import { ProfileContent } from "@/components/ProfileContent";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const Profile = () => {
+interface MobileSidebarProps {
+  children: React.ReactNode;
+}
+
+export const MobileSidebar = ({ children }: MobileSidebarProps) => {
   const isMobile = useIsMobile();
 
   return (
@@ -33,7 +36,7 @@ const Profile = () => {
           )}
           <div className="p-6">
             <div className="max-w-7xl mx-auto">
-              <ProfileContent />
+              {children}
             </div>
           </div>
         </main>
@@ -41,5 +44,3 @@ const Profile = () => {
     </SidebarProvider>
   );
 };
-
-export default Profile;

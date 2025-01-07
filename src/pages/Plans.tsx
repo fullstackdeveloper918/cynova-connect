@@ -143,7 +143,7 @@ const Plans = () => {
           <Button
             variant="ghost"
             onClick={() => navigate("/dashboard")}
-            className="flex items-center gap-2 hover:bg-accent"
+            className="flex items-center gap-2 hover:bg-accent md:inline-flex"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
@@ -155,16 +155,18 @@ const Plans = () => {
           <p className="text-lg text-muted-foreground mb-8">
             Select the perfect plan for your content creation needs
           </p>
-          <div className="flex items-center justify-center gap-4 mb-8">
+          <div className="flex items-center justify-center gap-4 mb-8 flex-wrap">
             <Button
               variant={isYearly ? "outline" : "default"}
               onClick={() => setIsYearly(false)}
+              className="w-full sm:w-auto"
             >
               Monthly
             </Button>
             <Button
               variant={isYearly ? "default" : "outline"}
               onClick={() => setIsYearly(true)}
+              className="w-full sm:w-auto"
             >
               Yearly (20% off)
             </Button>
