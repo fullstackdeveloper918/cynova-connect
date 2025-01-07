@@ -47,8 +47,8 @@ export const VideoPreview = ({
         setIsLoading(true);
         try {
           const audioDuration = audioRef.current?.duration || 30;
-          // Reduce number of frames to 2 (one for each option) for faster generation
-          const numberOfFrames = 2;
+          // Increase number of frames to 6 for more variety
+          const numberOfFrames = 6;
           
           console.log('Starting frame generation for script:', script);
           console.log('Generating frames:', numberOfFrames);
@@ -69,8 +69,8 @@ export const VideoPreview = ({
             console.log('Received frame URLs:', data.frameUrls);
             // Duplicate frames to maintain smooth transitions
             const duplicatedFrames = data.frameUrls.reduce((acc: string[], frame: string) => {
-              // Duplicate each frame 3 times for smoother transitions
-              return [...acc, frame, frame, frame];
+              // Duplicate each frame 2 times instead of 3 for more frequent changes
+              return [...acc, frame, frame];
             }, []);
             setFrameUrls(duplicatedFrames);
           }
