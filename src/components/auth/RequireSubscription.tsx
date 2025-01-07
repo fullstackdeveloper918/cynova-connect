@@ -52,8 +52,8 @@ export const RequireSubscription = ({ children }: RequireSubscriptionProps) => {
   // If not subscribed, show upgrade message
   if (!isSubscribed) {
     return (
-      <div className="flex flex-col items-center justify-center space-y-4 p-8">
-        <Alert variant="destructive" className="max-w-md">
+      <div className="flex flex-col items-center justify-center space-y-4 p-8 backdrop-blur-xl bg-white/5 border border-white/10 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.3)] rounded-lg">
+        <Alert variant="destructive" className="max-w-md bg-transparent border-red-500/20">
           <Crown className="h-4 w-4" />
           <AlertDescription>
             This feature is only available for premium users. Please upgrade your plan to access this feature.
