@@ -14,18 +14,21 @@ export const RequireSubscription = ({ children }: RequireSubscriptionProps) => {
   const navigate = useNavigate();
   const { data: subscription, isLoading, error } = useSubscription();
 
-  const isSubscribed = !isLoading && subscription?.plan_name !== "Free";
+  // Check if user has an active paid subscription
+  const isSubscribed = subscription?.plan_name && subscription.plan_name !== "Free";
 
   useEffect(() => {
-    if (!isLoading && !error && !isSubscribed) {
+    // Only redirect if we have subscription data and user is not subscribed
+    if (!isLoading && !error && subscription && !isSubscribed) {
+      console.log("User not subscribed, redirecting to plans", { subscription });
       toast({
-        title: "Subscription Required",
-        description: "This feature requires a paid subscription",
+        title: "Premium Feature",
+        description: "This feature requires a paid subscription. Please upgrade your plan to continue.",
         variant: "destructive",
       });
       navigate("/plans");
     }
-  }, [isLoading, error, isSubscribed, navigate]);
+  }, [isLoading, error, isSubscribed, subscription, navigate]);
 
   if (isLoading) {
     return (
@@ -35,6 +38,18 @@ export const RequireSubscription = ({ children }: RequireSubscriptionProps) => {
     );
   }
 
+  if (error) {
+    console.error("Subscription check error:", error);
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>
+          Unable to verify subscription status. Please try again later.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  // If not subscribed, show upgrade message
   if (!isSubscribed) {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 p-8">
@@ -46,7 +61,7 @@ export const RequireSubscription = ({ children }: RequireSubscriptionProps) => {
         </Alert>
         <Button 
           onClick={() => navigate("/plans")} 
-          className="mt-4 bg-primary hover:bg-primary/90"
+          className="mt-4"
         >
           Upgrade Now
         </Button>
@@ -54,5 +69,6 @@ export const RequireSubscription = ({ children }: RequireSubscriptionProps) => {
     );
   }
 
+  // If subscribed, render children
   return <>{children}</>;
 };

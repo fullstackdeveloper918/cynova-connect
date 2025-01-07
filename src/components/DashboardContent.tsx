@@ -22,6 +22,8 @@ export const DashboardContent = () => {
   const userEmail = user?.email;
   const isFreePlan = !isLoadingSubscription && subscription?.plan_name === "Free";
 
+  console.log("Dashboard subscription state:", { subscription, isFreePlan });
+
   return (
     <div className="space-y-8">
       <WelcomeHeader
@@ -57,10 +59,14 @@ export const DashboardContent = () => {
 
       <UpdatesSection />
 
-      {/* Wrap FeatureGrid with RequireSubscription */}
-      <RequireSubscription>
+      {/* Only show premium features to paid users */}
+      {!isFreePlan ? (
         <FeatureGrid isFreePlan={isFreePlan} />
-      </RequireSubscription>
+      ) : (
+        <RequireSubscription>
+          <FeatureGrid isFreePlan={isFreePlan} />
+        </RequireSubscription>
+      )}
     </div>
   );
 };
