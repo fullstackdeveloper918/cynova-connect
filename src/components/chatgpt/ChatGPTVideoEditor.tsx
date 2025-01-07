@@ -13,6 +13,7 @@ export const ChatGPTVideoEditor = () => {
     prompt,
     setPrompt,
     script,
+    setScript,
     isGenerating,
     isPreviewLoading,
     previewUrl,
