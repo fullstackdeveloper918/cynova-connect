@@ -33,27 +33,23 @@ export const UserAnalytics = () => {
   const { data: stats } = useQuery({
     queryKey: ["admin", "user-stats"],
     queryFn: async () => {
-      // Get all users through roles table
-      const { data: allUsers, error: usersError } = await supabase
-        .from('user_roles')
-        .select('user_id, created_at');
+      // Get all users through admin API
+      const { data: allUsers, error: usersError } = await supabase.auth.admin.listUsers();
       
       if (usersError) throw usersError;
 
-      // Get active users (users who signed up within last 24h)
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const { data: activeUsers, error: activeError } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .gt('created_at', oneDayAgo);
-
-      if (activeError) throw activeError;
+      // Get active users (users who have logged in within last 24h)
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const activeUsers = allUsers.users.filter(user => {
+        const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at) : null;
+        return lastSignIn && lastSignIn > oneDayAgo;
+      });
 
       return {
-        total_users: allUsers?.length || 0,
-        active_users: activeUsers?.length || 0,
-        inactive_users: (allUsers?.length || 0) - (activeUsers?.length || 0),
-        users_last_day: activeUsers?.length || 0,
+        total_users: allUsers.users.length,
+        active_users: activeUsers.length,
+        inactive_users: allUsers.users.length - activeUsers.length,
+        users_last_day: activeUsers.length,
       } as UserStats;
     },
   });
@@ -62,14 +58,14 @@ export const UserAnalytics = () => {
   const { data: users } = useQuery({
     queryKey: ["admin", "user-details"],
     queryFn: async () => {
+      // Get all users through admin API
+      const { data: allUsers, error: usersError } = await supabase.auth.admin.listUsers();
+      if (usersError) throw usersError;
+
       // Get user roles
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
-        .select(`
-          user_id,
-          role,
-          created_at
-        `);
+        .select('user_id, role');
 
       if (rolesError) throw rolesError;
 
@@ -81,14 +77,17 @@ export const UserAnalytics = () => {
       if (subsError) throw subsError;
 
       // Combine data
-      return userRoles.map(user => ({
-        id: user.user_id,
-        email: user.user_id, // Note: We can't get email directly due to auth restrictions
-        last_sign_in_at: "N/A", // We don't have this information in user_roles
-        created_at: user.created_at,
-        role: user.role,
-        subscription_status: subscriptions?.find(s => s.user_id === user.user_id)?.status || null,
-      })) as UserDetail[];
+      return allUsers.users.map(user => {
+        const userRole = userRoles?.find(r => r.user_id === user.id);
+        return {
+          id: user.id,
+          email: user.email || 'No email',
+          last_sign_in_at: user.last_sign_in_at || 'Never',
+          created_at: user.created_at,
+          role: userRole?.role || 'user',
+          subscription_status: subscriptions?.find(s => s.user_id === user.id)?.status || null,
+        };
+      }) as UserDetail[];
     },
   });
 
