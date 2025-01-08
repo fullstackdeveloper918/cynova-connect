@@ -29,8 +29,8 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = async () => {
-    setIsOpen(false);
     try {
+      setIsOpen(false);
       await supabase.auth.signOut();
       navigate('/login');
       toast({
@@ -47,8 +47,8 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
   };
 
   const handleProfileClick = () => {
-    setIsOpen(false);
     navigate("/dashboard/profile");
+    setIsOpen(false);
   };
 
   return (
@@ -74,25 +74,25 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="ml-2"
+                    className="ml-2 h-10 w-10 touch-manipulation"
                   >
-                    <User className="h-4 w-4" />
+                    <User className="h-5 w-5" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="w-72 p-0">
+                <DialogContent className="w-72 p-0 sm:max-w-[425px]">
                   <div className="flex flex-col w-full">
                     <button
                       onClick={handleProfileClick}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-sm hover:bg-accent border-b"
+                      className="w-full flex items-center gap-2 px-4 py-4 text-base hover:bg-accent border-b touch-manipulation"
                     >
-                      <User className="h-4 w-4" />
+                      <User className="h-5 w-5" />
                       Settings
                     </button>
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50"
+                      className="w-full flex items-center gap-2 px-4 py-4 text-base text-red-600 hover:bg-red-50 touch-manipulation"
                     >
-                      <LogOut className="h-4 w-4" />
+                      <LogOut className="h-5 w-5" />
                       Logout
                     </button>
                   </div>
