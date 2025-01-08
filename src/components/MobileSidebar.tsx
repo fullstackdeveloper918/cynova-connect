@@ -6,6 +6,16 @@ import {
 } from "@/components/ui/sidebar";
 import { SidebarNavigation } from "@/components/sidebar/SidebarNavigation";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
+import { User, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 interface MobileSidebarProps {
   children: React.ReactNode;
@@ -13,6 +23,25 @@ interface MobileSidebarProps {
 
 export const MobileSidebar = ({ children }: MobileSidebarProps) => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/login');
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error logging out",
+        description: "There was a problem logging out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <SidebarProvider>
@@ -30,8 +59,35 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
 
         <main className="flex-1">
           {isMobile && (
-            <div className="p-4 sticky top-0 z-50 bg-background border-b">
+            <div className="p-4 sticky top-0 z-50 bg-background border-b flex items-center justify-between">
               <SidebarTrigger />
+              <HoverCard openDelay={0} closeDelay={0}>
+                <HoverCardTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="ml-2"
+                  >
+                    <User className="h-4 w-4" />
+                  </Button>
+                </HoverCardTrigger>
+                <HoverCardContent align="end" className="w-48 p-2">
+                  <button
+                    onClick={() => navigate("/dashboard/profile")}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-accent"
+                  >
+                    <User className="h-4 w-4" />
+                    Settings
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Logout
+                  </button>
+                </HoverCardContent>
+              </HoverCard>
             </div>
           )}
           <div className="p-6">
