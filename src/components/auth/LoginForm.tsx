@@ -18,23 +18,34 @@ export const LoginForm = () => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // Check role and redirect accordingly
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-
-        if (roleData?.role === 'admin') {
-          navigate("/admin");
-        } else {
-          navigate("/dashboard");
-        }
+        await handleRoleBasedRedirect(session.user.id);
       }
     };
 
     checkSession();
   }, [navigate]);
+
+  const handleRoleBasedRedirect = async (userId: string) => {
+    const { data: roleData, error: roleError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (roleError) {
+      console.error("Error fetching user role:", roleError);
+      toast.error("Error determining user access level");
+      return;
+    }
+
+    if (roleData?.role === 'admin') {
+      navigate("/admin");
+      toast.success("Welcome back, Admin!");
+    } else {
+      navigate("/dashboard");
+      toast.success("Successfully logged in!");
+    }
+  };
 
   const getErrorMessage = (error: AuthError) => {
     console.log("Auth error details:", error);
@@ -93,21 +104,7 @@ export const LoginForm = () => {
 
       if (session) {
         console.log("Login successful!");
-        
-        // Check if user is admin
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-
-        if (roleData?.role === 'admin') {
-          navigate("/admin");
-          toast.success("Welcome back, Admin!");
-        } else {
-          navigate("/dashboard");
-          toast.success("Successfully logged in!");
-        }
+        await handleRoleBasedRedirect(session.user.id);
       }
     } catch (error) {
       console.error("Unexpected error during login:", error);
