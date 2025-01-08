@@ -3,6 +3,8 @@ export interface PlanLimits {
   max_duration_minutes: number;
   max_videos_per_month: number;
   max_exports_per_month: number;
+  max_voiceover_minutes: number;
+  max_ai_images: number;
 }
 
 export interface Subscription {

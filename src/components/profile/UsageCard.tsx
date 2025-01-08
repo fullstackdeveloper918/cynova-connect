@@ -3,6 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { PlanLimits } from "@/integrations/supabase/subscription-types";
 
 interface UsageData {
   videos_created: number;
@@ -12,19 +13,13 @@ interface UsageData {
   ai_images_created: number;
 }
 
-interface PlanLimits {
-  max_videos_per_month: number;
-  max_duration_minutes: number;
-  max_voiceover_minutes: number;
-  max_ai_images: number;
-  features: string[];
-}
-
 export const UsageCard = () => {
   const { data: subscription } = useSubscription();
   const { data: usage } = useQuery({
     queryKey: ['usage'],
     queryFn: async () => {
+      if (!subscription) return null;
+      
       const { data, error } = await supabase
         .from('user_usage')
         .select('*')
@@ -49,7 +44,7 @@ export const UsageCard = () => {
     );
   }
 
-  const limits = subscription.plan_limits as PlanLimits || {
+  const limits = subscription.plan_limits || {
     max_videos_per_month: 0,
     max_duration_minutes: 0,
     max_voiceover_minutes: 0,
