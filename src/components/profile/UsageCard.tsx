@@ -8,6 +8,8 @@ interface UsageData {
   videos_created: number;
   export_minutes_used: number;
   storage_used: number;
+  voiceover_minutes_used: number;
+  ai_images_created: number;
 }
 
 export const UsageCard = () => {
@@ -42,6 +44,8 @@ export const UsageCard = () => {
   const limits = subscription.plan_limits || {
     max_videos_per_month: 0,
     max_duration_minutes: 0,
+    max_voiceover_minutes: 0,
+    max_ai_images: 0,
   };
 
   const videosPercentage = usage 
@@ -50,6 +54,14 @@ export const UsageCard = () => {
   
   const minutesPercentage = usage 
     ? (usage.export_minutes_used / limits.max_duration_minutes) * 100 
+    : 0;
+
+  const voiceoverPercentage = usage
+    ? (usage.voiceover_minutes_used / limits.max_voiceover_minutes) * 100
+    : 0;
+
+  const aiImagesPercentage = usage
+    ? (usage.ai_images_created / limits.max_ai_images) * 100
     : 0;
 
   return (
@@ -74,6 +86,26 @@ export const UsageCard = () => {
             </span>
           </div>
           <Progress value={minutesPercentage} className="h-2" />
+        </div>
+
+        <div>
+          <div className="flex justify-between mb-2">
+            <span className="text-sm font-medium">Voiceover Minutes</span>
+            <span className="text-sm text-muted-foreground">
+              {usage?.voiceover_minutes_used || 0} / {limits.max_voiceover_minutes} minutes
+            </span>
+          </div>
+          <Progress value={voiceoverPercentage} className="h-2" />
+        </div>
+
+        <div>
+          <div className="flex justify-between mb-2">
+            <span className="text-sm font-medium">AI Images</span>
+            <span className="text-sm text-muted-foreground">
+              {usage?.ai_images_created || 0} / {limits.max_ai_images} images
+            </span>
+          </div>
+          <Progress value={aiImagesPercentage} className="h-2" />
         </div>
 
         <div>
