@@ -16,6 +16,7 @@ import {
   DialogContent,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useState } from "react";
 
 interface MobileSidebarProps {
   children: React.ReactNode;
@@ -25,8 +26,10 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = async () => {
+    setIsOpen(false);
     try {
       await supabase.auth.signOut();
       navigate('/login');
@@ -44,6 +47,7 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
   };
 
   const handleProfileClick = () => {
+    setIsOpen(false);
     navigate("/dashboard/profile");
   };
 
@@ -65,7 +69,7 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
           {isMobile && (
             <div className="p-4 sticky top-0 z-50 bg-background border-b flex items-center justify-between">
               <SidebarTrigger />
-              <Dialog>
+              <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
