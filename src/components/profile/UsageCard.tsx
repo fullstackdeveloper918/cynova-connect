@@ -19,10 +19,10 @@ export const UsageCard = () => {
         .from('user_usage')
         .select('*')
         .eq('month_start', new Date().toISOString().slice(0, 7) + '-01')
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      return data as UsageData;
+      return data as UsageData | null;
     },
   });
 
