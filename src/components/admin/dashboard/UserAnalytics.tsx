@@ -28,6 +28,13 @@ interface UserDetail {
   subscription_status: string | null;
 }
 
+interface AdminUser {
+  id: string;
+  email: string | null;
+  last_sign_in_at: string | null;
+  created_at: string;
+}
+
 export const UserAnalytics = () => {
   // Fetch user statistics
   const { data: stats } = useQuery({
@@ -40,7 +47,7 @@ export const UserAnalytics = () => {
 
       // Get active users (users who have logged in within last 24h)
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      const activeUsers = allUsers.users.filter(user => {
+      const activeUsers = allUsers.users.filter((user: AdminUser) => {
         const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at) : null;
         return lastSignIn && lastSignIn > oneDayAgo;
       });
@@ -77,7 +84,7 @@ export const UserAnalytics = () => {
       if (subsError) throw subsError;
 
       // Combine data
-      return allUsers.users.map(user => {
+      return allUsers.users.map((user: AdminUser) => {
         const userRole = userRoles?.find(r => r.user_id === user.id);
         return {
           id: user.id,
