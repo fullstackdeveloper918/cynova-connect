@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthError, AuthApiError } from "@supabase/supabase-js";
+import { Loader2 } from "lucide-react";
 
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -13,7 +14,6 @@ export const LoginForm = () => {
   const [isSendingReset, setIsSendingReset] = useState(false);
   const navigate = useNavigate();
 
-  // Check for existing session on mount
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -26,17 +26,21 @@ export const LoginForm = () => {
   }, [navigate]);
 
   const handleRoleBasedRedirect = async (userId: string) => {
+    console.log("Checking role for user:", userId);
+    
     const { data: roleData, error: roleError } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', userId)
-      .maybeSingle();
+      .single();
 
     if (roleError) {
       console.error("Error fetching user role:", roleError);
       toast.error("Error determining user access level");
       return;
     }
+
+    console.log("User role data:", roleData);
 
     if (roleData?.role === 'admin') {
       navigate("/admin");
@@ -45,40 +49,6 @@ export const LoginForm = () => {
       navigate("/dashboard");
       toast.success("Successfully logged in!");
     }
-  };
-
-  const getErrorMessage = (error: AuthError) => {
-    console.log("Auth error details:", error);
-    
-    if (error instanceof AuthApiError) {
-      if (error.message.includes("Invalid login credentials")) {
-        return "Invalid email or password. Please check your credentials and try again.";
-      }
-      
-      if (error.message.includes("Email not confirmed")) {
-        return "Please verify your email address before signing in.";
-      }
-      
-      if (error.message.includes("user_not_found")) {
-        return "No user found with these credentials.";
-      }
-      
-      if (error.status === 429) {
-        return "Too many login attempts. Please try again later.";
-      }
-      
-      if (error.status === 422) {
-        return "Invalid email format. Please enter a valid email address.";
-      }
-      
-      console.error("Unexpected auth error:", {
-        status: error.status,
-        message: error.message,
-        name: error.name
-      });
-    }
-    
-    return "An unexpected error occurred. Please try again.";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -90,7 +60,7 @@ export const LoginForm = () => {
     
     setIsLoading(true);
     try {
-      console.log("Attempting login...");
+      console.log("Attempting login for:", email);
       const { data: { session }, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim()
@@ -103,7 +73,7 @@ export const LoginForm = () => {
       }
 
       if (session) {
-        console.log("Login successful!");
+        console.log("Login successful for user:", session.user.id);
         await handleRoleBasedRedirect(session.user.id);
       }
     } catch (error) {
@@ -112,6 +82,32 @@ export const LoginForm = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getErrorMessage = (error: AuthError) => {
+    if (error instanceof AuthApiError) {
+      if (error.message.includes("Invalid login credentials")) {
+        return "Invalid email or password. Please check your credentials and try again.";
+      }
+      if (error.message.includes("Email not confirmed")) {
+        return "Please verify your email address before signing in.";
+      }
+      if (error.message.includes("user_not_found")) {
+        return "No user found with these credentials.";
+      }
+      if (error.status === 429) {
+        return "Too many login attempts. Please try again later.";
+      }
+      if (error.status === 422) {
+        return "Invalid email format. Please enter a valid email address.";
+      }
+      console.error("Unexpected auth error:", {
+        status: error.status,
+        message: error.message,
+        name: error.name
+      });
+    }
+    return "An unexpected error occurred. Please try again.";
   };
 
   const handleForgotPassword = async (e: React.MouseEvent) => {
@@ -189,10 +185,7 @@ export const LoginForm = () => {
       <Button type="submit" className="w-full" disabled={isLoading || isSendingReset}>
         {isLoading ? (
           <span className="flex items-center justify-center">
-            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
+            <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5" />
             Signing in...
           </span>
         ) : (

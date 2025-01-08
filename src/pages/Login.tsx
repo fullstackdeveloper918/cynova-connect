@@ -17,7 +17,6 @@ const Login = () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          // Remove the hardcoded email check and let role-based redirect handle it
           const { data: roleData } = await supabase
             .from('user_roles')
             .select('role')
