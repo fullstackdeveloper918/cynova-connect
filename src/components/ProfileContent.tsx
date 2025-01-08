@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Settings, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
@@ -12,27 +12,68 @@ import { SecurityCard } from "./profile/SecurityCard";
 import { SubscriptionCard } from "./profile/SubscriptionCard";
 import { BillingCard } from "./profile/BillingCard";
 import { UsageCard } from "./profile/UsageCard";
+import { supabase } from "@/integrations/supabase/client";
 
 export const ProfileContent = () => {
-  const { data: user } = useUser();
+  const { data: user, isLoading: isLoadingUser } = useUser();
   const { data: role } = useRole();
   const { data: subscription } = useSubscription();
   const updateUser = useUpdateUser();
-  const [name, setName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
-  const handleUpdateProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateUser.mutate({ name, email }, {
-      onSuccess: () => {
-        toast({
-          title: "Profile Updated",
-          description: `Name updated to: ${name}`,
-        });
+  useEffect(() => {
+    const initializeUserData = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setName(session.user.user_metadata?.name || session.user.email?.split('@')[0] || '');
+        setEmail(session.user.email || '');
+        console.log("Current user session:", session.user);
       }
-    });
+    };
+
+    initializeUserData();
+  }, []);
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Error",
+          description: "No active session found",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      updateUser.mutate({ name, email }, {
+        onSuccess: () => {
+          toast({
+            title: "Profile Updated",
+            description: `Profile updated successfully`,
+          });
+        },
+        onError: (error) => {
+          console.error("Error updating profile:", error);
+          toast({
+            title: "Error",
+            description: "Failed to update profile",
+            variant: "destructive",
+          });
+        }
+      });
+    } catch (error) {
+      console.error("Error in handleUpdateProfile:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleUpdatePassword = (e: React.FormEvent) => {
@@ -52,6 +93,10 @@ export const ProfileContent = () => {
     setCurrentPassword("");
     setNewPassword("");
   };
+
+  if (isLoadingUser) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-8">
