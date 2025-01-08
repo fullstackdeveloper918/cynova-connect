@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/hover-card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useEffect, useState } from "react";
 
 interface WelcomeHeaderProps {
   userName: string;
@@ -28,6 +29,33 @@ export const WelcomeHeader = ({
 }: WelcomeHeaderProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminRole = async () => {
+      if (!userEmail) return;
+      
+      try {
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+          .maybeSingle();
+
+        if (roleError) {
+          console.error("Error checking admin role:", roleError);
+          return;
+        }
+
+        console.log("Role data:", roleData);
+        setIsAdmin(roleData?.role === 'admin');
+      } catch (error) {
+        console.error("Error in checkAdminRole:", error);
+      }
+    };
+
+    checkAdminRole();
+  }, [userEmail]);
 
   const handleLogout = async () => {
     try {
@@ -66,7 +94,7 @@ export const WelcomeHeader = ({
         </div>
       </div>
       <div className="flex items-center gap-4">
-        {userEmail === 'inke2@hotmail.com' && (
+        {isAdmin && (
           <Button
             onClick={() => navigate("/admin")}
             variant="destructive"
