@@ -43,7 +43,10 @@ export const UserAnalytics = () => {
       // Get all users through admin API
       const { data: allUsers, error: usersError } = await supabase.auth.admin.listUsers();
       
-      if (usersError) throw usersError;
+      if (usersError) {
+        console.error("Error fetching users:", usersError);
+        throw usersError;
+      }
 
       // Get active users (users who have logged in within last 24h)
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -86,15 +89,17 @@ export const UserAnalytics = () => {
       // Combine data
       return allUsers.users.map((user: AdminUser) => {
         const userRole = userRoles?.find(r => r.user_id === user.id);
+        const subscription = subscriptions?.find(s => s.user_id === user.id);
+        
         return {
           id: user.id,
           email: user.email || 'No email',
           last_sign_in_at: user.last_sign_in_at || 'Never',
           created_at: user.created_at,
           role: userRole?.role || 'user',
-          subscription_status: subscriptions?.find(s => s.user_id === user.id)?.status || null,
-        };
-      }) as UserDetail[];
+          subscription_status: subscription?.status || null,
+        } as UserDetail;
+      });
     },
   });
 
