@@ -11,17 +11,23 @@ interface User {
 }
 
 const getStoredUser = async (): Promise<User> => {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   
+  if (sessionError) {
+    throw sessionError;
+  }
+
   if (!session?.user) {
-    return {
-      id: "default-id",
-      name: "User",
-      email: "",
-      user_metadata: {
-        name: "User"
-      }
-    };
+    throw new Error("No authenticated user found");
+  }
+
+  // Verify the session is valid
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  
+  if (userError || !user || user.id !== session.user.id) {
+    // Invalid session, clear it
+    await supabase.auth.signOut();
+    throw new Error("Invalid session detected");
   }
 
   return {
@@ -36,6 +42,7 @@ export const useUser = () => {
   return useQuery({
     queryKey: ['user'],
     queryFn: getStoredUser,
+    retry: false, // Don't retry on error as it might be an invalid session
   });
 };
 
