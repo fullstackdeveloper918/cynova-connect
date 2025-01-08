@@ -11,6 +11,7 @@ import { PersonalInfoCard } from "./profile/PersonalInfoCard";
 import { SecurityCard } from "./profile/SecurityCard";
 import { SubscriptionCard } from "./profile/SubscriptionCard";
 import { BillingCard } from "./profile/BillingCard";
+import { UsageCard } from "./profile/UsageCard";
 
 export const ProfileContent = () => {
   const { data: user } = useUser();
@@ -50,62 +51,6 @@ export const ProfileContent = () => {
     });
     setCurrentPassword("");
     setNewPassword("");
-  };
-
-  const renderUsageContent = () => {
-    if (!subscription || subscription.plan_name === 'Free') {
-      return (
-        <Card className="p-6">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold mb-4">Usage Allowance</h2>
-            <p className="text-muted-foreground mb-4">
-              No usage allowance available. Upgrade to access features.
-            </p>
-            <Button onClick={() => window.location.href = '/plans'}>
-              Upgrade Now
-            </Button>
-          </div>
-        </Card>
-      );
-    }
-
-    const limits = subscription.plan_limits || { max_videos_per_month: 0, max_duration_minutes: 0 };
-    return (
-      <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-6">Resource Usage</h2>
-        <div className="space-y-6">
-          <div>
-            <div className="flex justify-between mb-2">
-              <span className="text-sm font-medium">AI Videos</span>
-              <span className="text-sm text-muted-foreground">
-                {limits.max_videos_per_month} videos/month
-              </span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2">
-              <div 
-                className="bg-primary rounded-full h-2" 
-                style={{ width: '50%' }}
-              />
-            </div>
-          </div>
-          
-          <div>
-            <div className="flex justify-between mb-2">
-              <span className="text-sm font-medium">Export Minutes</span>
-              <span className="text-sm text-muted-foreground">
-                {limits.max_duration_minutes} minutes
-              </span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2">
-              <div 
-                className="bg-primary rounded-full h-2" 
-                style={{ width: '50%' }}
-              />
-            </div>
-          </div>
-        </div>
-      </Card>
-    );
   };
 
   return (
@@ -176,7 +121,7 @@ export const ProfileContent = () => {
         </TabsContent>
 
         <TabsContent value="usage" className="space-y-4">
-          {renderUsageContent()}
+          <UsageCard />
         </TabsContent>
 
         {role === 'admin' && (

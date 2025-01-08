@@ -418,6 +418,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_usage: {
+        Row: {
+          created_at: string | null
+          export_minutes_used: number | null
+          id: string
+          month_start: string | null
+          storage_used: number | null
+          updated_at: string | null
+          user_id: string
+          videos_created: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          export_minutes_used?: number | null
+          id?: string
+          month_start?: string | null
+          storage_used?: number | null
+          updated_at?: string | null
+          user_id: string
+          videos_created?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          export_minutes_used?: number | null
+          id?: string
+          month_start?: string | null
+          storage_used?: number | null
+          updated_at?: string | null
+          user_id?: string
+          videos_created?: number | null
+        }
+        Relationships: []
+      }
       video_segments: {
         Row: {
           combined_url: string | null
