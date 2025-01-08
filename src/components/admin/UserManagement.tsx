@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/admin-client";
 import {
   Table,
   TableBody,
@@ -46,22 +46,29 @@ export const UserManagement = () => {
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin", "users"],
     queryFn: async () => {
-      const { data: roles, error } = await supabase
-        .from("user_roles")
-        .select(`
-          id,
-          user_id,
-          role,
-          created_at
-        `);
+      // First, get all users through admin API
+      const { data: { users: authUsers }, error: authError } = await adminSupabase.auth.admin.listUsers();
+      if (authError) throw authError;
 
-      if (error) throw error;
-      return roles as UserRoleData[];
+      // Then get their roles
+      const { data: roles, error: rolesError } = await adminSupabase
+        .from("user_roles")
+        .select("*");
+
+      if (rolesError) throw rolesError;
+
+      // Combine the data
+      return roles.map((role) => ({
+        id: role.id,
+        user_id: role.user_id,
+        role: role.role as UserRole,
+        created_at: role.created_at,
+      }));
     },
   });
 
   const handleRoleChange = async (userId: string, newRole: UserRole) => {
-    const { error } = await supabase
+    const { error } = await adminSupabase
       .from("user_roles")
       .update({ role: newRole })
       .eq("user_id", userId);
@@ -81,7 +88,7 @@ export const UserManagement = () => {
     });
 
     // Log admin action
-    await supabase.rpc("log_admin_action", {
+    await adminSupabase.rpc("log_admin_action", {
       action: "update_user_role",
       entity_type: "user",
       entity_id: userId,
