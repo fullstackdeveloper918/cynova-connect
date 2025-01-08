@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/admin-client";
 import { Card } from "@/components/ui/card";
 import { Users, UserCheck, Clock, UserX } from "lucide-react";
 import {
@@ -41,7 +41,7 @@ export const UserAnalytics = () => {
     queryKey: ["admin", "user-stats"],
     queryFn: async () => {
       // Get all users through admin API
-      const { data: allUsers, error: usersError } = await supabase.auth.admin.listUsers();
+      const { data: allUsers, error: usersError } = await adminSupabase.auth.admin.listUsers();
       
       if (usersError) {
         console.error("Error fetching users:", usersError);
@@ -69,18 +69,18 @@ export const UserAnalytics = () => {
     queryKey: ["admin", "user-details"],
     queryFn: async () => {
       // Get all users through admin API
-      const { data: allUsers, error: usersError } = await supabase.auth.admin.listUsers();
+      const { data: allUsers, error: usersError } = await adminSupabase.auth.admin.listUsers();
       if (usersError) throw usersError;
 
       // Get user roles
-      const { data: userRoles, error: rolesError } = await supabase
+      const { data: userRoles, error: rolesError } = await adminSupabase
         .from('user_roles')
         .select('user_id, role');
 
       if (rolesError) throw rolesError;
 
       // Get subscriptions
-      const { data: subscriptions, error: subsError } = await supabase
+      const { data: subscriptions, error: subsError } = await adminSupabase
         .from('subscriptions')
         .select('user_id, status');
 
