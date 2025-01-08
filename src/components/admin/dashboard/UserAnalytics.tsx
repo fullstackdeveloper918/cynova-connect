@@ -33,14 +33,21 @@ export const UserAnalytics = () => {
   const { data: stats } = useQuery({
     queryKey: ["admin", "user-stats"],
     queryFn: async () => {
-      const { data: { users: allUsers } } = await supabase.auth.admin.listUsers();
-      const { data: { users: activeUsers } } = await supabase.auth.admin.listUsers({
-        filter: {
-          lastSignInAt: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-          },
-        },
-      });
+      // Get all users through roles table
+      const { data: allUsers, error: usersError } = await supabase
+        .from('user_roles')
+        .select('user_id, created_at');
+      
+      if (usersError) throw usersError;
+
+      // Get active users (users who have logged in within last 24h)
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { data: activeUsers, error: activeError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .gt('last_sign_in_at', oneDayAgo);
+
+      if (activeError) throw activeError;
 
       return {
         total_users: allUsers?.length || 0,
@@ -55,27 +62,33 @@ export const UserAnalytics = () => {
   const { data: users } = useQuery({
     queryKey: ["admin", "user-details"],
     queryFn: async () => {
-      const { data: { users }, error } = await supabase.auth.admin.listUsers();
-      if (error) throw error;
+      // Get user roles
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select(`
+          user_id,
+          role,
+          created_at,
+          last_sign_in_at
+        `);
 
-      // Fetch roles and subscriptions for all users
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("user_id, role");
+      if (rolesError) throw rolesError;
 
-      const { data: subscriptions } = await supabase
-        .from("subscriptions")
-        .select("user_id, status");
+      // Get subscriptions
+      const { data: subscriptions, error: subsError } = await supabase
+        .from('subscriptions')
+        .select('user_id, status');
 
-      // Combine user data with roles and subscriptions
-      return users.map((user) => ({
-        id: user.id,
-        email: user.email || "",
+      if (subsError) throw subsError;
+
+      // Combine data
+      return userRoles.map(user => ({
+        id: user.user_id,
+        email: user.user_id, // Note: We can't get email directly due to auth restrictions
         last_sign_in_at: user.last_sign_in_at || "Never",
         created_at: user.created_at,
-        role: roles?.find((r) => r.user_id === user.id)?.role || "user",
-        subscription_status: subscriptions?.find((s) => s.user_id === user.id)
-          ?.status || null,
+        role: user.role,
+        subscription_status: subscriptions?.find(s => s.user_id === user.user_id)?.status || null,
       })) as UserDetail[];
     },
   });
