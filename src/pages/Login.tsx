@@ -4,13 +4,11 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { SocialLogin } from "@/components/auth/SocialLogin";
-import { useRole } from "@/hooks/useRole";
 import { Loader2 } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-  const { data: userRole } = useRole();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -22,6 +20,8 @@ const Login = () => {
             .select('role')
             .eq('user_id', session.user.id)
             .single();
+
+          console.log("User session and role:", { session, roleData });
 
           if (roleData?.role === 'admin') {
             navigate("/admin");

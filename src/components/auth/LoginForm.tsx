@@ -14,17 +14,6 @@ export const LoginForm = () => {
   const [isSendingReset, setIsSendingReset] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        await handleRoleBasedRedirect(session.user.id);
-      }
-    };
-
-    checkSession();
-  }, [navigate]);
-
   const handleRoleBasedRedirect = async (userId: string) => {
     console.log("Checking role for user:", userId);
     
@@ -44,10 +33,8 @@ export const LoginForm = () => {
 
     if (roleData?.role === 'admin') {
       navigate("/admin");
-      toast.success("Welcome back, Admin!");
     } else {
       navigate("/dashboard");
-      toast.success("Successfully logged in!");
     }
   };
 
