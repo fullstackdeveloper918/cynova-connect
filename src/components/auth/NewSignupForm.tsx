@@ -1,68 +1,51 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { AuthError, AuthApiError } from "@supabase/supabase-js";
 
 export const NewSignupForm = () => {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      toast.error("Passwords do not match");
+      return;
+    }
+
     if (password.length < 6) {
+      setError("Password must be at least 6 characters long");
       toast.error("Password must be at least 6 characters long");
       return;
     }
-    
+
     try {
-      setLoading(true);
-      console.log("Starting signup process...");
-      
-      const { data, error } = await supabase.auth.signUp({
+      setIsLoading(true);
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/login`,
-        }
       });
 
-      if (error) {
-        console.error("Signup error:", error);
-        if (error instanceof AuthApiError) {
-          switch (error.status) {
-            case 400:
-              toast.error("Invalid email or password format");
-              break;
-            case 422:
-              toast.error("Email already registered");
-              break;
-            default:
-              toast.error(error.message);
-          }
-        } else {
-          toast.error("An unexpected error occurred");
-        }
-        return;
-      }
+      if (signUpError) throw signUpError;
 
-      console.log("Signup successful:", data);
-
-      if (data.user) {
-        toast.success("Check your email for the confirmation link!");
-        navigate("/login");
-      }
-      
+      toast.success("Account created successfully!");
+      navigate("/dashboard/projects");
     } catch (error) {
-      console.error("Unexpected error during signup:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to sign up");
+      console.error("Signup error:", error);
+      setError(error.message);
+      toast.error(error.message);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -77,9 +60,10 @@ export const NewSignupForm = () => {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
           required
-          disabled={loading}
+          className="mt-1"
+          placeholder="Enter your email"
+          disabled={isLoading}
         />
       </div>
 
@@ -92,15 +76,37 @@ export const NewSignupForm = () => {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••••"
           required
-          disabled={loading}
+          className="mt-1"
+          placeholder="Create a password"
+          disabled={isLoading}
           minLength={6}
         />
       </div>
 
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Creating account..." : "Sign up"}
+      <div>
+        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+          Confirm Password
+        </label>
+        <Input
+          id="confirmPassword"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+          className="mt-1"
+          placeholder="Confirm your password"
+          disabled={isLoading}
+          minLength={6}
+        />
+      </div>
+
+      {error && (
+        <p className="text-sm text-red-600 mt-1">{error}</p>
+      )}
+
+      <Button type="submit" className="w-full" disabled={isLoading}>
+        {isLoading ? "Creating account..." : "Sign up"}
       </Button>
     </form>
   );
