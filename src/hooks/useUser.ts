@@ -23,16 +23,6 @@ const getStoredUser = async (): Promise<User> => {
     throw new Error("No authenticated user found");
   }
 
-  // Verify the session is valid
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
-  if (userError || !user || user.id !== session.user.id) {
-    console.error('Invalid session detected');
-    // Invalid session, clear it
-    await supabase.auth.signOut();
-    throw new Error("Invalid session detected");
-  }
-
   return {
     id: session.user.id,
     name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
@@ -48,6 +38,7 @@ export const useUser = () => {
     retry: 1,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 };
 

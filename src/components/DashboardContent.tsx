@@ -21,31 +21,9 @@ export const DashboardContent = () => {
     error: subscriptionError 
   } = useSubscription();
 
-  // Add session verification
+  // Simplified session verification
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error || !session) {
-        toast.error("Your session has expired. Please login again.");
-        navigate("/login");
-        return;
-      }
-
-      // Verify the session belongs to the correct user
-      if (session.user.id !== user?.id) {
-        console.error("Session user ID mismatch");
-        await supabase.auth.signOut();
-        toast.error("Invalid session detected. Please login again.");
-        navigate("/login");
-        return;
-      }
-    };
-
-    checkSession();
-
-    // Set up auth state listener
-    const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_OUT' || !session) {
           navigate("/login");
@@ -54,9 +32,9 @@ export const DashboardContent = () => {
     );
 
     return () => {
-      authSubscription.unsubscribe();
+      subscription.unsubscribe();
     };
-  }, [navigate, user?.id]);
+  }, [navigate]);
 
   const userName = user?.name || 'User';
   const userEmail = user?.email;
@@ -99,7 +77,6 @@ export const DashboardContent = () => {
 
       <UpdatesSection />
 
-      {/* Only show premium features to paid users */}
       {!isFreePlan ? (
         <FeatureGrid isFreePlan={isFreePlan} />
       ) : (

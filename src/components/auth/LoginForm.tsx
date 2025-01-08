@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,36 +13,53 @@ export const LoginForm = () => {
   const [isSendingReset, setIsSendingReset] = useState(false);
   const navigate = useNavigate();
 
+  // Check for existing session on mount
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // Check role and redirect accordingly
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
+        if (roleData?.role === 'admin') {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
+      }
+    };
+
+    checkSession();
+  }, [navigate]);
+
   const getErrorMessage = (error: AuthError) => {
     console.log("Auth error details:", error);
     
     if (error instanceof AuthApiError) {
-      // Check for invalid credentials
       if (error.message.includes("Invalid login credentials")) {
         return "Invalid email or password. Please check your credentials and try again.";
       }
       
-      // Check for email confirmation
       if (error.message.includes("Email not confirmed")) {
         return "Please verify your email address before signing in.";
       }
       
-      // Check for user not found
       if (error.message.includes("user_not_found")) {
         return "No user found with these credentials.";
       }
       
-      // Handle rate limiting
       if (error.status === 429) {
         return "Too many login attempts. Please try again later.";
       }
       
-      // Handle validation errors
       if (error.status === 422) {
         return "Invalid email format. Please enter a valid email address.";
       }
       
-      // Log unexpected error codes for debugging
       console.error("Unexpected auth error:", {
         status: error.status,
         message: error.message,
