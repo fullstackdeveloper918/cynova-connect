@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 export const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const { data: role, isLoading, error } = useRole();
@@ -51,6 +53,14 @@ export const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8">
+        <Button
+          variant="outline"
+          className="mb-6"
+          onClick={() => navigate("/dashboard")}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Dashboard
+        </Button>
         {children}
       </div>
     </div>
