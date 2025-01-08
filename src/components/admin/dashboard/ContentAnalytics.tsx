@@ -38,13 +38,14 @@ export const ContentAnalytics = () => {
         supabase.from("projects").select("id, type", { count: "exact" }),
         supabase.from("exports").select("id", { count: "exact" }),
         supabase.rpc('calculate_total_storage'),
-        supabase.from('projects')
+        supabase
+          .from('projects')
           .select(`
             user_id,
-            projects_count:count(*),
-            exports:exports(count)
+            exports (count)
           `)
-          .group_by('user_id')
+          .groupBy('user_id')
+          .select('count(*)', { count: 'exact' })
           .order('count', { ascending: false })
           .limit(5)
       ]);
@@ -66,9 +67,9 @@ export const ContentAnalytics = () => {
       // Process active users data
       const activeUsersData: ActiveUser[] = activeUsers?.map((user) => ({
         user_id: user.user_id,
-        projects_count: user.projects_count,
-        exports_count: user.exports?.count || 0,
-        total_activity: user.projects_count + (user.exports?.count || 0),
+        projects_count: parseInt(user.count),
+        exports_count: user.exports?.[0]?.count || 0,
+        total_activity: parseInt(user.count) + (user.exports?.[0]?.count || 0),
       })) || [];
 
       return {
