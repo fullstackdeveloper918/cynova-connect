@@ -17,12 +17,18 @@ const Login = () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          // Special handling for admin user
-          if (session.user.email === 'inke2@hotmail.com') {
+          // Remove the hardcoded email check and let role-based redirect handle it
+          const { data: roleData } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', session.user.id)
+            .single();
+
+          if (roleData?.role === 'admin') {
             navigate("/admin");
-            return;
+          } else {
+            navigate("/dashboard");
           }
-          navigate("/dashboard");
         }
       } catch (error) {
         console.error("Error checking session:", error);
