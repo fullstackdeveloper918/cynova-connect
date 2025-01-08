@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { FileVideo, FolderOpen, HardDrive } from "lucide-react";
+import { FileVideo, FolderOpen, HardDrive, Users } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -13,6 +13,8 @@ import {
   PieChart,
   Pie,
   Cell,
+  BarChart,
+  Bar,
 } from "recharts";
 import { StatsCard } from "./StatsCard";
 
@@ -21,14 +23,30 @@ interface ProjectTypeStats {
   count: number;
 }
 
+interface ActiveUser {
+  user_id: string;
+  total_activity: number;
+  projects_count: number;
+  exports_count: number;
+}
+
 export const ContentAnalytics = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["admin", "content-stats"],
     queryFn: async () => {
-      const [projectsCount, exportsCount, { data: storageData }] = await Promise.all([
+      const [projectsCount, exportsCount, { data: storageData }, { data: activeUsers }] = await Promise.all([
         supabase.from("projects").select("id, type", { count: "exact" }),
         supabase.from("exports").select("id", { count: "exact" }),
         supabase.rpc('calculate_total_storage'),
+        supabase.from('projects')
+          .select(`
+            user_id,
+            projects_count:count(*),
+            exports:exports(count)
+          `)
+          .group_by('user_id')
+          .order('count', { ascending: false })
+          .limit(5)
       ]);
 
       // Calculate project type distribution
@@ -45,11 +63,20 @@ export const ContentAnalytics = () => {
         })
       );
 
+      // Process active users data
+      const activeUsersData: ActiveUser[] = activeUsers?.map((user) => ({
+        user_id: user.user_id,
+        projects_count: user.projects_count,
+        exports_count: user.exports?.count || 0,
+        total_activity: user.projects_count + (user.exports?.count || 0),
+      })) || [];
+
       return {
         totalProjects: projectsCount.count || 0,
         totalExports: exportsCount.count || 0,
         storageUsed: storageData || 0,
         projectTypeStats,
+        activeUsers: activeUsersData,
       };
     },
   });
@@ -102,6 +129,22 @@ export const ContentAnalytics = () => {
                 </Pie>
                 <Tooltip />
               </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold mb-4">Most Active Users</h2>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats?.activeUsers}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="user_id" />
+                <YAxis />
+                <Tooltip />
+                <Bar name="Projects" dataKey="projects_count" fill="#8884d8" stackId="a" />
+                <Bar name="Exports" dataKey="exports_count" fill="#82ca9d" stackId="a" />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
