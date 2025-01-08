@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface SignupFormProps {
   onSubmit: (email: string, password: string, confirmPassword: string) => void;
@@ -11,9 +12,24 @@ export const SignupForm = ({ onSubmit, isLoading }: SignupFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+
     onSubmit(email, password, confirmPassword);
   };
 
@@ -69,6 +85,10 @@ export const SignupForm = ({ onSubmit, isLoading }: SignupFormProps) => {
             minLength={6}
           />
         </div>
+
+        {error && (
+          <p className="text-sm text-red-600 mt-1">{error}</p>
+        )}
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading}>
