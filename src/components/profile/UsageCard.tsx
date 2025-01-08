@@ -12,6 +12,14 @@ interface UsageData {
   ai_images_created: number;
 }
 
+interface PlanLimits {
+  max_videos_per_month: number;
+  max_duration_minutes: number;
+  max_voiceover_minutes: number;
+  max_ai_images: number;
+  features: string[];
+}
+
 export const UsageCard = () => {
   const { data: subscription } = useSubscription();
   const { data: usage } = useQuery({
@@ -41,11 +49,12 @@ export const UsageCard = () => {
     );
   }
 
-  const limits = subscription.plan_limits || {
+  const limits = subscription.plan_limits as PlanLimits || {
     max_videos_per_month: 0,
     max_duration_minutes: 0,
     max_voiceover_minutes: 0,
     max_ai_images: 0,
+    features: [],
   };
 
   const videosPercentage = usage 

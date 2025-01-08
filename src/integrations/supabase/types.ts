@@ -420,6 +420,7 @@ export type Database = {
       }
       user_usage: {
         Row: {
+          ai_images_created: number | null
           created_at: string | null
           export_minutes_used: number | null
           id: string
@@ -428,8 +429,10 @@ export type Database = {
           updated_at: string | null
           user_id: string
           videos_created: number | null
+          voiceover_minutes_used: number | null
         }
         Insert: {
+          ai_images_created?: number | null
           created_at?: string | null
           export_minutes_used?: number | null
           id?: string
@@ -438,8 +441,10 @@ export type Database = {
           updated_at?: string | null
           user_id: string
           videos_created?: number | null
+          voiceover_minutes_used?: number | null
         }
         Update: {
+          ai_images_created?: number | null
           created_at?: string | null
           export_minutes_used?: number | null
           id?: string
@@ -448,6 +453,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           videos_created?: number | null
+          voiceover_minutes_used?: number | null
         }
         Relationships: []
       }
