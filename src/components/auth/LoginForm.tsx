@@ -17,23 +17,35 @@ export const LoginForm = () => {
   const handleRoleBasedRedirect = async (userId: string) => {
     console.log("Checking role for user:", userId);
     
-    const { data: roleData, error: roleError } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .single();
+    try {
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-    if (roleError) {
-      console.error("Error fetching user role:", roleError);
-      toast.error("Error determining user access level");
-      return;
-    }
+      if (roleError) {
+        console.error("Error fetching user role:", roleError);
+        toast.error("Error determining user access level");
+        // Default to user dashboard on error
+        navigate("/dashboard");
+        return;
+      }
 
-    console.log("User role data:", roleData);
+      console.log("User role data:", roleData);
 
-    if (roleData?.role === 'admin') {
-      navigate("/admin");
-    } else {
+      // If no role found or role is user, redirect to dashboard
+      if (!roleData || roleData.role === 'user') {
+        navigate("/dashboard");
+      } else if (roleData.role === 'admin') {
+        navigate("/admin");
+      } else {
+        // Default case
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.error("Error in role check:", error);
+      // Default to dashboard on error
       navigate("/dashboard");
     }
   };
