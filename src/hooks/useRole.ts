@@ -26,7 +26,7 @@ export const useRole = () => {
 
       if (error) {
         console.error('Error fetching user role:', error);
-        return 'user' as UserRole;
+        throw error;
       }
 
       console.log("Role data:", data);
@@ -34,6 +34,6 @@ export const useRole = () => {
     },
     enabled: !isLoadingUser && !!user?.id && user.id !== 'default-id',
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    retry: 1,
+    retry: 2, // Retry twice if the query fails
   });
 };

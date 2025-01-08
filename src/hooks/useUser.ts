@@ -14,10 +14,12 @@ const getStoredUser = async (): Promise<User> => {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   
   if (sessionError) {
+    console.error('Session error:', sessionError);
     throw sessionError;
   }
 
   if (!session?.user) {
+    console.error('No authenticated user found');
     throw new Error("No authenticated user found");
   }
 
@@ -25,6 +27,7 @@ const getStoredUser = async (): Promise<User> => {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   
   if (userError || !user || user.id !== session.user.id) {
+    console.error('Invalid session detected');
     // Invalid session, clear it
     await supabase.auth.signOut();
     throw new Error("Invalid session detected");
@@ -42,7 +45,9 @@ export const useUser = () => {
   return useQuery({
     queryKey: ['user'],
     queryFn: getStoredUser,
-    retry: false, // Don't retry on error as it might be an invalid session
+    retry: 1,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 };
 
@@ -56,6 +61,7 @@ export const useUpdateUser = () => {
       });
 
       if (error) {
+        console.error('Error updating user:', error);
         throw error;
       }
 

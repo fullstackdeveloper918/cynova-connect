@@ -76,12 +76,19 @@ export const LoginForm = () => {
 
       if (session) {
         console.log("Login successful!");
-        // Special handling for admin user
-        if (email.trim() === 'inke2@hotmail.com') {
+        
+        // Check if user is admin
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
+        if (roleData?.role === 'admin') {
           navigate("/admin");
           toast.success("Welcome back, Admin!");
         } else {
-          navigate("/dashboard"); // Changed from /dashboard/projects to /dashboard
+          navigate("/dashboard");
           toast.success("Successfully logged in!");
         }
       }
