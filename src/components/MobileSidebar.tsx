@@ -30,13 +30,13 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
 
   const handleLogout = async () => {
     try {
-      setIsOpen(false);
       await supabase.auth.signOut();
-      navigate('/login');
+      setIsOpen(false);
       toast({
         title: "Logged out successfully",
         description: "You have been logged out of your account.",
       });
+      navigate('/login');
     } catch (error) {
       toast({
         title: "Error logging out",
@@ -46,9 +46,13 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
     }
   };
 
-  const handleProfileClick = () => {
-    navigate("/dashboard/profile");
+  const handleProfileClick = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
     setIsOpen(false);
+    setTimeout(() => {
+      navigate("/dashboard/profile");
+    }, 100);
   };
 
   return (
@@ -74,23 +78,23 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="ml-2 h-10 w-10 touch-manipulation"
+                    className="ml-2 h-12 w-12 touch-manipulation"
                   >
-                    <User className="h-5 w-5" />
+                    <User className="h-6 w-6" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="w-72 p-0 sm:max-w-[425px]">
+                <DialogContent className="w-[90vw] max-w-[300px] p-0">
                   <div className="flex flex-col w-full">
                     <button
                       onClick={handleProfileClick}
-                      className="w-full flex items-center gap-2 px-4 py-4 text-base hover:bg-accent border-b touch-manipulation"
+                      className="w-full flex items-center gap-3 px-6 py-5 text-base hover:bg-accent border-b touch-manipulation"
                     >
                       <User className="h-5 w-5" />
                       Settings
                     </button>
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-2 px-4 py-4 text-base text-red-600 hover:bg-red-50 touch-manipulation"
+                      className="w-full flex items-center gap-3 px-6 py-5 text-base text-red-600 hover:bg-red-50 touch-manipulation"
                     >
                       <LogOut className="h-5 w-5" />
                       Logout
