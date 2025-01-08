@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Users, UserCheck, UserClock, UserX } from "lucide-react";
+import { Users, UserCheck, Clock, UserX } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -33,8 +33,8 @@ export const UserAnalytics = () => {
   const { data: stats } = useQuery({
     queryKey: ["admin", "user-stats"],
     queryFn: async () => {
-      const { count: totalUsers } = await supabase.auth.admin.listUsers();
-      const { count: activeLastDay } = await supabase.auth.admin.listUsers({
+      const { data: { users: allUsers } } = await supabase.auth.admin.listUsers();
+      const { data: { users: activeUsers } } = await supabase.auth.admin.listUsers({
         filter: {
           lastSignInAt: {
             gte: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
@@ -43,10 +43,10 @@ export const UserAnalytics = () => {
       });
 
       return {
-        total_users: totalUsers || 0,
-        active_users: activeLastDay || 0,
-        inactive_users: (totalUsers || 0) - (activeLastDay || 0),
-        users_last_day: activeLastDay || 0,
+        total_users: allUsers?.length || 0,
+        active_users: activeUsers?.length || 0,
+        inactive_users: (allUsers?.length || 0) - (activeUsers?.length || 0),
+        users_last_day: activeUsers?.length || 0,
       } as UserStats;
     },
   });
@@ -106,7 +106,7 @@ export const UserAnalytics = () => {
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-2">
-            <UserClock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">Active Last 24h</span>
           </div>
           <p className="mt-2 text-2xl font-bold">{stats?.users_last_day || 0}</p>
