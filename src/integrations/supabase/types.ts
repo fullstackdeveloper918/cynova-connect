@@ -280,6 +280,30 @@ export type Database = {
         }
         Relationships: []
       }
+      system_metrics: {
+        Row: {
+          details: Json | null
+          id: string
+          metric_type: Database["public"]["Enums"]["system_metric_type"]
+          recorded_at: string | null
+          value: number
+        }
+        Insert: {
+          details?: Json | null
+          id?: string
+          metric_type: Database["public"]["Enums"]["system_metric_type"]
+          recorded_at?: string | null
+          value: number
+        }
+        Update: {
+          details?: Json | null
+          id?: string
+          metric_type?: Database["public"]["Enums"]["system_metric_type"]
+          recorded_at?: string | null
+          value?: number
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           description: string | null
@@ -513,6 +537,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      record_system_metrics: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       reset_monthly_credits: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -531,6 +559,11 @@ export type Database = {
       quiz_question_type: "multiple_choice" | "true_false"
       segment_status: "pending" | "processing" | "completed" | "failed"
       subscription_status: "active" | "canceled" | "past_due"
+      system_metric_type:
+        | "cpu_usage"
+        | "memory_usage"
+        | "api_latency"
+        | "storage_usage"
       user_role: "admin" | "user"
       video_processing_status: "pending" | "processing" | "completed" | "failed"
     }
