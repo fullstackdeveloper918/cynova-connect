@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { FileVideo, FolderOpen, HardDrive, Users } from "lucide-react";
+import { FileVideo, FolderOpen, HardDrive } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -42,10 +42,10 @@ export const ContentAnalytics = () => {
           .from('projects')
           .select(`
             user_id,
-            exports (count)
-          `)
-          .groupBy('user_id')
-          .select('count(*)', { count: 'exact' })
+            count:count(id),
+            export_count:exports(count)
+          `, { count: 'exact', head: false })
+          .select()
           .order('count', { ascending: false })
           .limit(5)
       ]);
@@ -65,11 +65,11 @@ export const ContentAnalytics = () => {
       );
 
       // Process active users data
-      const activeUsersData: ActiveUser[] = activeUsers?.map((user) => ({
+      const activeUsersData: ActiveUser[] = activeUsers?.map((user: any) => ({
         user_id: user.user_id,
-        projects_count: parseInt(user.count),
-        exports_count: user.exports?.[0]?.count || 0,
-        total_activity: parseInt(user.count) + (user.exports?.[0]?.count || 0),
+        projects_count: parseInt(user.count || '0'),
+        exports_count: user.export_count?.[0]?.count || 0,
+        total_activity: parseInt(user.count || '0') + (user.export_count?.[0]?.count || 0),
       })) || [];
 
       return {
