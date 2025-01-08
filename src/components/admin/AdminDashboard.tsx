@@ -4,6 +4,7 @@ import { DashboardOverview } from "./dashboard/DashboardOverview";
 import { UpdatesManagement } from "./dashboard/UpdatesManagement";
 import { ContentAnalytics } from "./dashboard/ContentAnalytics";
 import { SystemHealthDashboard } from "./dashboard/SystemHealthDashboard";
+import { UserAnalytics } from "./dashboard/UserAnalytics";
 
 export const AdminDashboard = () => {
   return (
@@ -16,6 +17,7 @@ export const AdminDashboard = () => {
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="users">User Analytics</TabsTrigger>
           <TabsTrigger value="content">Content Analytics</TabsTrigger>
           <TabsTrigger value="system">System Health</TabsTrigger>
           <TabsTrigger value="updates">Updates</TabsTrigger>
@@ -23,6 +25,10 @@ export const AdminDashboard = () => {
 
         <TabsContent value="overview">
           <DashboardOverview />
+        </TabsContent>
+
+        <TabsContent value="users">
+          <UserAnalytics />
         </TabsContent>
 
         <TabsContent value="content">
