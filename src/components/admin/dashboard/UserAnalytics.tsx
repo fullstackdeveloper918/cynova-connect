@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { User } from "@supabase/supabase-js";
 
 interface UserStats {
   total_users: number;
@@ -28,13 +29,6 @@ interface UserDetail {
   subscription_status: string | null;
 }
 
-interface AdminUser {
-  id: string;
-  email: string | null;
-  last_sign_in_at: string | null;
-  created_at: string;
-}
-
 export const UserAnalytics = () => {
   // Fetch user statistics
   const { data: stats } = useQuery({
@@ -50,7 +44,7 @@ export const UserAnalytics = () => {
 
       // Get active users (users who have logged in within last 24h)
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      const activeUsers = allUsers.users.filter((user: AdminUser) => {
+      const activeUsers = allUsers.users.filter((user: User) => {
         const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at) : null;
         return lastSignIn && lastSignIn > oneDayAgo;
       });
@@ -87,7 +81,7 @@ export const UserAnalytics = () => {
       if (subsError) throw subsError;
 
       // Combine data
-      return allUsers.users.map((user: AdminUser) => {
+      return allUsers.users.map((user: User): UserDetail => {
         const userRole = userRoles?.find(r => r.user_id === user.id);
         const subscription = subscriptions?.find(s => s.user_id === user.id);
         
@@ -98,7 +92,7 @@ export const UserAnalytics = () => {
           created_at: user.created_at,
           role: userRole?.role || 'user',
           subscription_status: subscription?.status || null,
-        } as UserDetail;
+        };
       });
     },
   });
