@@ -40,12 +40,12 @@ export const UserAnalytics = () => {
       
       if (usersError) throw usersError;
 
-      // Get active users (users who have logged in within last 24h)
+      // Get active users (users who signed up within last 24h)
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const { data: activeUsers, error: activeError } = await supabase
         .from('user_roles')
         .select('user_id')
-        .gt('last_sign_in_at', oneDayAgo);
+        .gt('created_at', oneDayAgo);
 
       if (activeError) throw activeError;
 
@@ -68,8 +68,7 @@ export const UserAnalytics = () => {
         .select(`
           user_id,
           role,
-          created_at,
-          last_sign_in_at
+          created_at
         `);
 
       if (rolesError) throw rolesError;
@@ -85,7 +84,7 @@ export const UserAnalytics = () => {
       return userRoles.map(user => ({
         id: user.user_id,
         email: user.user_id, // Note: We can't get email directly due to auth restrictions
-        last_sign_in_at: user.last_sign_in_at || "Never",
+        last_sign_in_at: "N/A", // We don't have this information in user_roles
         created_at: user.created_at,
         role: user.role,
         subscription_status: subscriptions?.find(s => s.user_id === user.user_id)?.status || null,
