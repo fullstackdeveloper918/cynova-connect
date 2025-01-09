@@ -19,18 +19,6 @@ const plans = [
       monthly: "price_1QeDzGG8TTdTbu7dz9ApCJQM",
       yearly: "price_1OgbZeG8TTdTbu7dKpFGWqL9",
     },
-    features: [
-      "30 AI videos per month",
-      "30 minutes of exporting",
-      "20 minutes of voiceover",
-      "50 AI Images",
-      "ChatGPT Videos",
-      "Fake Text Videos",
-      "Reddit Videos",
-      "Split Videos",
-      "Would You Rather Videos",
-      "Quiz Videos"
-    ],
     limits: {
       max_duration_minutes: 30,
       max_videos_per_month: 30,
@@ -58,19 +46,6 @@ const plans = [
       yearly: "price_1OgbZeG8TTdTbu7dKpFGWqL9",
     },
     popular: true,
-    features: [
-      "50 AI videos per month",
-      "45 minutes of export",
-      "30 minutes of voiceover",
-      "100 AI Images",
-      "ChatGPT Videos",
-      "Fake Text Videos",
-      "Reddit Videos",
-      "Split Videos",
-      "Would You Rather Videos",
-      "Quiz Videos",
-      "Priority Support"
-    ],
     limits: {
       max_duration_minutes: 45,
       max_videos_per_month: 50,
@@ -98,20 +73,6 @@ const plans = [
       monthly: "price_1QeDzuG8TTdTbu7dosC1Ry4k",
       yearly: "price_1OgbZeG8TTdTbu7dKpFGWqL9",
     },
-    features: [
-      "100 AI videos per month",
-      "60 minutes of export",
-      "45 minutes of voiceover",
-      "200 AI Images",
-      "ChatGPT Videos",
-      "Fake Text Videos",
-      "Reddit Videos",
-      "Split Videos",
-      "Would You Rather Videos",
-      "Quiz Videos",
-      "Priority Support",
-      "Custom Branding"
-    ],
     limits: {
       max_duration_minutes: 60,
       max_videos_per_month: 100,
