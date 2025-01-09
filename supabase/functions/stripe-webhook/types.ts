@@ -1,7 +1,5 @@
-import Stripe from "https://esm.sh/stripe@14.21.0";
-
 export interface WebhookHandlerResult {
-  status: string;
+  status: 'success' | 'error';
   message: string;
   data?: any;
 }
@@ -14,4 +12,12 @@ export interface SubscriptionData {
   stripe_customer_id: string;
   current_period_start: string;
   current_period_end: string;
+  plan_limits: {
+    features: string[];
+    max_duration_minutes: number;
+    max_videos_per_month: number;
+    max_exports_per_month: number;
+    max_voiceover_minutes: number;
+    max_ai_images: number;
+  };
 }
