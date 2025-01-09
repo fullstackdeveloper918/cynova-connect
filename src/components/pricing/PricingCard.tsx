@@ -1,8 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Check, Star } from "lucide-react";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 interface PricingCardProps {
   plan: {
@@ -15,7 +13,13 @@ interface PricingCardProps {
       monthly: string;
       yearly: string;
     };
-    features: string[];
+    limits: {
+      max_duration_minutes: number;
+      max_videos_per_month: number;
+      max_voiceover_minutes: number;
+      max_ai_images: number;
+      max_exports_per_month: number;
+    };
     popular?: boolean;
   };
   isYearly: boolean;
@@ -25,6 +29,13 @@ interface PricingCardProps {
 }
 
 export const PricingCard = ({ plan, isYearly, isLoading, onSubscribe, isCurrentPlan }: PricingCardProps) => {
+  const usageLimits = [
+    `${plan.limits.max_videos_per_month} AI videos per month`,
+    `${plan.limits.max_duration_minutes} minutes of export`,
+    `${plan.limits.max_voiceover_minutes} minutes of voiceover`,
+    `${plan.limits.max_ai_images} AI Images`,
+  ];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -56,10 +67,10 @@ export const PricingCard = ({ plan, isYearly, isLoading, onSubscribe, isCurrentP
         )}
       </div>
       <ul className="space-y-4 mb-6">
-        {plan.features.map((feature) => (
-          <li key={feature} className="flex items-center gap-2">
+        {usageLimits.map((limit) => (
+          <li key={limit} className="flex items-center gap-2">
             <Check className="w-5 h-5 text-primary" />
-            <span>{feature}</span>
+            <span>{limit}</span>
           </li>
         ))}
       </ul>
