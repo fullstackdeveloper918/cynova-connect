@@ -29,8 +29,9 @@ export const WelcomeHeader = ({
 }: WelcomeHeaderProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [isCheckingRole, setIsCheckingRole] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const checkAdminRole = async () => {
@@ -74,17 +75,35 @@ export const WelcomeHeader = ({
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate('/login');
+        return;
+      }
+
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Logout error:", error);
+        toast({
+          title: "Error logging out",
+          description: "There was a problem logging out. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       navigate('/login');
       toast({
         title: "Logged out successfully",
         description: "You have been logged out of your account.",
       });
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error("Error during logout:", error);
       toast({
-        title: "Error logging out",
-        description: "There was a problem logging out. Please try again.",
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     }

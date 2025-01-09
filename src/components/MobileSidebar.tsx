@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { User, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -25,24 +25,32 @@ interface MobileSidebarProps {
 export const MobileSidebar = ({ children }: MobileSidebarProps) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // If no session exists, just redirect to login
+        navigate('/login');
+        return;
+      }
+
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Logout error:", error);
+        toast.error("There was a problem logging out. Please try again.");
+        return;
+      }
+
       setIsOpen(false);
-      toast({
-        title: "Logged out successfully",
-        description: "You have been logged out of your account.",
-      });
+      toast.success("Logged out successfully");
       navigate('/login');
     } catch (error) {
-      toast({
-        title: "Error logging out",
-        description: "There was a problem logging out. Please try again.",
-        variant: "destructive",
-      });
+      console.error("Error during logout:", error);
+      toast.error("An unexpected error occurred. Please try again.");
     }
   };
 
