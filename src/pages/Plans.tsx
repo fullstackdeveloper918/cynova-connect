@@ -20,19 +20,11 @@ const plans = [
       yearly: "price_1OgbZeG8TTdTbu7dKpFGWqL9",
     },
     limits: {
-      max_duration_minutes: 30,
-      max_videos_per_month: 30,
-      max_voiceover_minutes: 20,
-      max_ai_images: 50,
+      max_duration_minutes: 40,
+      max_videos_per_month: 50,
+      max_voiceover_minutes: 30,
+      max_ai_images: 100,
       max_exports_per_month: 30,
-      features: [
-        "chatgpt_video",
-        "fake_text",
-        "reddit_video",
-        "split_video",
-        "would_you_rather",
-        "quiz_video"
-      ]
     }
   },
   {
@@ -47,20 +39,11 @@ const plans = [
     },
     popular: true,
     limits: {
-      max_duration_minutes: 45,
-      max_videos_per_month: 50,
-      max_voiceover_minutes: 30,
-      max_ai_images: 100,
+      max_duration_minutes: 120,
+      max_videos_per_month: 150,
+      max_voiceover_minutes: 120,
+      max_ai_images: 300,
       max_exports_per_month: 50,
-      features: [
-        "chatgpt_video",
-        "fake_text",
-        "reddit_video",
-        "split_video",
-        "would_you_rather",
-        "quiz_video",
-        "priority_support"
-      ]
     }
   },
   {
@@ -74,21 +57,11 @@ const plans = [
       yearly: "price_1OgbZeG8TTdTbu7dKpFGWqL9",
     },
     limits: {
-      max_duration_minutes: 60,
-      max_videos_per_month: 100,
-      max_voiceover_minutes: 45,
-      max_ai_images: 200,
+      max_duration_minutes: 180,
+      max_videos_per_month: 250,
+      max_voiceover_minutes: 60,
+      max_ai_images: 500,
       max_exports_per_month: 80,
-      features: [
-        "chatgpt_video",
-        "fake_text",
-        "reddit_video",
-        "split_video",
-        "would_you_rather",
-        "quiz_video",
-        "priority_support",
-        "custom_branding"
-      ]
     }
   },
 ];

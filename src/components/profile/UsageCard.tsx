@@ -28,7 +28,8 @@ export const UsageCard = () => {
       if (error) throw error;
       return data as UsageData | null;
     },
-    enabled: !!subscription
+    enabled: !!subscription,
+    refetchInterval: 30000, // Refetch every 30 seconds to keep usage data current
   });
 
   if (!subscription) {
