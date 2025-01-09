@@ -1,8 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import Stripe from "https://esm.sh/stripe@14.21.0";
-import { handleCheckoutCompleted } from "./handlers/checkoutHandler.ts";
-import { handleSubscriptionUpdated, handleSubscriptionDeleted } from "./handlers/subscriptionHandler.ts";
+import { handleSubscriptionUpdated, handlePaymentSucceeded, handlePaymentFailed } from "./handlers/subscriptionHandler.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,7 +12,6 @@ serve(async (req) => {
   const startTime = new Date().toISOString();
   console.log(`[${startTime}] Webhook received`);
 
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -50,10 +48,7 @@ serve(async (req) => {
     } catch (err) {
       console.error('Error constructing event:', err);
       return new Response(
-        JSON.stringify({
-          error: 'Webhook Error',
-          details: err.message,
-        }),
+        JSON.stringify({ error: 'Webhook Error', details: err.message }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -81,21 +76,20 @@ serve(async (req) => {
     let result;
     try {
       switch (event.type) {
-        case 'checkout.session.completed':
-          result = await handleCheckoutCompleted(
-            event.data.object,
-            stripe,
-            supabaseAdmin
-          );
-          break;
         case 'customer.subscription.updated':
           result = await handleSubscriptionUpdated(
             event.data.object,
             supabaseAdmin
           );
           break;
-        case 'customer.subscription.deleted':
-          result = await handleSubscriptionDeleted(
+        case 'payment_intent.succeeded':
+          result = await handlePaymentSucceeded(
+            event.data.object,
+            supabaseAdmin
+          );
+          break;
+        case 'payment_intent.payment_failed':
+          result = await handlePaymentFailed(
             event.data.object,
             supabaseAdmin
           );
