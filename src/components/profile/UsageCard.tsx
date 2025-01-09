@@ -28,6 +28,7 @@ export const UsageCard = () => {
       if (error) throw error;
       return data as UsageData | null;
     },
+    enabled: !!subscription
   });
 
   if (!subscription) {

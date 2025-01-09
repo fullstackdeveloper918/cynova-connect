@@ -24,6 +24,12 @@ const plans = [
       "30 minutes of exporting",
       "20 minutes of voiceover",
       "50 AI Images",
+      "ChatGPT Videos",
+      "Fake Text Videos",
+      "Reddit Videos",
+      "Split Videos",
+      "Would You Rather Videos",
+      "Quiz Videos"
     ],
     limits: {
       max_duration_minutes: 30,
@@ -31,6 +37,14 @@ const plans = [
       max_voiceover_minutes: 20,
       max_ai_images: 50,
       max_exports_per_month: 30,
+      features: [
+        "chatgpt_video",
+        "fake_text",
+        "reddit_video",
+        "split_video",
+        "would_you_rather",
+        "quiz_video"
+      ]
     }
   },
   {
@@ -49,6 +63,13 @@ const plans = [
       "45 minutes of export",
       "30 minutes of voiceover",
       "100 AI Images",
+      "ChatGPT Videos",
+      "Fake Text Videos",
+      "Reddit Videos",
+      "Split Videos",
+      "Would You Rather Videos",
+      "Quiz Videos",
+      "Priority Support"
     ],
     limits: {
       max_duration_minutes: 45,
@@ -56,6 +77,15 @@ const plans = [
       max_voiceover_minutes: 30,
       max_ai_images: 100,
       max_exports_per_month: 50,
+      features: [
+        "chatgpt_video",
+        "fake_text",
+        "reddit_video",
+        "split_video",
+        "would_you_rather",
+        "quiz_video",
+        "priority_support"
+      ]
     }
   },
   {
@@ -73,6 +103,14 @@ const plans = [
       "60 minutes of export",
       "45 minutes of voiceover",
       "200 AI Images",
+      "ChatGPT Videos",
+      "Fake Text Videos",
+      "Reddit Videos",
+      "Split Videos",
+      "Would You Rather Videos",
+      "Quiz Videos",
+      "Priority Support",
+      "Custom Branding"
     ],
     limits: {
       max_duration_minutes: 60,
@@ -80,6 +118,16 @@ const plans = [
       max_voiceover_minutes: 45,
       max_ai_images: 200,
       max_exports_per_month: 80,
+      features: [
+        "chatgpt_video",
+        "fake_text",
+        "reddit_video",
+        "split_video",
+        "would_you_rather",
+        "quiz_video",
+        "priority_support",
+        "custom_branding"
+      ]
     }
   },
 ];
@@ -125,7 +173,6 @@ const Plans = () => {
     try {
       setIsLoading(plan.name);
       
-      // Get the current user session
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -134,7 +181,6 @@ const Plans = () => {
         return;
       }
 
-      // Check if user is already subscribed to this plan
       if (subscription?.plan_name === plan.name && subscription?.status === 'active') {
         toast.error("You are already subscribed to this plan");
         return;
