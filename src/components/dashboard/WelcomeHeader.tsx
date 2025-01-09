@@ -32,6 +32,7 @@ export const WelcomeHeader = ({
   const [errorMessage, setErrorMessage] = useState("");
   const [isCheckingRole, setIsCheckingRole] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     const checkAdminRole = async () => {
@@ -59,7 +60,6 @@ export const WelcomeHeader = ({
           return;
         }
 
-        console.log("Role data:", roleData);
         setIsAdmin(roleData?.role === 'admin');
       } catch (error) {
         console.error("Error in checkAdminRole:", error);
@@ -74,18 +74,36 @@ export const WelcomeHeader = ({
   }, [userEmail]);
 
   const handleLogout = async () => {
+    if (isLoggingOut) return; // Prevent multiple logout attempts
+    
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggingOut(true);
       
+      // First check if we have a session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        toast({
+          title: "Error checking session",
+          description: "Unable to verify your session. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (!session) {
         navigate('/login');
         return;
       }
 
-      const { error } = await supabase.auth.signOut();
+      // Attempt to sign out
+      const { error: signOutError } = await supabase.auth.signOut({
+        scope: 'local' // Only clear local session to prevent 403
+      });
       
-      if (error) {
-        console.error("Logout error:", error);
+      if (signOutError) {
+        console.error("Logout error:", signOutError);
         toast({
           title: "Error logging out",
           description: "There was a problem logging out. Please try again.",
@@ -106,6 +124,8 @@ export const WelcomeHeader = ({
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -170,10 +190,11 @@ export const WelcomeHeader = ({
             </button>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-red-600 hover:bg-red-50"
+              disabled={isLoggingOut}
+              className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
             >
               <LogOut className="h-4 w-4" />
-              Logout
+              {isLoggingOut ? "Logging out..." : "Logout"}
             </button>
           </HoverCardContent>
         </HoverCard>

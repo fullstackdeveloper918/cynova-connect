@@ -26,21 +26,37 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
+    if (isLoggingOut) return; // Prevent multiple logout attempts
+    
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggingOut(true);
       
+      // First check if we have a session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        toast.error("Error checking session status");
+        return;
+      }
+
       if (!session) {
-        // If no session exists, just redirect to login
+        // No active session, just redirect
+        setIsOpen(false);
         navigate('/login');
         return;
       }
 
-      const { error } = await supabase.auth.signOut();
+      // Attempt to sign out
+      const { error: signOutError } = await supabase.auth.signOut({
+        scope: 'local' // Only clear local session to prevent 403
+      });
       
-      if (error) {
-        console.error("Logout error:", error);
+      if (signOutError) {
+        console.error("Logout error:", signOutError);
         toast.error("There was a problem logging out. Please try again.");
         return;
       }
@@ -51,6 +67,8 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
     } catch (error) {
       console.error("Error during logout:", error);
       toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -102,10 +120,11 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
                     </button>
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-3 px-6 py-5 text-base text-red-600 hover:bg-red-50 touch-manipulation"
+                      disabled={isLoggingOut}
+                      className="w-full flex items-center gap-3 px-6 py-5 text-base text-red-600 hover:bg-red-50 touch-manipulation disabled:opacity-50"
                     >
                       <LogOut className="h-5 w-5" />
-                      Logout
+                      {isLoggingOut ? "Logging out..." : "Logout"}
                     </button>
                   </div>
                 </DialogContent>
