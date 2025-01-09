@@ -79,34 +79,16 @@ export const WelcomeHeader = ({
     try {
       setIsLoggingOut(true);
       
-      // First check if we have a session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      // Clear auth data first
+      localStorage.removeItem('sb-fkrvvlfhdjxqadmupldb-auth-token');
+      document.cookie = 'sb-access-token=; Max-Age=0; path=/;';
+      document.cookie = 'sb-refresh-token=; Max-Age=0; path=/;';
       
-      if (sessionError) {
-        console.error("Session error:", sessionError);
-        toast({
-          title: "Error checking session",
-          description: "Unable to verify your session. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // If no session, just redirect to login
-      if (!session) {
-        navigate('/login');
-        return;
-      }
-
-      // Clear local storage and cookies related to auth
-      localStorage.removeItem('supabase.auth.token');
-      document.cookie = 'supabase-auth-token=; Max-Age=0; path=/;';
-
-      // Attempt to sign out
+      // Then attempt to sign out
       const { error: signOutError } = await supabase.auth.signOut();
       
       if (signOutError) {
-        // If we get a 403/session not found, we can still proceed with navigation
+        // If session not found, just proceed with navigation
         if (signOutError.status === 403) {
           navigate('/login');
           return;
