@@ -30,16 +30,27 @@ export const WelcomeHeader = ({
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isCheckingRole, setIsCheckingRole] = useState(true);
 
   useEffect(() => {
     const checkAdminRole = async () => {
-      if (!userEmail) return;
-      
       try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          return;
+        }
+
+        if (!session?.user?.id) {
+          console.log("No active session found");
+          return;
+        }
+
         const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+          .eq('user_id', session.user.id)
           .maybeSingle();
 
         if (roleError) {
@@ -51,10 +62,14 @@ export const WelcomeHeader = ({
         setIsAdmin(roleData?.role === 'admin');
       } catch (error) {
         console.error("Error in checkAdminRole:", error);
+      } finally {
+        setIsCheckingRole(false);
       }
     };
 
-    checkAdminRole();
+    if (userEmail) {
+      checkAdminRole();
+    }
   }, [userEmail]);
 
   const handleLogout = async () => {
@@ -66,6 +81,7 @@ export const WelcomeHeader = ({
         description: "You have been logged out of your account.",
       });
     } catch (error) {
+      console.error("Logout error:", error);
       toast({
         title: "Error logging out",
         description: "There was a problem logging out. Please try again.",
@@ -74,11 +90,22 @@ export const WelcomeHeader = ({
     }
   };
 
+  if (isLoadingUser || isCheckingRole) {
+    return (
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <div className="h-8 w-48 bg-gray-200 animate-pulse rounded"></div>
+          <div className="h-4 w-32 bg-gray-200 animate-pulse rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center justify-between">
       <div className="space-y-1">
         <h1 className="text-3xl font-bold text-primary">
-          Welcome back, {isLoadingUser ? 'Loading...' : userName}! 👋
+          Welcome back, {userName}! 👋
         </h1>
         <div className="flex items-center gap-2">
           <Crown className="h-4 w-4 text-primary" />
