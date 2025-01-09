@@ -59,7 +59,7 @@ const plans = [
     limits: {
       max_duration_minutes: 180,
       max_videos_per_month: 250,
-      max_voiceover_minutes: 60,
+      max_voiceover_minutes: 180,
       max_ai_images: 500,
       max_exports_per_month: 80,
     }
