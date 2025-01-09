@@ -29,7 +29,7 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    if (isLoggingOut) return; // Prevent multiple logout attempts
+    if (isLoggingOut) return;
     
     try {
       setIsLoggingOut(true);
@@ -43,19 +43,28 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
         return;
       }
 
+      // If no session, just redirect to login
       if (!session) {
-        // No active session, just redirect
         setIsOpen(false);
         navigate('/login');
         return;
       }
 
+      // Clear local storage and cookies related to auth
+      localStorage.removeItem('supabase.auth.token');
+      document.cookie = 'supabase-auth-token=; Max-Age=0; path=/;';
+
       // Attempt to sign out
-      const { error: signOutError } = await supabase.auth.signOut({
-        scope: 'local' // Only clear local session to prevent 403
-      });
+      const { error: signOutError } = await supabase.auth.signOut();
       
       if (signOutError) {
+        // If we get a 403/session not found, we can still proceed with navigation
+        if (signOutError.status === 403) {
+          setIsOpen(false);
+          navigate('/login');
+          return;
+        }
+        
         console.error("Logout error:", signOutError);
         toast.error("There was a problem logging out. Please try again.");
         return;
