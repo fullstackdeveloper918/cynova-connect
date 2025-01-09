@@ -20,11 +20,18 @@ const plans = [
       yearly: "price_1OgbZeG8TTdTbu7dKpFGWqL9",
     },
     features: [
-      "50 AI videos per month",
-      "40 minutes of exporting",
-      "30 minutes of voiceover",
-      "100 AI Images",
+      "30 AI videos per month",
+      "30 minutes of exporting",
+      "20 minutes of voiceover",
+      "50 AI Images",
     ],
+    limits: {
+      max_duration_minutes: 30,
+      max_videos_per_month: 30,
+      max_voiceover_minutes: 20,
+      max_ai_images: 50,
+      max_exports_per_month: 30,
+    }
   },
   {
     name: "Pro",
@@ -38,11 +45,18 @@ const plans = [
     },
     popular: true,
     features: [
-      "100 AI videos per month",
-      "2 hours of export",
-      "150 voiceover minutes",
-      "300 AI Images",
+      "50 AI videos per month",
+      "45 minutes of export",
+      "30 minutes of voiceover",
+      "100 AI Images",
     ],
+    limits: {
+      max_duration_minutes: 45,
+      max_videos_per_month: 50,
+      max_voiceover_minutes: 30,
+      max_ai_images: 100,
+      max_exports_per_month: 50,
+    }
   },
   {
     name: "Premium",
@@ -55,11 +69,18 @@ const plans = [
       yearly: "price_1OgbZeG8TTdTbu7dKpFGWqL9",
     },
     features: [
-      "200 AI videos per month",
-      "3 hours of export",
-      "200 voiceover minutes",
-      "500 AI Images",
+      "100 AI videos per month",
+      "60 minutes of export",
+      "45 minutes of voiceover",
+      "200 AI Images",
     ],
+    limits: {
+      max_duration_minutes: 60,
+      max_videos_per_month: 100,
+      max_voiceover_minutes: 45,
+      max_ai_images: 200,
+      max_exports_per_month: 80,
+    }
   },
 ];
 
