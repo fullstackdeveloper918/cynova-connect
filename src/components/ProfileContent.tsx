@@ -23,14 +23,30 @@ export const ProfileContent = () => {
   const [email, setEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
     const initializeUserData = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          return;
+        }
+
+        if (!session?.user) {
+          console.log("No active session found");
+          return;
+        }
+
         setName(session.user.user_metadata?.name || session.user.email?.split('@')[0] || '');
         setEmail(session.user.email || '');
         console.log("Current user session:", session.user);
+      } catch (error) {
+        console.error("Error initializing user data:", error);
+      } finally {
+        setIsInitializing(false);
       }
     };
 
@@ -40,7 +56,18 @@ export const ProfileContent = () => {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        toast({
+          title: "Error",
+          description: "Failed to get current session",
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (!session) {
         toast({
           title: "Error",
@@ -54,7 +81,7 @@ export const ProfileContent = () => {
         onSuccess: () => {
           toast({
             title: "Profile Updated",
-            description: `Profile updated successfully`,
+            description: "Profile updated successfully",
           });
         },
         onError: (error) => {
@@ -94,8 +121,15 @@ export const ProfileContent = () => {
     setNewPassword("");
   };
 
-  if (isLoadingUser) {
-    return <div>Loading...</div>;
+  if (isLoadingUser || isInitializing) {
+    return (
+      <div className="flex items-center justify-center h-[50vh]">
+        <div className="space-y-4">
+          <div className="h-8 w-48 bg-gray-200 animate-pulse rounded"></div>
+          <div className="h-4 w-32 bg-gray-200 animate-pulse rounded"></div>
+        </div>
+      </div>
+    );
   }
 
   return (
