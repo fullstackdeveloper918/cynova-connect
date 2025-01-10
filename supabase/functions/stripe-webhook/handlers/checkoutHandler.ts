@@ -3,12 +3,42 @@ import Stripe from "https://esm.sh/stripe@14.21.0";
 import { WebhookHandlerResult, SubscriptionData } from "../types.ts";
 
 const planMap: Record<string, string> = {
-  'price_1QdIQ0G8TTdTbu7dSw6PTIQG': 'Starter',
-  'price_1QdIQWG8TTdTbu7dpGfYO8qR': 'Pro',
-  'price_1QdIR3G8TTdTbu7d797PglPe': 'Premium',
-  'price_1QdIRgG8TTdTbu7d32x1RBaY': 'Starter',
-  'price_1QdIS8G8TTdTbu7dTh5tOLpH': 'Pro',
-  'price_1QdIScG8TTdTbu7duXhWR8Px': 'Premium',
+  'price_1QeDzGG8TTdTbu7dz9ApCJQM': 'Starter',  // Test Monthly
+  'price_1QeDzuG8TTdTbu7dosC1Ry4k': 'Starter',  // Test Yearly
+  'price_1QeDzcG8TTdTbu7d6fJJNFFQ': 'Pro',      // Test Monthly
+  'price_1QeDzuG8TTdTbu7dosC1Ry4k': 'Pro',      // Test Yearly
+  'price_1QeDzuG8TTdTbu7dosC1Ry4k': 'Premium',  // Test Monthly
+  'price_1QeDzuG8TTdTbu7dosC1Ry4k': 'Premium',  // Test Yearly
+};
+
+const getPlanLimits = (planName: string) => {
+  const limits = {
+    Starter: {
+      features: ["chatgpt_video", "fake_text", "reddit_video", "split_video"],
+      max_duration_minutes: 40,
+      max_videos_per_month: 50,
+      max_voiceover_minutes: 30,
+      max_ai_images: 100,
+      max_exports_per_month: 40,
+    },
+    Pro: {
+      features: ["chatgpt_video", "fake_text", "reddit_video", "split_video"],
+      max_duration_minutes: 120,
+      max_videos_per_month: 100,
+      max_voiceover_minutes: 150,
+      max_ai_images: 300,
+      max_exports_per_month: 80,
+    },
+    Premium: {
+      features: ["chatgpt_video", "fake_text", "reddit_video", "split_video"],
+      max_duration_minutes: 180,
+      max_videos_per_month: 200,
+      max_voiceover_minutes: 200,
+      max_ai_images: 500,
+      max_exports_per_month: 160,
+    },
+  };
+  return limits[planName as keyof typeof limits] || limits.Starter;
 };
 
 export async function handleCheckoutCompleted(
@@ -17,106 +47,80 @@ export async function handleCheckoutCompleted(
   supabaseAdmin: ReturnType<typeof createClient>
 ): Promise<WebhookHandlerResult> {
   try {
-    console.log('Processing checkout.session.completed event');
-    console.log('Session details:', {
+    console.log('Processing checkout.session.completed:', {
       id: session.id,
       customer: session.customer,
       subscription: session.subscription,
-      payment_status: session.payment_status,
+      metadata: session.metadata,
     });
 
     if (!session.customer || !session.subscription) {
       throw new Error('Missing customer or subscription ID');
     }
 
-    const customerId = session.customer as string;
-    const subscriptionId = session.subscription as string;
-
-    // Get customer's email
-    console.log('Retrieving customer details for ID:', customerId);
-    let customer;
-    try {
-      customer = await stripe.customers.retrieve(customerId);
-    } catch (error) {
-      console.error('Error retrieving customer:', error);
-      throw new Error(`Failed to retrieve customer: ${error.message}`);
-    }
-
-    const email = customer.email;
-    if (!email) {
-      console.error('No email found for customer:', customerId);
-      throw new Error('No email found for customer');
-    }
-    console.log('Customer email found:', email);
-
-    // Get user id from email
-    console.log('Looking up user by email in Supabase...');
-    const { data: userData, error: userError } = await supabaseAdmin
-      .from('auth.users')
-      .select('id')
-      .eq('email', email)
-      .single();
-
-    if (userError) {
-      console.error('Error finding user:', userError);
-      throw new Error(`User lookup failed: ${userError.message}`);
-    }
-
-    if (!userData) {
-      console.error('No user found for email:', email);
-      throw new Error('User not found');
-    }
-    console.log('Found user:', userData);
-
-    // Get subscription details
-    console.log('Retrieving subscription details for ID:', subscriptionId);
-    let subscription;
-    try {
-      subscription = await stripe.subscriptions.retrieve(subscriptionId);
-    } catch (error) {
-      console.error('Error retrieving subscription:', error);
-      throw new Error(`Failed to retrieve subscription: ${error.message}`);
-    }
+    // Get subscription details to determine the plan
+    const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+    console.log('Subscription retrieved:', subscription.id);
 
     const priceId = subscription.items.data[0].price.id;
-    console.log('Price ID from subscription:', priceId);
-
     const planName = planMap[priceId];
+    
     if (!planName) {
       console.error('Unknown price ID:', priceId);
       throw new Error('Unknown price ID');
     }
-    console.log('Mapped to plan name:', planName);
+
+    console.log('Mapped to plan:', planName);
+
+    // Get user ID from metadata
+    const userId = session.metadata?.user_id;
+    if (!userId) {
+      throw new Error('No user_id found in session metadata');
+    }
 
     // Prepare subscription data
     const subscriptionData: SubscriptionData = {
-      user_id: userData.id,
+      user_id: userId,
       plan_name: planName,
       status: subscription.status,
-      stripe_subscription_id: subscriptionId,
-      stripe_customer_id: customerId,
+      stripe_subscription_id: subscription.id,
+      stripe_customer_id: session.customer as string,
       current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
       current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      plan_limits: {
-        features: ["chatgpt_video", "fake_text", "reddit_video", "split_video"],
-        max_duration_minutes: planName === 'Premium' ? 60 : planName === 'Pro' ? 30 : 10,
-        max_videos_per_month: planName === 'Premium' ? 100 : planName === 'Pro' ? 50 : 20,
-        max_exports_per_month: planName === 'Premium' ? 80 : planName === 'Pro' ? 40 : 10,
-      },
+      plan_limits: getPlanLimits(planName),
+      payment_status: session.payment_status,
     };
-    console.log('Preparing to upsert subscription:', subscriptionData);
+
+    console.log('Updating subscription in database:', subscriptionData);
 
     // Update or insert subscription
-    const { error: subError } = await supabaseAdmin
+    const { error: upsertError } = await supabaseAdmin
       .from('subscriptions')
       .upsert(subscriptionData);
 
-    if (subError) {
-      console.error('Error upserting subscription:', subError);
-      throw subError;
+    if (upsertError) {
+      console.error('Error upserting subscription:', upsertError);
+      throw upsertError;
     }
 
-    console.log('Successfully processed subscription for user:', userData.id);
+    // Reset usage metrics for the new billing period
+    const { error: usageError } = await supabaseAdmin
+      .from('user_usage')
+      .upsert({
+        user_id: userId,
+        videos_created: 0,
+        export_minutes_used: 0,
+        voiceover_minutes_used: 0,
+        ai_images_created: 0,
+        month_start: new Date().toISOString().slice(0, 7) + '-01',
+        updated_at: new Date().toISOString(),
+      });
+
+    if (usageError) {
+      console.error('Error resetting usage metrics:', usageError);
+    }
+
+    console.log('Successfully processed subscription for user:', userId);
     return {
       status: 'success',
       message: 'Subscription processed successfully',
