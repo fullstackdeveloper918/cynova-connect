@@ -32,6 +32,18 @@ const getPlanLimits = (planName: string) => {
   return limits[planName as keyof typeof limits] || limits.Starter;
 };
 
+const getPlanNameFromPrice = (priceId: string): string => {
+  const priceMap: Record<string, string> = {
+    'price_1QdIQ0G8TTdTbu7dSw6PTIQG': 'Starter',
+    'price_1QdIQWG8TTdTbu7dpGfYO8qR': 'Pro',
+    'price_1QdIR3G8TTdTbu7d797PglPe': 'Premium',
+    'price_1QdIRgG8TTdTbu7d32x1RBaY': 'Starter',
+    'price_1QdIS8G8TTdTbu7dTh5tOLpH': 'Pro',
+    'price_1QdIScG8TTdTbu7duXhWR8Px': 'Premium',
+  };
+  return priceMap[priceId] || 'Free';
+};
+
 export async function handleSubscriptionUpdated(
   subscription: Stripe.Subscription,
   supabaseAdmin: ReturnType<typeof createClient>
@@ -39,35 +51,73 @@ export async function handleSubscriptionUpdated(
   console.log('Processing subscription update:', subscription.id);
   
   try {
+    // Get the customer ID from the subscription
+    const customerId = subscription.customer as string;
+    
+    // Get customer details to find the user
+    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+      apiVersion: "2023-10-16",
+    });
+    
+    const customer = await stripe.customers.retrieve(customerId);
+    if (!customer.email) {
+      throw new Error('No email found for customer');
+    }
+
+    // Find the user by email
+    const { data: userData, error: userError } = await supabaseAdmin
+      .from('auth.users')
+      .select('id')
+      .eq('email', customer.email)
+      .single();
+
+    if (userError || !userData) {
+      throw new Error(`User not found for email: ${customer.email}`);
+    }
+
     const planName = getPlanNameFromPrice(subscription.items.data[0].price.id);
     const planLimits = getPlanLimits(planName);
     
     const subscriptionData: Partial<SubscriptionData> = {
+      user_id: userData.id,
+      plan_name: planName,
       status: subscription.status,
       current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
       current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      payment_status: subscription.status === 'active' ? 'succeeded' : 'pending',
+      stripe_subscription_id: subscription.id,
+      stripe_customer_id: customerId,
       plan_limits: planLimits,
+      payment_status: subscription.status === 'active' ? 'succeeded' : 'pending',
     };
 
-    const { error } = await supabaseAdmin
-      .from('subscriptions')
-      .update(subscriptionData)
-      .eq('stripe_subscription_id', subscription.id);
+    console.log('Updating subscription with data:', subscriptionData);
 
-    if (error) throw error;
+    // Update or insert the subscription
+    const { error: updateError } = await supabaseAdmin
+      .from('subscriptions')
+      .upsert({
+        ...subscriptionData,
+        updated_at: new Date().toISOString(),
+      });
+
+    if (updateError) {
+      console.error('Error updating subscription:', updateError);
+      throw updateError;
+    }
 
     // Reset usage if payment succeeded
     if (subscription.status === 'active') {
       await supabaseAdmin
         .from('user_usage')
-        .update({
+        .upsert({
+          user_id: userData.id,
           videos_created: 0,
           export_minutes_used: 0,
           voiceover_minutes_used: 0,
           ai_images_created: 0,
-        })
-        .eq('user_id', subscription.metadata.user_id);
+          month_start: new Date().toISOString().slice(0, 7) + '-01',
+          updated_at: new Date().toISOString(),
+        });
     }
 
     return {
@@ -91,7 +141,8 @@ export async function handlePaymentSucceeded(
       .from('subscriptions')
       .update({
         payment_status: 'succeeded',
-        redirect_status: 'success'
+        status: 'active',
+        updated_at: new Date().toISOString(),
       })
       .eq('stripe_subscription_id', paymentIntent.metadata.subscription_id);
 
@@ -118,8 +169,8 @@ export async function handlePaymentFailed(
       .from('subscriptions')
       .update({
         payment_status: 'failed',
-        redirect_status: 'failed',
-        status: 'past_due'
+        status: 'past_due',
+        updated_at: new Date().toISOString(),
       })
       .eq('stripe_subscription_id', paymentIntent.metadata.subscription_id);
 
@@ -133,13 +184,4 @@ export async function handlePaymentFailed(
     console.error('Error processing payment failure:', error);
     throw error;
   }
-}
-
-function getPlanNameFromPrice(priceId: string): string {
-  const priceMap: Record<string, string> = {
-    'price_1QdIQ0G8TTdTbu7dSw6PTIQG': 'Starter',
-    'price_1QdIQWG8TTdTbu7dpGfYO8qR': 'Pro',
-    'price_1QdIR3G8TTdTbu7d797PglPe': 'Premium',
-  };
-  return priceMap[priceId] || 'Starter';
 }
