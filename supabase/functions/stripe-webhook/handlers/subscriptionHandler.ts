@@ -51,7 +51,6 @@ export async function handleSubscriptionUpdated(
   console.log('Processing subscription update:', subscription.id);
   
   try {
-    // Get the customer ID from the subscription
     const customerId = subscription.customer as string;
     
     // Get customer details to find the user
@@ -64,22 +63,25 @@ export async function handleSubscriptionUpdated(
       throw new Error('No email found for customer');
     }
 
-    // Find the user by email
+    // Find the user by email in user_roles table since we can't access auth.users directly
     const { data: userData, error: userError } = await supabaseAdmin
-      .from('auth.users')
-      .select('id')
-      .eq('email', customer.email)
+      .from('user_roles')
+      .select('user_id')
+      .eq('user_id', subscription.metadata.user_id)
       .single();
 
     if (userError || !userData) {
-      throw new Error(`User not found for email: ${customer.email}`);
+      console.error('User lookup error:', userError);
+      throw new Error(`User not found for ID: ${subscription.metadata.user_id}`);
     }
 
     const planName = getPlanNameFromPrice(subscription.items.data[0].price.id);
     const planLimits = getPlanLimits(planName);
     
+    console.log('Updating subscription for user:', userData.user_id, 'to plan:', planName);
+
     const subscriptionData: Partial<SubscriptionData> = {
-      user_id: userData.id,
+      user_id: userData.user_id,
       plan_name: planName,
       status: subscription.status,
       current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
@@ -90,27 +92,35 @@ export async function handleSubscriptionUpdated(
       payment_status: subscription.status === 'active' ? 'succeeded' : 'pending',
     };
 
-    console.log('Updating subscription with data:', subscriptionData);
-
-    // Update or insert the subscription
+    // First try to update existing subscription
     const { error: updateError } = await supabaseAdmin
       .from('subscriptions')
-      .upsert({
+      .update({
         ...subscriptionData,
         updated_at: new Date().toISOString(),
-      });
+      })
+      .eq('user_id', userData.user_id);
 
+    // If no existing subscription found, insert a new one
     if (updateError) {
-      console.error('Error updating subscription:', updateError);
-      throw updateError;
+      console.log('No existing subscription found, creating new one');
+      const { error: insertError } = await supabaseAdmin
+        .from('subscriptions')
+        .insert({
+          ...subscriptionData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+
+      if (insertError) throw insertError;
     }
 
-    // Reset usage if payment succeeded
+    // Reset usage metrics for the new billing period
     if (subscription.status === 'active') {
-      await supabaseAdmin
+      const { error: usageError } = await supabaseAdmin
         .from('user_usage')
         .upsert({
-          user_id: userData.id,
+          user_id: userData.user_id,
           videos_created: 0,
           export_minutes_used: 0,
           voiceover_minutes_used: 0,
@@ -118,6 +128,10 @@ export async function handleSubscriptionUpdated(
           month_start: new Date().toISOString().slice(0, 7) + '-01',
           updated_at: new Date().toISOString(),
         });
+
+      if (usageError) {
+        console.error('Error resetting usage metrics:', usageError);
+      }
     }
 
     return {
