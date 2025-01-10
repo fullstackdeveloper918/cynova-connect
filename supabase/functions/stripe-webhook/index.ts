@@ -2,10 +2,20 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { handleCheckoutCompleted } from "./handlers/checkoutHandler.ts";
-import { handleSubscriptionUpdated, handlePaymentSucceeded, handlePaymentFailed } from "./handlers/subscriptionHandler.ts";
+import { handleSubscriptionUpdated, handleSubscriptionDeleted } from "./handlers/subscriptionHandler.ts";
 import { WebhookHandlerResult } from "./types.ts";
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   try {
     console.log("Received webhook request");
     
@@ -34,7 +44,10 @@ serve(async (req) => {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err) {
       console.error(`Webhook signature verification failed:`, err.message);
-      return new Response(JSON.stringify({ error: err.message }), { status: 400 });
+      return new Response(JSON.stringify({ error: err.message }), { 
+        status: 400,
+        headers: { ...corsHeaders }
+      });
     }
 
     console.log(`Processing Stripe webhook event: ${event.type}`, event);
@@ -70,18 +83,10 @@ serve(async (req) => {
         );
         break;
 
-      case "payment_intent.succeeded":
-        console.log("Processing payment_intent.succeeded");
-        result = await handlePaymentSucceeded(
-          event.data.object as Stripe.PaymentIntent,
-          supabaseAdmin
-        );
-        break;
-
-      case "payment_intent.payment_failed":
-        console.log("Processing payment_intent.payment_failed");
-        result = await handlePaymentFailed(
-          event.data.object as Stripe.PaymentIntent,
+      case "customer.subscription.deleted":
+        console.log("Processing customer.subscription.deleted");
+        result = await handleSubscriptionDeleted(
+          event.data.object as Stripe.Subscription,
           supabaseAdmin
         );
         break;
@@ -90,19 +95,29 @@ serve(async (req) => {
         console.log(`Unhandled event type: ${event.type}`);
         return new Response(
           JSON.stringify({ received: true, handled: false }),
-          { status: 200 }
+          { 
+            status: 200,
+            headers: { ...corsHeaders }
+          }
         );
     }
 
     console.log(`Successfully processed ${event.type}:`, result);
-    return new Response(JSON.stringify({ received: true, handled: true }), {
-      status: 200,
-    });
+    return new Response(
+      JSON.stringify({ received: true, handled: true, result }),
+      { 
+        status: 200,
+        headers: { ...corsHeaders }
+      }
+    );
   } catch (error) {
     console.error("Error processing webhook:", error);
     return new Response(
       JSON.stringify({ error: "Failed to process webhook" }),
-      { status: 400 }
+      { 
+        status: 400,
+        headers: { ...corsHeaders }
+      }
     );
   }
 });

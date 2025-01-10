@@ -52,36 +52,20 @@ export async function handleSubscriptionUpdated(
   
   try {
     const customerId = subscription.customer as string;
+    const userId = subscription.metadata.user_id;
     
-    // Get customer details to find the user
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-      apiVersion: "2023-10-16",
-    });
-    
-    const customer = await stripe.customers.retrieve(customerId);
-    if (!customer.email) {
-      throw new Error('No email found for customer');
+    if (!userId) {
+      console.error('No user_id found in subscription metadata');
+      throw new Error('No user_id found in subscription metadata');
     }
 
-    // Find the user by email in user_roles table since we can't access auth.users directly
-    const { data: userData, error: userError } = await supabaseAdmin
-      .from('user_roles')
-      .select('user_id')
-      .eq('user_id', subscription.metadata.user_id)
-      .single();
-
-    if (userError || !userData) {
-      console.error('User lookup error:', userError);
-      throw new Error(`User not found for ID: ${subscription.metadata.user_id}`);
-    }
+    console.log('Updating subscription for user:', userId);
 
     const planName = getPlanNameFromPrice(subscription.items.data[0].price.id);
     const planLimits = getPlanLimits(planName);
     
-    console.log('Updating subscription for user:', userData.user_id, 'to plan:', planName);
-
     const subscriptionData: Partial<SubscriptionData> = {
-      user_id: userData.user_id,
+      user_id: userId,
       plan_name: planName,
       status: subscription.status,
       current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
@@ -92,27 +76,18 @@ export async function handleSubscriptionUpdated(
       payment_status: subscription.status === 'active' ? 'succeeded' : 'pending',
     };
 
-    // First try to update existing subscription
+    console.log('Updating subscription data:', subscriptionData);
+
     const { error: updateError } = await supabaseAdmin
       .from('subscriptions')
-      .update({
+      .upsert({
         ...subscriptionData,
         updated_at: new Date().toISOString(),
-      })
-      .eq('user_id', userData.user_id);
+      });
 
-    // If no existing subscription found, insert a new one
     if (updateError) {
-      console.log('No existing subscription found, creating new one');
-      const { error: insertError } = await supabaseAdmin
-        .from('subscriptions')
-        .insert({
-          ...subscriptionData,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
-
-      if (insertError) throw insertError;
+      console.error('Error updating subscription:', updateError);
+      throw updateError;
     }
 
     // Reset usage metrics for the new billing period
@@ -120,7 +95,7 @@ export async function handleSubscriptionUpdated(
       const { error: usageError } = await supabaseAdmin
         .from('user_usage')
         .upsert({
-          user_id: userData.user_id,
+          user_id: userId,
           videos_created: 0,
           export_minutes_used: 0,
           voiceover_minutes_used: 0,
@@ -144,58 +119,55 @@ export async function handleSubscriptionUpdated(
   }
 }
 
-export async function handlePaymentSucceeded(
-  paymentIntent: Stripe.PaymentIntent,
+export async function handleSubscriptionDeleted(
+  subscription: Stripe.Subscription,
   supabaseAdmin: ReturnType<typeof createClient>
 ): Promise<WebhookHandlerResult> {
-  console.log('Processing successful payment:', paymentIntent.id);
+  console.log('Processing subscription deletion:', subscription.id);
 
   try {
-    const { error } = await supabaseAdmin
-      .from('subscriptions')
-      .update({
-        payment_status: 'succeeded',
-        status: 'active',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('stripe_subscription_id', paymentIntent.metadata.subscription_id);
+    const userId = subscription.metadata.user_id;
+    
+    if (!userId) {
+      console.error('No user_id found in subscription metadata');
+      throw new Error('No user_id found in subscription metadata');
+    }
 
-    if (error) throw error;
+    console.log('Setting subscription to Free plan for user:', userId);
+
+    const subscriptionData = {
+      user_id: userId,
+      plan_name: 'Free',
+      status: 'inactive',
+      stripe_subscription_id: null,
+      stripe_customer_id: null,
+      plan_limits: {
+        features: ["chatgpt_video"],
+        max_duration_minutes: 10,
+        max_videos_per_month: 20,
+        max_exports_per_month: 10,
+        max_voiceover_minutes: 10,
+        max_ai_images: 50,
+      },
+      payment_status: 'cancelled',
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error: updateError } = await supabaseAdmin
+      .from('subscriptions')
+      .upsert(subscriptionData);
+
+    if (updateError) {
+      console.error('Error updating subscription:', updateError);
+      throw updateError;
+    }
 
     return {
       status: 'success',
-      message: `Payment ${paymentIntent.id} processed successfully`,
+      message: `Subscription ${subscription.id} marked as cancelled`,
     };
   } catch (error) {
-    console.error('Error processing payment:', error);
-    throw error;
-  }
-}
-
-export async function handlePaymentFailed(
-  paymentIntent: Stripe.PaymentIntent,
-  supabaseAdmin: ReturnType<typeof createClient>
-): Promise<WebhookHandlerResult> {
-  console.log('Processing failed payment:', paymentIntent.id);
-
-  try {
-    const { error } = await supabaseAdmin
-      .from('subscriptions')
-      .update({
-        payment_status: 'failed',
-        status: 'past_due',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('stripe_subscription_id', paymentIntent.metadata.subscription_id);
-
-    if (error) throw error;
-
-    return {
-      status: 'success',
-      message: `Payment failure ${paymentIntent.id} recorded`,
-    };
-  } catch (error) {
-    console.error('Error processing payment failure:', error);
+    console.error('Error handling subscription deletion:', error);
     throw error;
   }
 }
