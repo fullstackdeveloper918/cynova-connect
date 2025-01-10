@@ -22,27 +22,73 @@ export const DashboardContent = () => {
     refetch: refetchSubscription
   } = useSubscription();
   const [isCheckingSubscription, setIsCheckingSubscription] = useState(true);
+  const [currentSession, setCurrentSession] = useState<string | null>(null);
 
-  // Simplified session verification
+  // Enhanced session verification
   useEffect(() => {
+    const checkAndSetSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // If no session, redirect to login
+        if (!session) {
+          console.log("No session found, redirecting to login");
+          navigate("/login");
+          return;
+        }
+
+        // If we have a stored session ID and it's different from current session
+        if (currentSession && currentSession !== session.user.id) {
+          console.log("Session mismatch detected, clearing session");
+          await supabase.auth.signOut();
+          localStorage.clear(); // Clear all local storage
+          navigate("/login");
+          return;
+        }
+
+        // Set current session
+        setCurrentSession(session.user.id);
+
+      } catch (error) {
+        console.error("Session check error:", error);
+        navigate("/login");
+      }
+    };
+
+    checkAndSetSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log("Auth state change:", event, session?.user.id);
+        
         if (event === 'SIGNED_OUT' || !session) {
+          localStorage.clear(); // Clear all local storage
           navigate("/login");
+          return;
         }
+
+        // Verify session matches stored session
+        if (currentSession && currentSession !== session.user.id) {
+          console.log("Session mismatch on auth change");
+          await supabase.auth.signOut();
+          localStorage.clear();
+          navigate("/login");
+          return;
+        }
+
+        setCurrentSession(session.user.id);
       }
     );
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, currentSession]);
 
   // Add subscription check and refresh logic
   useEffect(() => {
     const checkSubscription = async () => {
       try {
-        // If coming from payment success, we need to wait a bit for the webhook
         const fromPayment = sessionStorage.getItem('from_payment');
         if (fromPayment) {
           sessionStorage.removeItem('from_payment');
@@ -50,7 +96,7 @@ export const DashboardContent = () => {
           const maxAttempts = 5;
           
           while (attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+            await new Promise(resolve => setTimeout(resolve, 2000));
             const result = await refetchSubscription();
             
             if (result.data?.plan_name && result.data.plan_name !== 'Free') {
