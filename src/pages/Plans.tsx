@@ -16,8 +16,8 @@ const plans = [
       yearly: 230,
     },
     priceId: {
-      monthly: "price_1QeDzGG8TTdTbu7dz9ApCJQM",
-      yearly: "price_1OgbZeG8TTdTbu7dKpFGWqL9",
+      monthly: "price_1QeDzGG8TTdTbu7dz9ApCJQM", // Test price ID for Starter Monthly
+      yearly: "price_1QeDzuG8TTdTbu7dosC1Ry4k",  // Test price ID for Starter Yearly
     },
     limits: {
       max_duration_minutes: 40,
@@ -34,8 +34,8 @@ const plans = [
       yearly: 374,
     },
     priceId: {
-      monthly: "price_1QeDzcG8TTdTbu7d6fJJNFFQ",
-      yearly: "price_1OgbZeG8TTdTbu7dKpFGWqL9",
+      monthly: "price_1QeDzcG8TTdTbu7d6fJJNFFQ", // Test price ID for Pro Monthly
+      yearly: "price_1QeDzuG8TTdTbu7dosC1Ry4k",  // Test price ID for Pro Yearly
     },
     popular: true,
     limits: {
@@ -53,8 +53,8 @@ const plans = [
       yearly: 758,
     },
     priceId: {
-      monthly: "price_1QeDzuG8TTdTbu7dosC1Ry4k",
-      yearly: "price_1OgbZeG8TTdTbu7dKpFGWqL9",
+      monthly: "price_1QeDzuG8TTdTbu7dosC1Ry4k", // Test price ID for Premium Monthly
+      yearly: "price_1QeDzuG8TTdTbu7dosC1Ry4k",  // Test price ID for Premium Yearly
     },
     limits: {
       max_duration_minutes: 180,
