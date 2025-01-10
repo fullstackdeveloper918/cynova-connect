@@ -1,23 +1,21 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
-import { useSubscription } from "@/hooks/useSubscription";
 
-const PaymentSuccess = () => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { toast } = useToast();
-  const { data: subscription, isLoading } = useSubscription();
+export default function PaymentSuccess() {
   const [countdown, setCountdown] = useState(5);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    // Set the trigger for subscription checking
+    sessionStorage.setItem('from_payment', 'true');
+    
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
           navigate("/dashboard");
+          return 0;
         }
         return prev - 1;
       });
@@ -26,36 +24,21 @@ const PaymentSuccess = () => {
     return () => clearInterval(timer);
   }, [navigate]);
 
-  useEffect(() => {
-    if (!searchParams.get("session_id")) {
-      navigate("/dashboard");
-    }
-  }, [searchParams, navigate]);
-
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-8 text-center">
-        <div className="flex justify-center">
-          <CheckCircle2 className="h-16 w-16 text-green-500" />
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight">Payment Successful!</h1>
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-center space-y-4">
+        <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto" />
+        <h1 className="text-2xl font-bold text-foreground">Payment Successful!</h1>
         <p className="text-muted-foreground">
-          Thank you for subscribing to the {subscription?.plan_name} plan.
+          Redirecting to dashboard in {countdown} seconds...
         </p>
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            You will be redirected to the dashboard in {countdown} seconds...
-          </p>
-          <Button 
-            onClick={() => navigate("/dashboard")} 
-            className="w-full"
-          >
-            Go to Dashboard Now
-          </Button>
-        </div>
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+        >
+          Go to Dashboard Now
+        </button>
       </div>
     </div>
   );
 };
-
-export default PaymentSuccess;
