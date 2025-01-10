@@ -7,8 +7,11 @@ import { WebhookHandlerResult } from "./types.ts";
 
 serve(async (req) => {
   try {
+    console.log("Received webhook request");
+    
     const signature = req.headers.get("stripe-signature");
     if (!signature) {
+      console.error("No Stripe signature found");
       throw new Error("No Stripe signature found");
     }
 
@@ -18,10 +21,13 @@ serve(async (req) => {
 
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
     if (!webhookSecret) {
+      console.error("Webhook secret not configured");
       throw new Error("Webhook secret not configured");
     }
 
     const body = await req.text();
+    console.log("Webhook body:", body);
+    
     let event;
 
     try {
@@ -31,7 +37,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: err.message }), { status: 400 });
     }
 
-    console.log(`Processing Stripe webhook event: ${event.type}`);
+    console.log(`Processing Stripe webhook event: ${event.type}`, event);
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -48,6 +54,7 @@ serve(async (req) => {
 
     switch (event.type) {
       case "checkout.session.completed":
+        console.log("Processing checkout.session.completed");
         result = await handleCheckoutCompleted(
           event.data.object as Stripe.Checkout.Session,
           stripe,
@@ -56,6 +63,7 @@ serve(async (req) => {
         break;
 
       case "customer.subscription.updated":
+        console.log("Processing customer.subscription.updated");
         result = await handleSubscriptionUpdated(
           event.data.object as Stripe.Subscription,
           supabaseAdmin
@@ -63,6 +71,7 @@ serve(async (req) => {
         break;
 
       case "payment_intent.succeeded":
+        console.log("Processing payment_intent.succeeded");
         result = await handlePaymentSucceeded(
           event.data.object as Stripe.PaymentIntent,
           supabaseAdmin
@@ -70,6 +79,7 @@ serve(async (req) => {
         break;
 
       case "payment_intent.payment_failed":
+        console.log("Processing payment_intent.payment_failed");
         result = await handlePaymentFailed(
           event.data.object as Stripe.PaymentIntent,
           supabaseAdmin
