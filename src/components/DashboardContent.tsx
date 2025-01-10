@@ -8,7 +8,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { WelcomeHeader } from "./dashboard/WelcomeHeader";
 import { FeatureGrid } from "./dashboard/FeatureGrid";
 import { RequireSubscription } from "./auth/RequireSubscription";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -17,9 +17,11 @@ export const DashboardContent = () => {
   const { data: user, isLoading: isLoadingUser } = useUser();
   const { 
     data: subscription, 
-    isLoading: isLoadingSubscription, 
-    error: subscriptionError 
+    isLoading: isLoadingSubscription,
+    error: subscriptionError,
+    refetch: refetchSubscription
   } = useSubscription();
+  const [isCheckingSubscription, setIsCheckingSubscription] = useState(true);
 
   // Simplified session verification
   useEffect(() => {
@@ -36,11 +38,59 @@ export const DashboardContent = () => {
     };
   }, [navigate]);
 
+  // Add subscription check and refresh logic
+  useEffect(() => {
+    const checkSubscription = async () => {
+      try {
+        // If coming from payment success, we need to wait a bit for the webhook
+        const fromPayment = sessionStorage.getItem('from_payment');
+        if (fromPayment) {
+          sessionStorage.removeItem('from_payment');
+          let attempts = 0;
+          const maxAttempts = 5;
+          
+          while (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+            const result = await refetchSubscription();
+            
+            if (result.data?.plan_name && result.data.plan_name !== 'Free') {
+              console.log('Subscription updated:', result.data);
+              break;
+            }
+            
+            attempts++;
+          }
+          
+          if (attempts === maxAttempts) {
+            toast.error("Subscription update is taking longer than expected. Please refresh the page in a few moments.");
+          }
+        }
+      } catch (error) {
+        console.error('Error checking subscription:', error);
+      } finally {
+        setIsCheckingSubscription(false);
+      }
+    };
+
+    checkSubscription();
+  }, [refetchSubscription]);
+
   const userName = user?.name || 'User';
   const userEmail = user?.email;
   const isFreePlan = !isLoadingSubscription && subscription?.plan_name === "Free";
 
-  console.log("Dashboard subscription state:", { subscription, isFreePlan });
+  console.log("Dashboard subscription state:", { subscription, isFreePlan, isCheckingSubscription });
+
+  if (isLoadingSubscription || isCheckingSubscription) {
+    return (
+      <div className="flex items-center justify-center h-[50vh]">
+        <div className="space-y-4">
+          <div className="h-8 w-48 bg-gray-200 animate-pulse rounded"></div>
+          <div className="h-4 w-32 bg-gray-200 animate-pulse rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
