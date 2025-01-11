@@ -79,11 +79,11 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <Sidebar className="hidden md:block">
-          <SidebarHeader className="p-4">
+          <SidebarHeader className="p-6">
             <img
               src="/logo.svg"
               alt="Cynova Logo"
-              className="h-8 w-auto mx-auto"
+              className="w-48 h-auto mx-auto"
             />
           </SidebarHeader>
           <SidebarNavigation />
