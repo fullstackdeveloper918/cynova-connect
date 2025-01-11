@@ -7,22 +7,30 @@ import { handleSubscriptionUpdated, handleSubscriptionDeleted } from "./handlers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 serve(async (req) => {
+  console.log('Webhook request received:', req.method);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling CORS preflight request');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const signature = req.headers.get('stripe-signature');
+    console.log('Stripe signature received:', signature ? 'Yes' : 'No');
+    
     if (!signature) {
+      console.error('No Stripe signature found');
       throw new Error('No Stripe signature found');
     }
 
     const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
     if (!webhookSecret) {
+      console.error('Webhook secret not configured');
       throw new Error('Webhook secret not configured');
     }
 
@@ -47,13 +55,17 @@ serve(async (req) => {
       console.error('Webhook signature verification failed:', err.message);
       return new Response(
         JSON.stringify({ error: `Webhook Error: ${err.message}` }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
       );
     }
 
     let result;
     switch (event.type) {
       case 'checkout.session.completed':
+        console.log('Processing checkout.session.completed event');
         result = await handleCheckoutCompleted(
           event.data.object as Stripe.Checkout.Session,
           stripe,
@@ -62,6 +74,7 @@ serve(async (req) => {
         break;
 
       case 'customer.subscription.updated':
+        console.log('Processing customer.subscription.updated event');
         result = await handleSubscriptionUpdated(
           event.data.object as Stripe.Subscription,
           supabaseAdmin
@@ -69,6 +82,7 @@ serve(async (req) => {
         break;
 
       case 'customer.subscription.deleted':
+        console.log('Processing customer.subscription.deleted event');
         result = await handleSubscriptionDeleted(
           event.data.object as Stripe.Subscription,
           supabaseAdmin
@@ -83,6 +97,7 @@ serve(async (req) => {
         );
     }
 
+    console.log('Webhook processed successfully:', result);
     return new Response(
       JSON.stringify({ received: true, result }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
