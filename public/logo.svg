@@ -1,27 +1,4 @@
 <svg width="1200" height="300" viewBox="0 0 1200 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Main hexagon shape - made larger -->
-  <path d="M150 75 L225 37.5 L300 75 L300 150 L225 187.5 L150 150 Z" 
-        fill="#9b87f5" 
-        stroke="#7E69AB" 
-        stroke-width="6"/>
-  
-  <!-- Inner decorative lines - adjusted for new size -->
-  <path d="M187.5 93.75 L262.5 131.25 M187.5 131.25 L262.5 93.75" 
-        stroke="#E5DEFF" 
-        stroke-width="4.5" 
-        stroke-linecap="round"/>
-  
-  <!-- Company name with modern font - made larger -->
-  <text x="360" y="150" 
-        font-family="Arial, sans-serif" 
-        font-size="108" 
-        font-weight="bold" 
-        fill="#1A1F2C">
-    CYNOVA
-  </text>
-  
-  <!-- Decorative dots - adjusted position -->
-  <circle cx="675" cy="127.5" r="6" fill="#9b87f5"/>
-  <circle cx="705" cy="127.5" r="6" fill="#7E69AB"/>
-  <circle cx="735" cy="127.5" r="6" fill="#6E59A5"/>
+  <path d="M30 50 L1170 50 L1170 250 L30 250 Z" fill="none"/>
+  <image href="/lovable-uploads/ef5e3724-9332-4994-ad12-3edcdb1c5cb7.png" x="30" y="50" width="1140" height="200" preserveAspectRatio="xMidYMid meet"/>
 </svg>
