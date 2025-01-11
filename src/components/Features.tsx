@@ -36,7 +36,7 @@ export const Features = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
+            className="text-3xl md:text-4xl font-bold mb-4 text-black"
           >
             Why Choose Cynova
           </motion.h2>
@@ -44,7 +44,7 @@ export const Features = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-muted-foreground text-lg max-w-2xl mx-auto"
+            className="text-black/80 text-lg max-w-2xl mx-auto"
           >
             Experience the power of next-generation AI technology
           </motion.p>
@@ -63,8 +63,8 @@ export const Features = () => {
               <div className="w-12 h-12 rounded-lg bg-accent flex items-center justify-center mb-4">
                 <feature.icon className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-primary">{feature.title}</h3>
-              <p className="text-muted-foreground">{feature.description}</p>
+              <h3 className="text-xl font-semibold mb-2 text-black">{feature.title}</h3>
+              <p className="text-black/80">{feature.description}</p>
             </motion.div>
           ))}
         </div>

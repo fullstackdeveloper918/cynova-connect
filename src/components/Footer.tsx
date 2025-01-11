@@ -20,14 +20,14 @@ export const Footer = () => {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-lg">Features</h3>
+              <h3 className="font-semibold text-lg text-black">Features</h3>
             </div>
             <ul className="space-y-2">
               {features.map((feature) => (
                 <li key={feature.title}>
                   <Link
                     to={feature.href}
-                    className="text-muted-foreground hover:text-primary transition-colors"
+                    className="text-black/70 hover:text-primary transition-colors"
                   >
                     {feature.title}
                   </Link>
@@ -40,13 +40,13 @@ export const Footer = () => {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <DollarSign className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-lg">Pricing</h3>
+              <h3 className="font-semibold text-lg text-black">Pricing</h3>
             </div>
             <ul className="space-y-2">
               <li>
                 <Link
                   to="/plans"
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  className="text-black/70 hover:text-primary transition-colors"
                 >
                   View Plans
                 </Link>
@@ -58,13 +58,13 @@ export const Footer = () => {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <FileText className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-lg">Legal</h3>
+              <h3 className="font-semibold text-lg text-black">Legal</h3>
             </div>
             <ul className="space-y-2">
               <li>
                 <Link
                   to="/privacy-policy"
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  className="text-black/70 hover:text-primary transition-colors"
                 >
                   Privacy Policy
                 </Link>
@@ -72,7 +72,7 @@ export const Footer = () => {
               <li>
                 <Link
                   to="/refund-policy"
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  className="text-black/70 hover:text-primary transition-colors"
                 >
                   Refund Policy
                 </Link>
@@ -80,7 +80,7 @@ export const Footer = () => {
               <li>
                 <Link
                   to="/terms-of-service"
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  className="text-black/70 hover:text-primary transition-colors"
                 >
                   Terms of Service
                 </Link>
