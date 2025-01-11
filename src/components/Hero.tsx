@@ -14,6 +14,11 @@ export const Hero = () => {
           transition={{ duration: 0.6 }}
           className="text-center max-w-4xl mx-auto"
         >
+          <img
+            src="/logo.svg"
+            alt="Cynova Logo"
+            className="w-48 h-auto mx-auto mb-8"
+          />
           <motion.span
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
