@@ -25,7 +25,7 @@ const UserDashboard = () => {
             <img
               src="/lovable-uploads/ef5e3724-9332-4994-ad12-3edcdb1c5cb7.png"
               alt="Cynova Logo"
-              className="w-48 h-auto mx-auto"
+              className="w-28 h-auto mx-auto"
             />
           </SidebarHeader>
           <SidebarNavigation />
