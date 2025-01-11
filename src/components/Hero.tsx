@@ -15,7 +15,7 @@ export const Hero = () => {
           className="text-center max-w-4xl mx-auto"
         >
           <img
-            src="/logo.svg"
+            src="/lovable-uploads/ef5e3724-9332-4994-ad12-3edcdb1c5cb7.png"
             alt="Cynova Logo"
             className="w-48 h-auto mx-auto mb-8"
           />
