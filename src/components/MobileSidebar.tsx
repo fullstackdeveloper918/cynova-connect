@@ -35,16 +35,13 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
     try {
       setIsLoggingOut(true);
       
-      // Clear auth data first
       localStorage.removeItem('sb-fkrvvlfhdjxqadmupldb-auth-token');
       document.cookie = 'sb-access-token=; Max-Age=0; path=/;';
       document.cookie = 'sb-refresh-token=; Max-Age=0; path=/;';
       
-      // Then attempt to sign out
       const { error: signOutError } = await supabase.auth.signOut();
       
       if (signOutError) {
-        // If session not found, just proceed with navigation
         if (signOutError.status === 403) {
           setIsOpen(false);
           navigate('/login');
@@ -80,7 +77,7 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <Sidebar className="hidden md:block">
-          <SidebarHeader className="p-6 bg-white">
+          <SidebarHeader className="p-6 bg-white border-b">
             <img
               src="/lovable-uploads/ef5e3724-9332-4994-ad12-3edcdb1c5cb7.png"
               alt="Cynova Logo"
@@ -99,20 +96,16 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="ml-2 h-12 w-12 touch-manipulation active:scale-95 transition-transform"
+                    className="ml-2 h-12 w-12 touch-manipulation active:scale-95 transition-transform z-50"
                     style={{ 
                       WebkitTapHighlightColor: 'transparent',
                       WebkitTouchCallout: 'none',
                       WebkitUserSelect: 'none',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      touchAction: 'manipulation'
                     }}
                     onTouchStart={(e) => {
                       e.preventDefault();
-                      setIsOpen(true);
-                    }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
                       setIsOpen(true);
                     }}
                   >
@@ -124,10 +117,11 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
                   <div className="flex flex-col w-full">
                     <button
                       onClick={handleProfileClick}
-                      className="w-full flex items-center gap-3 px-6 py-5 text-base hover:bg-accent border-b touch-manipulation active:bg-accent/80"
+                      className="w-full flex items-center gap-3 px-6 py-5 text-base hover:bg-accent border-b"
                       style={{ 
                         WebkitTapHighlightColor: 'transparent',
-                        WebkitTouchCallout: 'none'
+                        WebkitTouchCallout: 'none',
+                        touchAction: 'manipulation'
                       }}
                     >
                       <User className="h-5 w-5" />
@@ -136,10 +130,11 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
                     <button
                       onClick={handleLogout}
                       disabled={isLoggingOut}
-                      className="w-full flex items-center gap-3 px-6 py-5 text-base text-red-600 hover:bg-red-50 touch-manipulation active:bg-red-100 disabled:opacity-50"
+                      className="w-full flex items-center gap-3 px-6 py-5 text-base text-red-600 hover:bg-red-50 disabled:opacity-50"
                       style={{ 
                         WebkitTapHighlightColor: 'transparent',
-                        WebkitTouchCallout: 'none'
+                        WebkitTouchCallout: 'none',
+                        touchAction: 'manipulation'
                       }}
                     >
                       <LogOut className="h-5 w-5" />
