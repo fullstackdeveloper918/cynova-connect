@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -64,7 +65,7 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
     }
   };
 
-  const handleProfileClick = (event: React.MouseEvent) => {
+  const handleProfileClick = (event: React.MouseEvent | React.TouchEvent) => {
     event.preventDefault();
     event.stopPropagation();
     setIsOpen(false);
@@ -89,7 +90,7 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
 
         <main className="flex-1">
           {isMobile && (
-            <div className="p-4 sticky top-0 z-50 bg-background border-b flex items-center justify-between">
+            <div className="p-4 sticky top-0 z-40 bg-background border-b flex items-center justify-between">
               <SidebarTrigger />
               <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogTrigger asChild>
@@ -104,16 +105,16 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
                       cursor: 'pointer',
                       touchAction: 'manipulation'
                     }}
-                    onTouchStart={(e) => {
-                      e.preventDefault();
-                      setIsOpen(true);
-                    }}
+                    onClick={() => setIsOpen(true)}
                   >
                     <User className="h-6 w-6" />
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="w-[90vw] max-w-[300px] p-0 bg-white">
                   <DialogTitle className="sr-only">User Menu</DialogTitle>
+                  <DialogDescription className="sr-only">
+                    Access your profile settings and logout options
+                  </DialogDescription>
                   <div className="flex flex-col w-full">
                     <button
                       onClick={handleProfileClick}
@@ -121,7 +122,8 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
                       style={{ 
                         WebkitTapHighlightColor: 'transparent',
                         WebkitTouchCallout: 'none',
-                        touchAction: 'manipulation'
+                        touchAction: 'manipulation',
+                        cursor: 'pointer'
                       }}
                     >
                       <User className="h-5 w-5" />
@@ -134,7 +136,8 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
                       style={{ 
                         WebkitTapHighlightColor: 'transparent',
                         WebkitTouchCallout: 'none',
-                        touchAction: 'manipulation'
+                        touchAction: 'manipulation',
+                        cursor: 'pointer'
                       }}
                     >
                       <LogOut className="h-5 w-5" />
