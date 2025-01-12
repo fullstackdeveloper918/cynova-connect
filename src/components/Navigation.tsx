@@ -65,7 +65,7 @@ export function Navigation() {
         <div className="flex items-center justify-between w-full">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <img src="/lovable-uploads/ef5e3724-9332-4994-ad12-3edcdb1c5cb7.png" alt="Cynova" className="h-8 w-auto" />
+            <img src="/logo.svg" alt="Cynova" className="h-8 w-auto" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -118,8 +118,13 @@ export function Navigation() {
             </NavigationMenu>
           </div>
 
-          {/* Get Started Button */}
-          <div className="hidden md:block">
+          {/* Get Started and Sign In Buttons */}
+          <div className="hidden md:flex items-center gap-4">
+            <Link to="/login">
+              <Button variant="outline">
+                Sign In
+              </Button>
+            </Link>
             <Link to="/signup">
               <Button className="bg-primary hover:bg-primary/90">
                 Get Started
@@ -180,6 +185,11 @@ export function Navigation() {
                     onClick={() => setIsOpen(false)}
                   >
                     Affiliate
+                  </Link>
+                  <Link to="/login" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full">
+                      Sign In
+                    </Button>
                   </Link>
                   <Link to="/signup" onClick={() => setIsOpen(false)}>
                     <Button className="w-full bg-primary hover:bg-primary/90">

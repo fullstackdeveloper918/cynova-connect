@@ -79,7 +79,7 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <Sidebar className="hidden md:block">
-          <SidebarHeader className="p-6">
+          <SidebarHeader className="p-6 bg-white">
             <img
               src="/lovable-uploads/ef5e3724-9332-4994-ad12-3edcdb1c5cb7.png"
               alt="Cynova Logo"
@@ -99,6 +99,10 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
                     variant="outline"
                     size="icon"
                     className="ml-2 h-12 w-12 touch-manipulation"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
                   >
                     <User className="h-6 w-6" />
                   </Button>
