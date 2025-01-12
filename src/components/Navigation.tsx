@@ -65,7 +65,11 @@ export function Navigation() {
         <div className="flex items-center justify-between w-full">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.svg" alt="Cynova" className="h-8 w-auto" />
+            <img 
+              src="/lovable-uploads/ef5e3724-9332-4994-ad12-3edcdb1c5cb7.png" 
+              alt="Cynova" 
+              className="h-8 w-auto" 
+            />
           </Link>
 
           {/* Desktop Navigation */}

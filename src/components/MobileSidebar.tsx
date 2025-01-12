@@ -100,7 +100,16 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
                     variant="outline"
                     size="icon"
                     className="ml-2 h-12 w-12 touch-manipulation active:scale-95 transition-transform"
-                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                    style={{ 
+                      WebkitTapHighlightColor: 'transparent',
+                      WebkitTouchCallout: 'none',
+                      WebkitUserSelect: 'none',
+                      cursor: 'pointer'
+                    }}
+                    onTouchStart={(e) => {
+                      e.preventDefault();
+                      setIsOpen(true);
+                    }}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -116,6 +125,10 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
                     <button
                       onClick={handleProfileClick}
                       className="w-full flex items-center gap-3 px-6 py-5 text-base hover:bg-accent border-b touch-manipulation active:bg-accent/80"
+                      style={{ 
+                        WebkitTapHighlightColor: 'transparent',
+                        WebkitTouchCallout: 'none'
+                      }}
                     >
                       <User className="h-5 w-5" />
                       Settings
@@ -124,6 +137,10 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
                       onClick={handleLogout}
                       disabled={isLoggingOut}
                       className="w-full flex items-center gap-3 px-6 py-5 text-base text-red-600 hover:bg-red-50 touch-manipulation active:bg-red-100 disabled:opacity-50"
+                      style={{ 
+                        WebkitTapHighlightColor: 'transparent',
+                        WebkitTouchCallout: 'none'
+                      }}
                     >
                       <LogOut className="h-5 w-5" />
                       {isLoggingOut ? "Logging out..." : "Logout"}
