@@ -13,21 +13,20 @@ const features = [
 
 export const Footer = () => {
   return (
-    <footer className="bg-muted/30 border-t border-accent">
+    <footer className="bg-white border-t border-zinc-100">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Features Column */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-lg text-black">Features</h3>
+              <Sparkles className="h-5 w-5 text-zinc-900" />
+              <h3 className="font-semibold text-lg text-zinc-900">Features</h3>
             </div>
             <ul className="space-y-2">
               {features.map((feature) => (
                 <li key={feature.title}>
                   <Link
                     to={feature.href}
-                    className="text-black/70 hover:text-primary transition-colors"
+                    className="text-zinc-600 hover:text-zinc-900 transition-colors"
                   >
                     {feature.title}
                   </Link>
@@ -36,17 +35,16 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Pricing Column */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <DollarSign className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-lg text-black">Pricing</h3>
+              <DollarSign className="h-5 w-5 text-zinc-900" />
+              <h3 className="font-semibold text-lg text-zinc-900">Pricing</h3>
             </div>
             <ul className="space-y-2">
               <li>
                 <Link
                   to="/plans"
-                  className="text-black/70 hover:text-primary transition-colors"
+                  className="text-zinc-600 hover:text-zinc-900 transition-colors"
                 >
                   View Plans
                 </Link>
@@ -54,17 +52,16 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Legal Column */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <FileText className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-lg text-black">Legal</h3>
+              <FileText className="h-5 w-5 text-zinc-900" />
+              <h3 className="font-semibold text-lg text-zinc-900">Legal</h3>
             </div>
             <ul className="space-y-2">
               <li>
                 <Link
                   to="/privacy-policy"
-                  className="text-black/70 hover:text-primary transition-colors"
+                  className="text-zinc-600 hover:text-zinc-900 transition-colors"
                 >
                   Privacy Policy
                 </Link>
@@ -72,7 +69,7 @@ export const Footer = () => {
               <li>
                 <Link
                   to="/refund-policy"
-                  className="text-black/70 hover:text-primary transition-colors"
+                  className="text-zinc-600 hover:text-zinc-900 transition-colors"
                 >
                   Refund Policy
                 </Link>
@@ -80,7 +77,7 @@ export const Footer = () => {
               <li>
                 <Link
                   to="/terms-of-service"
-                  className="text-black/70 hover:text-primary transition-colors"
+                  className="text-zinc-600 hover:text-zinc-900 transition-colors"
                 >
                   Terms of Service
                 </Link>
