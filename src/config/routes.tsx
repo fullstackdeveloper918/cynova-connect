@@ -6,6 +6,7 @@ import UserDashboard from "@/pages/UserDashboard";
 import Editor from "@/pages/Editor";
 import Plans from "@/pages/Plans";
 import Profile from "@/pages/Profile";
+import Newsletter from "@/pages/Newsletter";
 import TikTokDownloader from "@/pages/TikTokDownloader";
 import YouTubeDownloader from "@/pages/YouTubeDownloader";
 import Affiliate from "@/pages/Affiliate";
@@ -27,6 +28,10 @@ export const routes = [
   {
     path: "/",
     element: <Index />,
+  },
+  {
+    path: "/newsletter",
+    element: <Newsletter />,
   },
   {
     path: "/login",
