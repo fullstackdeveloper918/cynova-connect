@@ -155,6 +155,36 @@ export type Database = {
           },
         ]
       }
+      newsletter_subscriptions: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          status: Database["public"]["Enums"]["newsletter_status"] | null
+          subscribed_at: string | null
+          unsubscribed_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          status?: Database["public"]["Enums"]["newsletter_status"] | null
+          subscribed_at?: string | null
+          unsubscribed_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          status?: Database["public"]["Enums"]["newsletter_status"] | null
+          subscribed_at?: string | null
+          unsubscribed_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           created_at: string | null
@@ -592,6 +622,7 @@ export type Database = {
       }
     }
     Enums: {
+      newsletter_status: "subscribed" | "unsubscribed" | "pending"
       project_type:
         | "chatgpt_video"
         | "fake_text"
