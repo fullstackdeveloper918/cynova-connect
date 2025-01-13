@@ -16,11 +16,11 @@ const Newsletter = () => {
             className="max-w-3xl mx-auto text-center mb-12"
           >
             <h1 className="text-4xl md:text-5xl font-bold text-zinc-900 mb-6">
-              Stay Connected
+              Be the First to Know
             </h1>
             <p className="text-xl text-zinc-600">
-              Subscribe to our newsletter and stay up to date with the latest AI video creation tips, 
-              features, and updates.
+              Sign up now to be among the first to experience our revolutionary AI video creation platform when we launch. 
+              Get exclusive early access and special launch offers!
             </p>
           </motion.div>
 
@@ -35,20 +35,20 @@ const Newsletter = () => {
             className="max-w-3xl mx-auto bg-white rounded-xl shadow-sm border border-zinc-200 p-8 mb-20"
           >
             <h2 className="text-2xl font-bold text-zinc-900 mb-6">
-              Why Subscribe?
+              Early Bird Benefits
             </h2>
             <div className="grid gap-6">
               <div>
-                <h3 className="font-semibold text-zinc-900 mb-2">Early Access to Features</h3>
-                <p className="text-zinc-600">Be the first to know about and try new AI video creation features.</p>
+                <h3 className="font-semibold text-zinc-900 mb-2">Priority Access</h3>
+                <p className="text-zinc-600">Get exclusive first access to our platform before the public launch.</p>
               </div>
               <div>
-                <h3 className="font-semibold text-zinc-900 mb-2">Expert Tips & Tutorials</h3>
-                <p className="text-zinc-600">Get exclusive content creation tips and tutorials from our team.</p>
+                <h3 className="font-semibold text-zinc-900 mb-2">Launch Day Bonuses</h3>
+                <p className="text-zinc-600">Receive special bonuses and discounts available only to early subscribers.</p>
               </div>
               <div>
-                <h3 className="font-semibold text-zinc-900 mb-2">Special Offers</h3>
-                <p className="text-zinc-600">Receive special offers and discounts available only to our subscribers.</p>
+                <h3 className="font-semibold text-zinc-900 mb-2">Founding Member Status</h3>
+                <p className="text-zinc-600">Join our exclusive community of early adopters and shape the future of AI video creation.</p>
               </div>
             </div>
           </motion.div>

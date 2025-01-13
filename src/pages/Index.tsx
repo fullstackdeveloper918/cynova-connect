@@ -103,7 +103,7 @@ const Index = () => {
             >
               <div className="aspect-video bg-accent rounded-lg overflow-hidden">
                 <img 
-                  src="/lovable-uploads/ef5e3724-9332-4994-ad12-3edcdb1c5cb7.png" 
+                  src="/lovable-uploads/393abc53-0b86-41cf-8573-398b1dd43757.png" 
                   alt="Platform Preview" 
                   className="w-full h-full object-cover"
                 />
