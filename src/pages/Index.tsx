@@ -82,7 +82,7 @@ const Index = () => {
                 <Button 
                   size="lg" 
                   onClick={() => navigate("/signup")}
-                  className="bg-zinc-900 hover:bg-zinc-800 text-white px-8 py-6 text-lg"
+                  className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg"
                 >
                   Get Started Free
                   <ArrowRight className="ml-2" />
@@ -91,7 +91,7 @@ const Index = () => {
                   size="lg" 
                   variant="outline"
                   onClick={() => navigate("/plans")}
-                  className="px-8 py-6 text-lg border-zinc-200"
+                  className="px-8 py-6 text-lg border-primary/20 text-primary hover:bg-primary/5"
                 >
                   View Pricing
                 </Button>
@@ -102,7 +102,7 @@ const Index = () => {
               animate={{ opacity: 1, x: 0 }}
               className="relative"
             >
-              <div className="aspect-video bg-zinc-100 rounded-lg overflow-hidden">
+              <div className="aspect-video bg-accent rounded-lg overflow-hidden">
                 <img 
                   src="/lovable-uploads/ef5e3724-9332-4994-ad12-3edcdb1c5cb7.png" 
                   alt="Platform Preview" 
@@ -117,8 +117,8 @@ const Index = () => {
                 className="absolute -bottom-5 left-1/2 transform -translate-x-1/2"
               >
                 <div className="bg-white shadow-lg rounded-full px-4 py-2 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-zinc-900" />
-                  <span className="text-sm text-zinc-900">AI-Powered Video Creation</span>
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  <span className="text-sm text-primary">AI-Powered Video Creation</span>
                 </div>
               </motion.div>
             </motion.div>
@@ -129,7 +129,7 @@ const Index = () => {
       <Features />
 
       {/* Split Section 1 */}
-      <section className="py-20 bg-zinc-50">
+      <section className="py-20 bg-accent/30">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div
@@ -139,7 +139,7 @@ const Index = () => {
               className="order-2 lg:order-1"
             >
               <div className="aspect-video bg-white rounded-lg shadow-lg overflow-hidden">
-                <Code className="w-full h-full p-12 text-zinc-900" />
+                <Code className="w-full h-full p-12 text-primary" />
               </div>
             </motion.div>
             <motion.div
@@ -182,7 +182,7 @@ const Index = () => {
               viewport={{ once: true }}
             >
               <div className="aspect-video bg-white rounded-lg shadow-lg overflow-hidden">
-                <Laptop className="w-full h-full p-12 text-zinc-900" />
+                <Laptop className="w-full h-full p-12 text-primary" />
               </div>
             </motion.div>
           </div>
@@ -192,14 +192,14 @@ const Index = () => {
       <HowItWorks />
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-zinc-50">
+      <section className="py-20 bg-accent/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <motion.span
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              className="text-zinc-900 font-medium mb-4 block"
+              className="text-primary font-medium mb-4 block"
             >
               Testimonials
             </motion.span>
@@ -221,18 +221,18 @@ const Index = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className="bg-white p-6 rounded-xl shadow-sm border border-zinc-100 relative"
+                className="bg-white p-6 rounded-xl shadow-sm border border-primary/10 relative"
               >
-                <Quote className="absolute top-4 right-4 h-8 w-8 text-zinc-200" />
+                <Quote className="absolute top-4 right-4 h-8 w-8 text-primary/20" />
                 <div className="flex items-center gap-2 mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-zinc-900 text-zinc-900" />
+                    <Star key={i} className="h-4 w-4 fill-primary text-primary" />
                   ))}
                 </div>
                 <p className="text-zinc-600 mb-4">{testimonial.quote}</p>
                 <div>
                   <p className="font-semibold text-zinc-900">{testimonial.name}</p>
-                  <p className="text-sm text-zinc-500">{testimonial.role}</p>
+                  <p className="text-sm text-primary">{testimonial.role}</p>
                 </div>
               </motion.div>
             ))}
