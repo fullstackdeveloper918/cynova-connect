@@ -105,7 +105,7 @@ const Index = () => {
                 <img 
                   src="/lovable-uploads/491d056f-055f-47bb-b4b4-e8e29b51a8bb.png" 
                   alt="Platform Preview" 
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               </div>
               <motion.div
