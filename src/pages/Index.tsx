@@ -101,14 +101,13 @@ const Index = () => {
               animate={{ opacity: 1, x: 0 }}
               className="relative"
             >
-              <div className="aspect-video bg-accent rounded-lg overflow-hidden">
+              <div className="aspect-video bg-accent rounded-lg overflow-hidden shadow-xl">
                 <img 
                   src="/lovable-uploads/393abc53-0b86-41cf-8573-398b1dd43757.png" 
                   alt="Platform Preview" 
                   className="w-full h-full object-cover"
                 />
               </div>
-              {/* Floating AI Button */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
