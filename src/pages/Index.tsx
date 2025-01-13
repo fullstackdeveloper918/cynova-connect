@@ -103,7 +103,7 @@ const Index = () => {
             >
               <div className="aspect-video bg-accent rounded-lg overflow-hidden shadow-xl">
                 <img 
-                  src="/lovable-uploads/393abc53-0b86-41cf-8573-398b1dd43757.png" 
+                  src="/lovable-uploads/ccea9cb0-6878-4c15-9768-dffd9b382752.png" 
                   alt="Platform Preview" 
                   className="w-full h-full object-cover"
                 />
@@ -112,7 +112,7 @@ const Index = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="absolute -bottom-5 left-1/2 transform -translate-x-1/2"
+                className="absolute -bottom-5 right-5 transform hover:-translate-y-1 hover:shadow-lg transition-all duration-300"
               >
                 <div className="bg-white shadow-lg rounded-full px-4 py-2 flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-primary" />
