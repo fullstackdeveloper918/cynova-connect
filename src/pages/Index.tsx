@@ -5,7 +5,7 @@ import { Features } from "@/components/Features";
 import { Footer } from "@/components/Footer";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Star, Quote, Sparkles, Code, Laptop, Video, Zap } from "lucide-react";
+import { ArrowRight, Star, Quote, Sparkles, Code, Laptop, Video, Zap, Wand2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Plans } from "@/components/pricing/Plans";
 
@@ -184,6 +184,36 @@ const Index = () => {
             >
               <div className="aspect-video bg-white rounded-lg shadow-lg overflow-hidden">
                 <Laptop className="w-full h-full p-12 text-primary" />
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* New AI Enhancement Section */}
+      <section className="py-20 bg-accent/30">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="space-y-6"
+            >
+              <h2 className="text-3xl font-bold text-zinc-900">
+                AI-Enhanced Video Creation
+              </h2>
+              <p className="text-lg text-zinc-600">
+                Leverage cutting-edge AI technology to enhance your videos with professional effects, transitions, and automated improvements. Create stunning content that stands out.
+              </p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="aspect-video bg-white rounded-lg shadow-lg overflow-hidden">
+                <Wand2 className="w-full h-full p-12 text-primary" />
               </div>
             </motion.div>
           </div>

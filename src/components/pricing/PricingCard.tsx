@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Check, Star } from "lucide-react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 interface PricingCardProps {
   plan: {
@@ -29,12 +30,17 @@ interface PricingCardProps {
 }
 
 export const PricingCard = ({ plan, isYearly, isLoading, onSubscribe, isCurrentPlan }: PricingCardProps) => {
+  const navigate = useNavigate();
   const usageLimits = [
     `${plan.limits.max_videos_per_month} AI videos per month`,
     `${plan.limits.max_duration_minutes} minutes of export`,
     `${plan.limits.max_voiceover_minutes} minutes of voiceover`,
     `${plan.limits.max_ai_images} AI Images`,
   ];
+
+  const handleGetStarted = () => {
+    navigate('/signup');
+  };
 
   return (
     <motion.div
@@ -77,7 +83,7 @@ export const PricingCard = ({ plan, isYearly, isLoading, onSubscribe, isCurrentP
       <Button 
         className="w-full" 
         variant={plan.popular ? "default" : "outline"}
-        onClick={onSubscribe}
+        onClick={handleGetStarted}
         disabled={isLoading || isCurrentPlan}
       >
         {isLoading ? "Loading..." : isCurrentPlan ? "Current Plan" : "Get Started"}
