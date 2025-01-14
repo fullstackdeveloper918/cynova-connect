@@ -23,6 +23,7 @@ import Quiz from "@/pages/Quiz";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import PaymentFailure from "@/pages/PaymentFailure";
 import { RequireSubscription } from "@/components/auth/RequireSubscription";
+import AffiliatePlaceholder from "@/pages/AffiliatePlaceholder";
 
 export const routes = [
   {
@@ -130,5 +131,9 @@ export const routes = [
   {
     path: "/payment-failure",
     element: <PaymentFailure />,
+  },
+  {
+    path: "/affiliate",
+    element: <AffiliatePlaceholder />,
   },
 ];
