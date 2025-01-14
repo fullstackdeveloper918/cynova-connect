@@ -2,12 +2,12 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { Features } from "@/components/Features";
-import { HowItWorks } from "@/components/HowItWorks";
 import { Footer } from "@/components/Footer";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Star, Quote, Sparkles, Code, Laptop } from "lucide-react";
+import { ArrowRight, Star, Quote, Sparkles, Code, Laptop, Video, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Plans } from "@/components/pricing/Plans";
 
 const testimonials = [
   {
@@ -15,18 +15,21 @@ const testimonials = [
     role: "Content Creator",
     quote: "This platform has revolutionized how I create videos. The AI features are incredible!",
     rating: 5,
+    avatar: "/lovable-uploads/ccea9cb0-6878-4c15-9768-dffd9b382752.png"
   },
   {
     name: "Michael Chen",
     role: "YouTuber",
     quote: "The automated video generation saves me hours of work. Absolutely worth it!",
     rating: 5,
+    avatar: "/lovable-uploads/09b3cb08-a80b-4ad0-b134-43e5a39ced9d.png"
   },
   {
     name: "Emma Davis",
     role: "Marketing Manager",
     quote: "Perfect for creating engaging social media content quickly and efficiently.",
     rating: 5,
+    avatar: "/lovable-uploads/491d056f-055f-47bb-b4b4-e8e29b51a8bb.png"
   },
 ];
 
@@ -62,7 +65,7 @@ const Index = () => {
     <div className="relative max-w-[1920px] mx-auto">
       <Navigation />
       
-      {/* Hero Section with Split Layout */}
+      {/* Hero Section */}
       <section className="relative py-20">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -137,7 +140,7 @@ const Index = () => {
               className="order-2 lg:order-1"
             >
               <div className="aspect-video bg-white rounded-lg shadow-lg overflow-hidden">
-                <Code className="w-full h-full p-12 text-primary" />
+                <Video className="w-full h-full p-12 text-primary" />
               </div>
             </motion.div>
             <motion.div
@@ -147,10 +150,10 @@ const Index = () => {
               className="space-y-6 order-1 lg:order-2"
             >
               <h2 className="text-3xl font-bold text-zinc-900">
-                Powerful Video Generation
+                AI-Powered Video Creation
               </h2>
               <p className="text-lg text-zinc-600">
-                Our AI-powered platform automatically generates engaging videos from your content. Just input your text, choose a style, and let our AI do the rest.
+                Transform your content into engaging videos with our advanced AI technology. Create professional-quality content in minutes, not hours.
               </p>
             </motion.div>
           </div>
@@ -187,7 +190,8 @@ const Index = () => {
         </div>
       </section>
 
-      <HowItWorks />
+      {/* Pricing Section */}
+      <Plans />
 
       {/* Testimonials Section */}
       <section className="py-20 bg-accent/30">
@@ -222,19 +226,62 @@ const Index = () => {
                 className="bg-white p-6 rounded-xl shadow-sm border border-primary/10 relative"
               >
                 <Quote className="absolute top-4 right-4 h-8 w-8 text-primary/20" />
+                <div className="flex items-center gap-4 mb-4">
+                  <img
+                    src={testimonial.avatar}
+                    alt={testimonial.name}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  <div>
+                    <p className="font-semibold text-zinc-900">{testimonial.name}</p>
+                    <p className="text-sm text-primary">{testimonial.role}</p>
+                  </div>
+                </div>
                 <div className="flex items-center gap-2 mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
                     <Star key={i} className="h-4 w-4 fill-primary text-primary" />
                   ))}
                 </div>
-                <p className="text-zinc-600 mb-4">{testimonial.quote}</p>
-                <div>
-                  <p className="font-semibold text-zinc-900">{testimonial.name}</p>
-                  <p className="text-sm text-primary">{testimonial.role}</p>
-                </div>
+                <p className="text-zinc-600">{testimonial.quote}</p>
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Get Started Section */}
+      <section className="py-20 bg-primary">
+        <div className="container mx-auto px-4 text-center">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-4xl md:text-5xl font-bold mb-4 text-white"
+          >
+            Ready to get started?
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-xl text-white/90 mb-8"
+          >
+            Join thousands of satisfied users today
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <Button
+              size="lg"
+              variant="secondary"
+              onClick={() => navigate("/signup")}
+              className="bg-white text-primary hover:bg-white/90 px-8 py-6 text-lg"
+            >
+              Get Started Now
+            </Button>
+          </motion.div>
         </div>
       </section>
 
