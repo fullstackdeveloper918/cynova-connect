@@ -1,42 +1,74 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { LoginForm } from "@/components/auth/LoginForm";
-import { SocialLogin } from "@/components/auth/SocialLogin";
+import { NewSignupForm } from "@/components/auth/NewSignupForm";
+import { GoogleSignup } from "@/components/auth/GoogleSignup";
+import { AuthError } from "@supabase/supabase-js";
+import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 const Login = () => {
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromSignup = searchParams.get('from') === 'signup';
 
   useEffect(() => {
-    const checkUser = async () => {
+    const checkSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Session check error:", error);
+          throw error;
+        }
+
         if (session) {
-          const { data: roleData } = await supabase
-            .from('user_roles')
-            .select('role')
+          console.log("User already logged in, checking subscription...");
+          const { data: subscription } = await supabase
+            .from('subscriptions')
+            .select('*')
             .eq('user_id', session.user.id)
-            .single();
+            .eq('status', 'active')
+            .maybeSingle();
 
-          console.log("User session and role:", { session, roleData });
-
-          if (roleData?.role === 'admin') {
-            navigate("/admin");
+          if (!subscription && fromSignup) {
+            navigate("/plans");
           } else {
-            navigate("/dashboard");
+            navigate("/dashboard/projects");
           }
         }
       } catch (error) {
         console.error("Error checking session:", error);
+        toast.error("Error checking authentication status");
       } finally {
         setIsLoading(false);
       }
     };
-    checkUser();
-  }, [navigate]);
+
+    checkSession();
+  }, [navigate, fromSignup]);
+
+  const handleGoogleSignup = async () => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard/projects`
+        }
+      });
+      
+      if (error) throw error;
+    } catch (error) {
+      console.error("Google signup error:", error);
+      const authError = error as AuthError;
+      toast.error("Failed to sign in with Google. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -55,12 +87,12 @@ const Login = () => {
       >
         <div className="text-center">
           <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Welcome Back
+            Create Account
           </h2>
-          <p className="mt-2 text-muted-foreground">Sign in to your account</p>
+          <p className="mt-2 text-muted-foreground">Sign up for Cynova</p>
         </div>
 
-        <LoginForm />
+        <NewSignupForm />
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
@@ -71,23 +103,18 @@ const Login = () => {
           </div>
         </div>
 
-        <SocialLogin />
+        <GoogleSignup onGoogleSignup={handleGoogleSignup} isLoading={isLoading} />
 
-        <div className="text-center space-y-2">
-          <p className="text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <button
-              type="button"
-              onClick={() => navigate("/signup")}
-              className="text-primary hover:underline font-medium"
-            >
-              Sign up
-            </button>
-          </p>
-          <p className="text-xs text-muted-foreground">
-            By signing in, you agree to our Terms of Service and Privacy Policy
-          </p>
-        </div>
+        <p className="text-center text-sm text-muted-foreground">
+          Already have an account?{" "}
+          <button
+            type="button"
+            onClick={() => navigate("/login")}
+            className="text-primary hover:underline"
+          >
+            Sign in
+          </button>
+        </p>
       </motion.div>
     </div>
   );
