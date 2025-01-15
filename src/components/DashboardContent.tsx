@@ -139,8 +139,8 @@ export const DashboardContent = () => {
   }
 
   return (
-    <div className="space-y-8 max-w-full overflow-x-hidden">
-      <div className="overflow-x-auto">
+    <div className="w-full space-y-8">
+      <div className="w-full">
         <WelcomeHeader
           userName={userName}
           userEmail={userEmail}
@@ -152,7 +152,7 @@ export const DashboardContent = () => {
       </div>
 
       {isFreePlan && (
-        <div className="overflow-x-auto">
+        <div className="w-full">
           <Alert className="bg-yellow-50 border-yellow-200">
             <AlertCircle className="h-4 w-4 text-yellow-600" />
             <AlertTitle className="text-yellow-800">Free Plan Limitations</AlertTitle>
@@ -175,11 +175,11 @@ export const DashboardContent = () => {
         Create and manage your video content with ease.
       </p>
 
-      <div className="overflow-x-auto">
+      <div className="w-full">
         <UpdatesSection />
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="w-full">
         {!isFreePlan ? (
           <FeatureGrid isFreePlan={isFreePlan} />
         ) : (
