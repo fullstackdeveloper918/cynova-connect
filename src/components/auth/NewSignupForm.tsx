@@ -14,9 +14,20 @@ export const NewSignupForm = () => {
   const [error, setError] = useState("");
   const [confirmationSent, setConfirmationSent] = useState(false);
 
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!validateEmail(email)) {
+      setError("Please enter a valid email address");
+      toast.error("Please enter a valid email address");
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
@@ -33,7 +44,7 @@ export const NewSignupForm = () => {
     try {
       setIsLoading(true);
       const { error: signUpError } = await supabase.auth.signUp({
-        email,
+        email: email.toLowerCase().trim(), // Normalize email
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/login`,
@@ -43,7 +54,12 @@ export const NewSignupForm = () => {
         },
       });
 
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        if (signUpError.message.includes("email_address_invalid")) {
+          throw new Error("Please enter a valid email address");
+        }
+        throw signUpError;
+      }
 
       // Sign out immediately after signup to prevent auto-login
       await supabase.auth.signOut();
