@@ -139,47 +139,55 @@ export const DashboardContent = () => {
   }
 
   return (
-    <div className="space-y-8">
-      <WelcomeHeader
-        userName={userName}
-        userEmail={userEmail}
-        subscription={subscription}
-        isLoadingUser={isLoadingUser}
-        isLoadingSubscription={isLoadingSubscription}
-        subscriptionError={subscriptionError}
-      />
+    <div className="space-y-8 max-w-full overflow-x-hidden">
+      <div className="overflow-x-auto">
+        <WelcomeHeader
+          userName={userName}
+          userEmail={userEmail}
+          subscription={subscription}
+          isLoadingUser={isLoadingUser}
+          isLoadingSubscription={isLoadingSubscription}
+          subscriptionError={subscriptionError}
+        />
+      </div>
 
       {isFreePlan && (
-        <Alert className="bg-yellow-50 border-yellow-200">
-          <AlertCircle className="h-4 w-4 text-yellow-600" />
-          <AlertTitle className="text-yellow-800">Free Plan Limitations</AlertTitle>
-          <AlertDescription className="text-yellow-700">
-            You are currently on the Free plan. To access all features, please{" "}
-            <Button
-              variant="link"
-              className="text-yellow-800 font-semibold p-0 h-auto hover:text-yellow-900"
-              onClick={() => navigate("/plans")}
-            >
-              upgrade to a paid plan
-            </Button>
-            . Unlock premium features and create unlimited videos!
-          </AlertDescription>
-        </Alert>
+        <div className="overflow-x-auto">
+          <Alert className="bg-yellow-50 border-yellow-200">
+            <AlertCircle className="h-4 w-4 text-yellow-600" />
+            <AlertTitle className="text-yellow-800">Free Plan Limitations</AlertTitle>
+            <AlertDescription className="text-yellow-700">
+              You are currently on the Free plan. To access all features, please{" "}
+              <Button
+                variant="link"
+                className="text-yellow-800 font-semibold p-0 h-auto hover:text-yellow-900"
+                onClick={() => navigate("/plans")}
+              >
+                upgrade to a paid plan
+              </Button>
+              . Unlock premium features and create unlimited videos!
+            </AlertDescription>
+          </Alert>
+        </div>
       )}
 
       <p className="text-muted-foreground">
         Create and manage your video content with ease.
       </p>
 
-      <UpdatesSection />
+      <div className="overflow-x-auto">
+        <UpdatesSection />
+      </div>
 
-      {!isFreePlan ? (
-        <FeatureGrid isFreePlan={isFreePlan} />
-      ) : (
-        <RequireSubscription>
+      <div className="overflow-x-auto">
+        {!isFreePlan ? (
           <FeatureGrid isFreePlan={isFreePlan} />
-        </RequireSubscription>
-      )}
+        ) : (
+          <RequireSubscription>
+            <FeatureGrid isFreePlan={isFreePlan} />
+          </RequireSubscription>
+        )}
+      </div>
     </div>
   );
 };
