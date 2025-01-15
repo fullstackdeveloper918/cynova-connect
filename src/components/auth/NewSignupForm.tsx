@@ -12,6 +12,7 @@ export const NewSignupForm = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,15 +32,21 @@ export const NewSignupForm = () => {
 
     try {
       setIsLoading(true);
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { error: signUpError, data } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/login`,
+        },
       });
 
       if (signUpError) throw signUpError;
 
-      toast.success("Account created successfully!");
-      navigate("/dashboard/projects");
+      setConfirmationSent(true);
+      toast.success("Verification email sent! Please check your inbox.");
+      setTimeout(() => {
+        navigate("/login");
+      }, 3000);
     } catch (error) {
       console.error("Signup error:", error);
       setError(error.message);
@@ -48,6 +55,20 @@ export const NewSignupForm = () => {
       setIsLoading(false);
     }
   };
+
+  if (confirmationSent) {
+    return (
+      <div className="text-center space-y-4">
+        <h3 className="text-lg font-semibold text-green-600">
+          Verification Email Sent!
+        </h3>
+        <p className="text-muted-foreground">
+          Please check your email to confirm your account. You will be redirected
+          to the login page shortly.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
