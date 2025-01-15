@@ -9,6 +9,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useEffect, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface WelcomeHeaderProps {
   userName: string;
@@ -33,6 +34,7 @@ export const WelcomeHeader = ({
   const [isCheckingRole, setIsCheckingRole] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const checkAdminRole = async () => {
@@ -160,6 +162,36 @@ export const WelcomeHeader = ({
             <Shield className="h-4 w-4" />
             Admin Panel
           </Button>
+        )}
+        {!isMobile && (
+          <HoverCard openDelay={0} closeDelay={0}>
+            <HoverCardTrigger asChild>
+              <Button
+                variant="outline"
+                className="gap-2"
+              >
+                <User className="h-4 w-4" />
+                Profile
+              </Button>
+            </HoverCardTrigger>
+            <HoverCardContent align="end" className="w-48 p-2">
+              <button
+                onClick={() => navigate("/dashboard/profile")}
+                className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-accent"
+              >
+                <User className="h-4 w-4" />
+                Settings
+              </button>
+              <button
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+              >
+                <LogOut className="h-4 w-4" />
+                {isLoggingOut ? "Logging out..." : "Logout"}
+              </button>
+            </HoverCardContent>
+          </HoverCard>
         )}
         <Button
           onClick={() => navigate("/plans")}
