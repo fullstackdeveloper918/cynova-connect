@@ -32,21 +32,26 @@ export const NewSignupForm = () => {
 
     try {
       setIsLoading(true);
-      const { error: signUpError, data } = await supabase.auth.signUp({
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/login`,
+          data: {
+            email_confirmed: false
+          }
         },
       });
 
       if (signUpError) throw signUpError;
 
+      // Sign out immediately after signup to prevent auto-login
+      await supabase.auth.signOut();
+      
       setConfirmationSent(true);
       toast.success("Verification email sent! Please check your inbox.");
-      setTimeout(() => {
-        navigate("/login");
-      }, 3000);
+      
+      // Don't automatically redirect - wait for user to verify email
     } catch (error) {
       console.error("Signup error:", error);
       setError(error.message);
@@ -63,9 +68,15 @@ export const NewSignupForm = () => {
           Verification Email Sent!
         </h3>
         <p className="text-muted-foreground">
-          Please check your email to confirm your account. You will be redirected
-          to the login page shortly.
+          Please check your email to confirm your account. After confirming, you can proceed to login.
         </p>
+        <Button 
+          onClick={() => navigate("/login")} 
+          variant="outline"
+          className="mt-4"
+        >
+          Go to Login
+        </Button>
       </div>
     );
   }
