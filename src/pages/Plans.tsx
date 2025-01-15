@@ -66,6 +66,37 @@ const plans = [
   },
 ];
 
+const faqs = [
+  {
+    question: "Can I cancel my subscription?",
+    answer: "Yes, you can cancel anytime through your settings. Your plan will remain active until the current billing cycle ends.",
+  },
+  {
+    question: "How can I check my remaining credits?",
+    answer: "You can view your remaining credits by going to settings and clicking your profile picture in the top-right corner.",
+  },
+  {
+    question: "Is it possible to change my plan after subscribing?",
+    answer: "Absolutely. You can upgrade or downgrade your plan at any time in your account settings.",
+  },
+  {
+    question: "Do you offer refunds?",
+    answer: "We don't provide refunds. However, you can cancel your subscription anytime, and it will stay active until the end of your billing period.",
+  },
+  {
+    question: "What are export minutes?",
+    answer: "Export minutes represent the total duration of videos you can create. For instance, 60 export minutes allow you to create 60 one-minute videos.",
+  },
+  {
+    question: "Can I monetize videos created with Cynova?",
+    answer: "Yes, all videos are fully owned by you, and we use custom-recorded gameplay to ensure originality.",
+  },
+  {
+    question: "Can I create videos in different languages?",
+    answer: "Yes, Cynova supports all languages. Just input your text in the desired language, and you're good to go!",
+  },
+];
+
 export const Plans = () => {
   const [isYearly, setIsYearly] = useState(false);
   const [isLoading, setIsLoading] = useState<string | null>(null);
