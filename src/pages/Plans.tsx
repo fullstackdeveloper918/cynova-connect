@@ -16,8 +16,8 @@ const plans = [
       yearly: 230,
     },
     priceId: {
-      monthly: "price_1QeDzGG8TTdTbu7dz9ApCJQM", // Test price ID for Starter Monthly
-      yearly: "price_1QeDzuG8TTdTbu7dosC1Ry4k",  // Test price ID for Starter Yearly
+      monthly: "price_1QeDzGG8TTdTbu7dz9ApCJQM",
+      yearly: "price_1QeDzuG8TTdTbu7dosC1Ry4k",
     },
     limits: {
       max_duration_minutes: 40,
@@ -34,8 +34,8 @@ const plans = [
       yearly: 374,
     },
     priceId: {
-      monthly: "price_1QeDzcG8TTdTbu7d6fJJNFFQ", // Test price ID for Pro Monthly
-      yearly: "price_1QeDzuG8TTdTbu7dosC1Ry4k",  // Test price ID for Pro Yearly
+      monthly: "price_1QeDzcG8TTdTbu7d6fJJNFFQ",
+      yearly: "price_1QeDzuG8TTdTbu7dosC1Ry4k",
     },
     popular: true,
     limits: {
@@ -53,8 +53,8 @@ const plans = [
       yearly: 758,
     },
     priceId: {
-      monthly: "price_1QeDzuG8TTdTbu7dosC1Ry4k", // Test price ID for Premium Monthly
-      yearly: "price_1QeDzuG8TTdTbu7dosC1Ry4k",  // Test price ID for Premium Yearly
+      monthly: "price_1QeDzuG8TTdTbu7dosC1Ry4k",
+      yearly: "price_1QeDzuG8TTdTbu7dosC1Ry4k",
     },
     limits: {
       max_duration_minutes: 180,
@@ -66,41 +66,10 @@ const plans = [
   },
 ];
 
-const faqs = [
-  {
-    question: "Can I cancel my subscription?",
-    answer: "Yes, you can cancel anytime through your settings. Your plan will remain active until the current billing cycle ends.",
-  },
-  {
-    question: "How can I check my remaining credits?",
-    answer: "You can view your remaining credits by going to settings and clicking your profile picture in the top-right corner.",
-  },
-  {
-    question: "Is it possible to change my plan after subscribing?",
-    answer: "Absolutely. You can upgrade or downgrade your plan at any time in your account settings.",
-  },
-  {
-    question: "Do you offer refunds?",
-    answer: "We don't provide refunds. However, you can cancel your subscription anytime, and it will stay active until the end of your billing period.",
-  },
-  {
-    question: "What are export minutes?",
-    answer: "Export minutes represent the total duration of videos you can create. For instance, 60 export minutes allow you to create 60 one-minute videos.",
-  },
-  {
-    question: "Can I monetize videos created with Cynova?",
-    answer: "Yes, all videos are fully owned by you, and we use custom-recorded gameplay to ensure originality.",
-  },
-  {
-    question: "Can I create videos in different languages?",
-    answer: "Yes, Cynova supports all languages. Just input your text in the desired language, and you're good to go!",
-  },
-];
-
-const Plans = () => {
+export const Plans = () => {
   const [isYearly, setIsYearly] = useState(false);
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  const navigate = useNavigate();
   const { data: subscription } = useSubscription();
   const [searchParams] = useSearchParams();
 
