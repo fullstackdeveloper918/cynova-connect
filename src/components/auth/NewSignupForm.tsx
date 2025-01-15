@@ -47,7 +47,7 @@ export const NewSignupForm = () => {
         email: email.toLowerCase().trim(),
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/plans?from=signup`,
+          emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
             email_confirmed: false
           }
@@ -83,7 +83,7 @@ export const NewSignupForm = () => {
           Verification Email Sent!
         </h3>
         <p className="text-muted-foreground">
-          Please check your email to confirm your account. After confirming, you'll be redirected to select your plan.
+          Please check your email to confirm your account. After confirming, you'll be redirected to your dashboard where you can explore our features.
         </p>
         <Button 
           onClick={() => navigate("/login")} 
