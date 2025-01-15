@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Check, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface PricingCardProps {
   plan: {
@@ -38,8 +40,37 @@ export const PricingCard = ({ plan, isYearly, isLoading, onSubscribe, isCurrentP
     `${plan.limits.max_ai_images} AI Images`,
   ];
 
-  const handleGetStarted = () => {
-    navigate('/signup');
+  const handleSubscribe = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error("Please log in to subscribe");
+        navigate("/login");
+        return;
+      }
+
+      const priceId = isYearly ? plan.priceId.yearly : plan.priceId.monthly;
+      
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { 
+          priceId,
+          mode: 'subscription',
+          currentPlan: null
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Failed to start checkout process. Please try again.");
+    }
   };
 
   return (
@@ -83,7 +114,7 @@ export const PricingCard = ({ plan, isYearly, isLoading, onSubscribe, isCurrentP
       <Button 
         className="w-full" 
         variant={plan.popular ? "default" : "outline"}
-        onClick={handleGetStarted}
+        onClick={handleSubscribe}
         disabled={isLoading || isCurrentPlan}
       >
         {isLoading ? "Loading..." : isCurrentPlan ? "Current Plan" : "Get Started"}
