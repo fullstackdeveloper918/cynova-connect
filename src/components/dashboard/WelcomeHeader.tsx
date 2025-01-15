@@ -161,34 +161,6 @@ export const WelcomeHeader = ({
             Admin Panel
           </Button>
         )}
-        <HoverCard openDelay={0} closeDelay={0}>
-          <HoverCardTrigger asChild>
-            <Button
-              variant="outline"
-              className="gap-2"
-            >
-              <User className="h-4 w-4" />
-              Profile
-            </Button>
-          </HoverCardTrigger>
-          <HoverCardContent align="end" className="w-48 p-2">
-            <button
-              onClick={() => navigate("/dashboard/profile")}
-              className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-accent"
-            >
-              <User className="h-4 w-4" />
-              Settings
-            </button>
-            <button
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
-            >
-              <LogOut className="h-4 w-4" />
-              {isLoggingOut ? "Logging out..." : "Logout"}
-            </button>
-          </HoverCardContent>
-        </HoverCard>
         <Button
           onClick={() => navigate("/plans")}
           variant="default"
