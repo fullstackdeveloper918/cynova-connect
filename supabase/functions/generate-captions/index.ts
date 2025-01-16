@@ -27,7 +27,7 @@ serve(async (req) => {
     console.log('Submitting transcription request to AssemblyAI...');
 
     // First, submit the audio file for transcription
-    const response = await fetch('https://api.assemblyai.com/v2/transcript', {
+    const transcriptionResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
       headers: {
         'Authorization': apiKey,
@@ -44,13 +44,13 @@ serve(async (req) => {
       })
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
+    if (!transcriptionResponse.ok) {
+      const errorText = await transcriptionResponse.text();
       console.error('AssemblyAI API error:', errorText);
       throw new Error(`Failed to submit transcription: ${errorText}`);
     }
 
-    const transcriptionData = await response.json();
+    const transcriptionData = await transcriptionResponse.json();
     console.log('Transcription submitted successfully:', transcriptionData);
 
     // Poll for the transcription result
