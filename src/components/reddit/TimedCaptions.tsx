@@ -4,85 +4,82 @@ interface TimedCaptionsProps {
   captions: string;
   audioRef: React.RefObject<HTMLAudioElement>;
   className?: string;
+  style?: string;
 }
 
 interface CaptionSegment {
   text: string;
   startTime: number;
   endTime: number;
+  style: string;
 }
 
-export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCaptionsProps) => {
+const WORDS_PER_MINUTE = 150; // Average reading speed
+const WORD_DURATION = 60 / WORDS_PER_MINUTE; // Duration per word in seconds
+
+export const TimedCaptions = ({ captions, audioRef, style = "default" }: TimedCaptionsProps) => {
   const [currentCaption, setCurrentCaption] = useState("");
   const [isVisible, setIsVisible] = useState(false);
   const [captionSegments, setCaptionSegments] = useState<CaptionSegment[]>([]);
   const lastUpdateTimeRef = useRef(0);
+  const animationFrameRef = useRef<number>();
 
-  // Calculate timing for each segment
+  const getStyleClass = () => {
+    switch (style) {
+      case "minimal":
+        return "text-white font-bold text-4xl tracking-tight";
+      case "outline":
+        return "text-white font-black text-4xl [text-shadow:_2px_2px_0_rgb(0_0_0_/_40%)]";
+      case "gradient":
+        return "bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-violet-500 font-bold text-4xl";
+      case "gaming":
+        return "text-green-400 font-black text-4xl animate-pulse";
+      case "modern":
+        return "text-yellow-400 font-extrabold text-4xl";
+      case "neon":
+        return "text-blue-400 font-bold text-4xl [text-shadow:_0_0_5px_rgb(59_130_246_/_50%)]";
+      default:
+        return "text-white font-medium text-2xl";
+    }
+  };
+
   useEffect(() => {
     if (!captions) return;
 
-    const [title, ...comments] = captions.split('\n\n');
-    const commentsText = comments.join('\n\n');
-    
-    // Average reading speed (words per second)
-    const WORDS_PER_SECOND = 2.5;
-    
-    const calculateSegmentDuration = (text: string) => {
-      const wordCount = text.split(/\s+/).length;
-      return wordCount / WORDS_PER_SECOND;
-    };
-
-    let currentTime = 0;
-    const segments: CaptionSegment[] = [];
-
-    // Add title segment
-    const titleDuration = calculateSegmentDuration(title);
-    segments.push({
-      text: title,
-      startTime: currentTime,
-      endTime: currentTime + titleDuration
-    });
-    currentTime += titleDuration + 0.5; // Add small pause after title
-
-    // Add comment segments
-    const sentences = commentsText
+    const sentences = captions
       .split(/(?<=[.!?])\s+/)
       .map(sentence => sentence.trim())
       .filter(Boolean);
 
-    sentences.forEach(sentence => {
-      const duration = calculateSegmentDuration(sentence);
-      segments.push({
+    let currentTime = 0;
+    const segments: CaptionSegment[] = sentences.map(sentence => {
+      const wordCount = sentence.split(/\s+/).length;
+      const duration = wordCount * WORD_DURATION;
+      
+      const segment = {
         text: sentence,
         startTime: currentTime,
-        endTime: currentTime + duration
-      });
+        endTime: currentTime + duration,
+        style: getStyleClass()
+      };
+      
       currentTime += duration + 0.3; // Add small pause between sentences
+      return segment;
     });
 
     setCaptionSegments(segments);
     console.log('Caption segments calculated:', segments);
-  }, [captions]);
+  }, [captions, style]);
 
   useEffect(() => {
     if (!audioRef.current || captionSegments.length === 0) return;
 
     const audio = audioRef.current;
-    let animationFrameId: number;
 
     const updateCaption = () => {
-      const now = Date.now();
-      if (now - lastUpdateTimeRef.current < 16) { // Limit updates to ~60fps
-        animationFrameId = requestAnimationFrame(updateCaption);
-        return;
-      }
-      lastUpdateTimeRef.current = now;
-
       const currentTime = audio.currentTime;
-      console.log('Current audio time:', currentTime);
-
-      // Find the current segment
+      
+      // Find the current segment based on exact timing
       const currentSegment = captionSegments.find(
         segment => currentTime >= segment.startTime && currentTime <= segment.endTime
       );
@@ -95,46 +92,33 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       }
 
       if (!audio.paused) {
-        animationFrameId = requestAnimationFrame(updateCaption);
+        animationFrameRef.current = requestAnimationFrame(updateCaption);
       }
     };
 
     const handleTimeUpdate = () => {
-      // Ensure immediate update on time change
+      // Cancel any existing animation frame
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
       updateCaption();
     };
 
-    const handlePlay = () => {
-      setIsVisible(true);
-      updateCaption();
-    };
-
-    const handlePause = () => {
-      cancelAnimationFrame(animationFrameId);
-    };
-
-    const handleEnded = () => {
-      cancelAnimationFrame(animationFrameId);
-      setIsVisible(false);
-    };
-
-    // Add event listeners
-    audio.addEventListener("play", handlePlay);
-    audio.addEventListener("pause", handlePause);
-    audio.addEventListener("ended", handleEnded);
+    audio.addEventListener("play", updateCaption);
+    audio.addEventListener("pause", () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    });
     audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("seeking", handleTimeUpdate);
 
-    // Start update loop if audio is already playing
-    if (!audio.paused) {
-      updateCaption();
-    }
-
     return () => {
-      cancelAnimationFrame(animationFrameId);
-      audio.removeEventListener("play", handlePlay);
-      audio.removeEventListener("pause", handlePause);
-      audio.removeEventListener("ended", handleEnded);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      audio.removeEventListener("play", updateCaption);
+      audio.removeEventListener("pause", updateCaption);
       audio.removeEventListener("timeupdate", handleTimeUpdate);
       audio.removeEventListener("seeking", handleTimeUpdate);
     };
@@ -143,9 +127,9 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
   return (
     <div className="absolute inset-0 flex items-center justify-center">
       <div 
-        className={`transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'} ${className}`}
+        className={`transition-all duration-300 ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
       >
-        <p className="text-center max-w-3xl mx-auto px-4 text-xl font-medium">
+        <p className={`text-center max-w-3xl mx-auto px-4 ${getStyleClass()}`}>
           {currentCaption}
         </p>
       </div>
