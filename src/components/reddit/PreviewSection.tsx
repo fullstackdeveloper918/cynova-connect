@@ -175,7 +175,7 @@ export const PreviewSection = ({
                 title={title}
                 comments={comments}
                 audioRef={audioRef}
-                captionStyle={getCaptionStyle(selectedCaptionStyle)}
+                captionStyle={getCaptionStyle()}
               />
             )}
 
