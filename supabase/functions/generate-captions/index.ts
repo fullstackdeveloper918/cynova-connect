@@ -20,30 +20,8 @@ serve(async (req) => {
       throw new Error('ASSEMBLY_AI_API_KEY is not set')
     }
 
-    // First, upload the audio file to AssemblyAI
-    console.log('Uploading audio to AssemblyAI...')
-    const audioResponse = await fetch(audioUrl)
-    const audioBlob = await audioResponse.blob()
-    
-    const uploadResponse = await fetch('https://api.assemblyai.com/v2/upload', {
-      method: 'POST',
-      headers: {
-        'authorization': assemblyKey
-      },
-      body: audioBlob
-    })
-
-    if (!uploadResponse.ok) {
-      const errorText = await uploadResponse.text()
-      console.error('Upload failed:', errorText)
-      throw new Error(`Failed to upload audio: ${errorText}`)
-    }
-
-    const { upload_url } = await uploadResponse.json()
-    console.log('Audio uploaded successfully:', upload_url)
-
-    // Submit transcription request
-    console.log('Submitting transcription request...')
+    // Create a transcription request
+    console.log('Creating transcription request...')
     const transcriptResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
       headers: {
@@ -51,9 +29,15 @@ serve(async (req) => {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        audio_url: upload_url,
+        audio_url: audioUrl,
         word_boost: ["reddit", "upvote", "downvote", "comment", "post"],
-        word_timestamps: true
+        word_timestamps: true,
+        auto_chapters: true,
+        entity_detection: true,
+        auto_highlights: true,
+        sentiment_analysis: true,
+        iab_categories: true,
+        content_safety: true,
       }),
     })
 
@@ -108,19 +92,24 @@ serve(async (req) => {
       throw new Error('Transcription timed out')
     }
 
-    // Format response with word-level timestamps
-    const captions = result.words.map((word: any) => ({
-      text: word.text,
-      start: word.start,
-      end: word.end,
-    }))
+    // Format response with word-level timestamps and additional data
+    const response = {
+      captions: result.words.map((word: any) => ({
+        text: word.text,
+        start: word.start,
+        end: word.end,
+      })),
+      text: result.text,
+      chapters: result.chapters,
+      highlights: result.auto_highlights_result,
+      sentiment: result.sentiment_analysis_results,
+      topics: result.iab_categories_result,
+      safety: result.content_safety_labels,
+      message: "Captions generated successfully"
+    }
 
     return new Response(
-      JSON.stringify({ 
-        captions,
-        text: result.text,
-        message: "Captions generated successfully" 
-      }),
+      JSON.stringify(response),
       { 
         headers: { 
           ...corsHeaders,
