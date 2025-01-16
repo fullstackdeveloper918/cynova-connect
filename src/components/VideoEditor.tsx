@@ -11,19 +11,21 @@ export const VideoEditor = () => {
   const [selectedStock, setSelectedStock] = useState<string>("");
   const [captions, setCaptions] = useState<string>("");
   const [isExporting, setIsExporting] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string>("");
-  const videoPreviewRef = useRef<HTMLVideoElement>(null);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
   const { data: userData } = useUser();
 
   const handleVideoUpload = async (file: File) => {
     if (file.type.startsWith("video/")) {
       setUserVideo(file);
-      const newPreviewUrl = URL.createObjectURL(file);
-      setPreviewUrl(newPreviewUrl);
       
-      if (videoPreviewRef.current) {
-        videoPreviewRef.current.src = newPreviewUrl;
-        videoPreviewRef.current.load();
+      // Create object URL for the uploaded video
+      const videoUrl = URL.createObjectURL(file);
+      
+      // Find the preview video element and update its source
+      const previewVideo = previewContainerRef.current?.querySelector('.user-video') as HTMLVideoElement;
+      if (previewVideo) {
+        previewVideo.src = videoUrl;
+        previewVideo.load();
       }
 
       toast({
@@ -42,14 +44,18 @@ export const VideoEditor = () => {
   const handleStockSelection = (videoId: string) => {
     setSelectedStock(videoId);
     
-    if (videoPreviewRef.current) {
-      const stockVideo = `/stock/${videoId}-gameplay.mp4`;
-      // We don't change the source, we'll handle the background in CSS
-      toast({
-        title: "Background selected",
-        description: `${videoId.toUpperCase()} gameplay footage will be added to your video.`,
-      });
+    // Find the background video element and update its source
+    const bgVideo = previewContainerRef.current?.querySelector('.background-video') as HTMLVideoElement;
+    if (bgVideo) {
+      bgVideo.src = `/stock/${videoId}-gameplay.mp4`;
+      bgVideo.load();
+      bgVideo.play().catch(console.error);
     }
+
+    toast({
+      title: "Background selected",
+      description: `${videoId.toUpperCase()} gameplay footage will be added to your video.`,
+    });
   };
 
   const handleExport = async () => {
@@ -119,8 +125,8 @@ export const VideoEditor = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-6xl">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="container mx-auto p-4 max-w-5xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Editor Section */}
         <div className="space-y-4">
           <EditorTabs
@@ -131,65 +137,68 @@ export const VideoEditor = () => {
         </div>
 
         {/* Preview Section */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Preview</h2>
-          <div className="relative w-full" style={{ aspectRatio: '9/16' }}>
-            <div className="absolute inset-0 bg-black rounded-lg overflow-hidden">
-              {userVideo ? (
-                <>
-                  {/* Top half - User video */}
-                  <div className="absolute top-0 left-0 right-0 h-1/2 overflow-hidden">
+        <div className="space-y-2">
+          <h2 className="text-lg font-semibold">Preview</h2>
+          <div 
+            ref={previewContainerRef}
+            className="relative bg-black rounded-lg overflow-hidden"
+            style={{ aspectRatio: '9/16', maxHeight: '480px' }}
+          >
+            {!userVideo ? (
+              <div className="absolute inset-0 flex items-center justify-center text-white/50">
+                <Upload className="h-8 w-8 mr-2" />
+                <span>Upload your video</span>
+              </div>
+            ) : (
+              <>
+                {/* Top half - User video */}
+                <div className="absolute top-0 left-0 right-0 h-1/2 overflow-hidden">
+                  <video
+                    className="user-video w-full h-full object-cover"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+                
+                {/* Bottom half - Background video */}
+                <div className="absolute bottom-0 left-0 right-0 h-1/2 overflow-hidden">
+                  {selectedStock ? (
                     <video
-                      ref={videoPreviewRef}
-                      className="w-full h-full object-cover"
-                      controls
+                      className="background-video w-full h-full object-cover"
+                      autoPlay
+                      loop
+                      muted
                       playsInline
                     >
                       Your browser does not support the video tag.
                     </video>
-                  </div>
-                  
-                  {/* Bottom half - Background video */}
-                  <div className="absolute bottom-0 left-0 right-0 h-1/2 overflow-hidden">
-                    {selectedStock ? (
-                      <video
-                        src={`/stock/${selectedStock}-gameplay.mp4`}
-                        className="w-full h-full object-cover"
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                      >
-                        Your browser does not support the video tag.
-                      </video>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-900 text-white/50">
-                        <Video className="h-8 w-8 mr-2" />
-                        <span>Select background</span>
-                      </div>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-white/50">
-                  <Upload className="h-12 w-12 mr-2" />
-                  <span>Upload your video</span>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-900 text-white/50">
+                      <Video className="h-6 w-6 mr-2" />
+                      <span>Select background</span>
+                    </div>
+                  )}
                 </div>
-              )}
 
-              {captions && (
-                <div className="absolute bottom-4 left-0 right-0 p-4 text-center z-10">
-                  <div className="bg-black/50 text-white p-2 rounded-lg inline-block text-sm">
-                    {captions}
+                {/* Captions overlay */}
+                {captions && (
+                  <div className="absolute bottom-4 left-0 right-0 p-4 text-center z-10">
+                    <div className="bg-black/50 text-white p-2 rounded-lg inline-block text-sm">
+                      {captions}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </>
+            )}
           </div>
 
           <Button
             onClick={handleExport}
-            className="w-full"
+            className="w-full mt-2"
             disabled={!userVideo || !selectedStock || isExporting}
           >
             {isExporting ? (
