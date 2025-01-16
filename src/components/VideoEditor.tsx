@@ -12,9 +12,7 @@ export const VideoEditor = () => {
   const [captions, setCaptions] = useState<string>("");
   const [isExporting, setIsExporting] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>("");
-  const [gameplayUrl, setGameplayUrl] = useState<string>("");
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
-  const gameplayPreviewRef = useRef<HTMLVideoElement>(null);
   const { data: userData } = useUser();
 
   const handleVideoUpload = async (file: File) => {
@@ -25,6 +23,7 @@ export const VideoEditor = () => {
       
       if (videoPreviewRef.current) {
         videoPreviewRef.current.src = newPreviewUrl;
+        videoPreviewRef.current.load();
       }
 
       toast({
@@ -42,18 +41,15 @@ export const VideoEditor = () => {
 
   const handleStockSelection = (videoId: string) => {
     setSelectedStock(videoId);
-    const stockVideo = `/stock/${videoId}-gameplay.mp4`;
-    setGameplayUrl(stockVideo);
     
-    if (gameplayPreviewRef.current) {
-      gameplayPreviewRef.current.src = stockVideo;
-      gameplayPreviewRef.current.load();
+    if (videoPreviewRef.current) {
+      const stockVideo = `/stock/${videoId}-gameplay.mp4`;
+      // We don't change the source, we'll handle the background in CSS
+      toast({
+        title: "Background selected",
+        description: `${videoId.toUpperCase()} gameplay footage will be added to your video.`,
+      });
     }
-    
-    toast({
-      title: "Background selected",
-      description: `${videoId.toUpperCase()} gameplay footage will be added to your video.`,
-    });
   };
 
   const handleExport = async () => {
@@ -137,53 +133,58 @@ export const VideoEditor = () => {
         {/* Preview Section */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Preview</h2>
-          <div className="space-y-2">
-            {/* Top half - Uploaded video */}
-            <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
+          <div className="relative w-full" style={{ aspectRatio: '9/16' }}>
+            <div className="absolute inset-0 bg-black rounded-lg overflow-hidden">
               {userVideo ? (
-                <video
-                  ref={videoPreviewRef}
-                  className="w-full h-full object-contain"
-                  controls
-                  playsInline
-                >
-                  Your browser does not support the video tag.
-                </video>
+                <>
+                  {/* Top half - User video */}
+                  <div className="absolute top-0 left-0 right-0 h-1/2 overflow-hidden">
+                    <video
+                      ref={videoPreviewRef}
+                      className="w-full h-full object-cover"
+                      controls
+                      playsInline
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                  
+                  {/* Bottom half - Background video */}
+                  <div className="absolute bottom-0 left-0 right-0 h-1/2 overflow-hidden">
+                    {selectedStock ? (
+                      <video
+                        src={`/stock/${selectedStock}-gameplay.mp4`}
+                        className="w-full h-full object-cover"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      >
+                        Your browser does not support the video tag.
+                      </video>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-900 text-white/50">
+                        <Video className="h-8 w-8 mr-2" />
+                        <span>Select background</span>
+                      </div>
+                    )}
+                  </div>
+                </>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-white/50">
-                  <Upload className="h-12 w-12" />
-                  <span className="ml-2">Upload your video</span>
+                  <Upload className="h-12 w-12 mr-2" />
+                  <span>Upload your video</span>
+                </div>
+              )}
+
+              {captions && (
+                <div className="absolute bottom-4 left-0 right-0 p-4 text-center z-10">
+                  <div className="bg-black/50 text-white p-2 rounded-lg inline-block text-sm">
+                    {captions}
+                  </div>
                 </div>
               )}
             </div>
-
-            {/* Bottom half - Gameplay background */}
-            <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
-              {selectedStock ? (
-                <video
-                  ref={gameplayPreviewRef}
-                  className="w-full h-full object-cover"
-                  controls
-                  playsInline
-                  loop
-                >
-                  Your browser does not support the video tag.
-                </video>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-white/50">
-                  <Video className="h-12 w-12" />
-                  <span className="ml-2">Select background</span>
-                </div>
-              )}
-            </div>
-
-            {captions && (
-              <div className="absolute bottom-16 left-0 right-0 p-4 text-center">
-                <div className="bg-black/50 text-white p-2 rounded-lg inline-block text-sm">
-                  {captions}
-                </div>
-              </div>
-            )}
           </div>
 
           <Button
