@@ -26,7 +26,7 @@ serve(async (req) => {
 
     console.log('Submitting transcription request to AssemblyAI...');
 
-    // Submit transcription request
+    // Submit transcription request with proper headers and body format
     const transcriptionResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
       headers: {
@@ -40,7 +40,6 @@ serve(async (req) => {
         format_text: true,
         punctuate: true,
         dual_channel: false,
-        auto_highlights: true,
         language_code: 'en'
       })
     });
