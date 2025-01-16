@@ -7,6 +7,12 @@ interface TimedCaptionsProps {
   style?: string;
 }
 
+interface WordTimestamp {
+  text: string;
+  start: number;
+  end: number;
+}
+
 interface CaptionSegment {
   text: string;
   startTime: number;
@@ -14,13 +20,10 @@ interface CaptionSegment {
   style: string;
 }
 
-const WORDS_PER_MINUTE = 150; // Average reading speed
-const WORD_DURATION = 60 / WORDS_PER_MINUTE; // Duration per word in seconds
-
 export const TimedCaptions = ({ captions, audioRef, style = "default" }: TimedCaptionsProps) => {
   const [currentCaption, setCurrentCaption] = useState("");
   const [isVisible, setIsVisible] = useState(false);
-  const [captionSegments, setCaptionSegments] = useState<CaptionSegment[]>([]);
+  const [wordTimestamps, setWordTimestamps] = useState<WordTimestamp[]>([]);
   const lastUpdateTimeRef = useRef(0);
   const animationFrameRef = useRef<number>();
 
@@ -46,46 +49,59 @@ export const TimedCaptions = ({ captions, audioRef, style = "default" }: TimedCa
   useEffect(() => {
     if (!captions) return;
 
+    // Try to parse captions if they're in JSON format (from AssemblyAI)
+    try {
+      const parsedCaptions = JSON.parse(captions);
+      if (Array.isArray(parsedCaptions)) {
+        setWordTimestamps(parsedCaptions);
+        return;
+      }
+    } catch (e) {
+      // If parsing fails, treat as regular text
+      console.log('Using regular text captions');
+    }
+
+    // Original caption splitting logic for text
     const sentences = captions
       .split(/(?<=[.!?])\s+/)
       .map(sentence => sentence.trim())
       .filter(Boolean);
 
+    const WORDS_PER_MINUTE = 150;
+    const WORD_DURATION = 60 / WORDS_PER_MINUTE;
+    
     let currentTime = 0;
-    const segments: CaptionSegment[] = sentences.map(sentence => {
-      const wordCount = sentence.split(/\s+/).length;
-      const duration = wordCount * WORD_DURATION;
-      
-      const segment = {
-        text: sentence,
-        startTime: currentTime,
-        endTime: currentTime + duration,
-        style: getStyleClass()
-      };
-      
-      currentTime += duration + 0.3; // Add small pause between sentences
-      return segment;
+    const timestamps = sentences.flatMap(sentence => {
+      const words = sentence.split(/\s+/);
+      return words.map(word => {
+        const timestamp = {
+          text: word,
+          start: currentTime,
+          end: currentTime + WORD_DURATION
+        };
+        currentTime += WORD_DURATION;
+        return timestamp;
+      });
     });
 
-    setCaptionSegments(segments);
-    console.log('Caption segments calculated:', segments);
-  }, [captions, style]);
+    setWordTimestamps(timestamps);
+  }, [captions]);
 
   useEffect(() => {
-    if (!audioRef.current || captionSegments.length === 0) return;
+    if (!audioRef.current || wordTimestamps.length === 0) return;
 
     const audio = audioRef.current;
 
     const updateCaption = () => {
-      const currentTime = audio.currentTime;
+      const currentTime = audio.currentTime * 1000; // Convert to milliseconds
       
-      // Find the current segment based on exact timing
-      const currentSegment = captionSegments.find(
-        segment => currentTime >= segment.startTime && currentTime <= segment.endTime
+      // Find current words based on timestamp
+      const currentWords = wordTimestamps.filter(
+        word => currentTime >= word.start && currentTime <= word.end
       );
 
-      if (currentSegment) {
-        setCurrentCaption(currentSegment.text);
+      if (currentWords.length > 0) {
+        setCurrentCaption(currentWords.map(word => word.text).join(" "));
         setIsVisible(true);
       } else {
         setIsVisible(false);
@@ -97,7 +113,6 @@ export const TimedCaptions = ({ captions, audioRef, style = "default" }: TimedCa
     };
 
     const handleTimeUpdate = () => {
-      // Cancel any existing animation frame
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
@@ -122,7 +137,7 @@ export const TimedCaptions = ({ captions, audioRef, style = "default" }: TimedCa
       audio.removeEventListener("timeupdate", handleTimeUpdate);
       audio.removeEventListener("seeking", handleTimeUpdate);
     };
-  }, [audioRef, captionSegments]);
+  }, [audioRef, wordTimestamps]);
 
   return (
     <div className="absolute inset-0 flex items-center justify-center">

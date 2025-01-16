@@ -1,4 +1,6 @@
 import { RefObject, useEffect, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
 
 interface VideoContentProps {
   previewUrl: string;
@@ -6,6 +8,7 @@ interface VideoContentProps {
   commentAudioUrl?: string;
   audioRef: RefObject<HTMLAudioElement>;
   onDurationChange?: (duration: number) => void;
+  onCaptionsGenerated?: (captions: string) => void;
 }
 
 export const VideoContent = ({ 
@@ -13,7 +16,8 @@ export const VideoContent = ({
   titleAudioUrl, 
   commentAudioUrl, 
   audioRef,
-  onDurationChange 
+  onDurationChange,
+  onCaptionsGenerated 
 }: VideoContentProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -24,11 +28,36 @@ export const VideoContent = ({
       const audio = audioRef.current;
       audio.currentTime = 0;
 
+      // Generate captions for the audio
+      const generateCaptions = async (audioUrl: string) => {
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-captions', {
+            body: { audioUrl }
+          });
+
+          if (error) throw error;
+
+          if (data.captions && onCaptionsGenerated) {
+            console.log('Captions generated:', data.captions);
+            onCaptionsGenerated(JSON.stringify(data.captions));
+          }
+        } catch (error) {
+          console.error('Error generating captions:', error);
+          toast({
+            title: "Caption Generation Failed",
+            description: "There was an error generating captions. The video will play without them.",
+            variant: "destructive",
+          });
+        }
+      };
+
       // Set up title audio first
       if (titleAudioUrl) {
         audio.src = titleAudioUrl;
+        generateCaptions(titleAudioUrl);
       } else if (commentAudioUrl) {
         audio.src = commentAudioUrl;
+        generateCaptions(commentAudioUrl);
       }
 
       const handleTitleEnded = async () => {
@@ -36,6 +65,7 @@ export const VideoContent = ({
         if (commentAudioUrl) {
           audio.src = commentAudioUrl;
           await audio.play();
+          generateCaptions(commentAudioUrl);
         }
       };
 
@@ -100,7 +130,7 @@ export const VideoContent = ({
         audio.src = '';
       };
     }
-  }, [titleAudioUrl, commentAudioUrl, audioRef, onDurationChange]);
+  }, [titleAudioUrl, commentAudioUrl, audioRef, onDurationChange, onCaptionsGenerated]);
 
   return (
     <div className="relative w-full h-full">
