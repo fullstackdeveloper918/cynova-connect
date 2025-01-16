@@ -24,10 +24,9 @@ serve(async (req) => {
       throw new Error('ASSEMBLY_AI_API_KEY is not set');
     }
 
+    // Step 1: Submit transcription request
     console.log('Submitting transcription request to AssemblyAI...');
-
-    // Submit transcription request with proper headers and body format
-    const transcriptionResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
+    const transcriptResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
       headers: {
         'Authorization': apiKey,
@@ -39,27 +38,28 @@ serve(async (req) => {
         word_timestamps: true,
         format_text: true,
         punctuate: true,
-        dual_channel: false,
-        language_code: 'en'
+        language_code: "en"
       })
     });
 
-    if (!transcriptionResponse.ok) {
-      const errorText = await transcriptionResponse.text();
+    if (!transcriptResponse.ok) {
+      const errorText = await transcriptResponse.text();
       console.error('AssemblyAI API error:', errorText);
       throw new Error(`Failed to submit transcription: ${errorText}`);
     }
 
-    const transcriptionData = await transcriptionResponse.json();
-    console.log('Transcription submitted successfully:', transcriptionData);
+    const transcriptData = await transcriptResponse.json();
+    console.log('Transcription submitted successfully:', transcriptData);
 
-    // Poll for the transcription result
-    const transcriptId = transcriptionData.id;
+    // Step 2: Poll for results
+    const transcriptId = transcriptData.id;
     let result;
     let attempts = 0;
     const maxAttempts = 60; // 5 minutes maximum waiting time
 
     while (attempts < maxAttempts) {
+      console.log(`Polling attempt ${attempts + 1} for transcript ${transcriptId}`);
+      
       const pollResponse = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptId}`, {
         headers: {
           'Authorization': apiKey,
@@ -91,6 +91,7 @@ serve(async (req) => {
 
     console.log('Transcription completed successfully');
 
+    // Return the formatted response
     return new Response(
       JSON.stringify({
         text: result.text,
