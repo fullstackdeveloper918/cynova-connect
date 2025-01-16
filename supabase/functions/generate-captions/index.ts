@@ -38,7 +38,7 @@ serve(async (req) => {
       throw new Error(`Audio URL validation failed: ${error.message}`)
     }
 
-    // Submit transcription request to AssemblyAI
+    // Submit transcription request to AssemblyAI using the correct endpoint
     console.log('Submitting transcription request to AssemblyAI')
     const uploadResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
@@ -49,8 +49,9 @@ serve(async (req) => {
       body: JSON.stringify({
         audio_url: audioUrl,
         word_boost: ["reddit", "upvote", "downvote", "comment", "post"],
-        word_timestamps: true
-      }),
+        word_timestamps: true,
+        format_text: true
+      })
     })
 
     if (!uploadResponse.ok) {
