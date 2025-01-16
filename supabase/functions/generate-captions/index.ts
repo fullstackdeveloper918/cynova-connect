@@ -26,20 +26,28 @@ serve(async (req) => {
 
     // Step 1: Submit transcription request
     console.log('Submitting transcription request to AssemblyAI...');
+    
+    const headers = {
+      'Authorization': apiKey,
+      'Content-Type': 'application/json',
+    };
+
+    const requestBody = {
+      audio_url: audioUrl,
+      word_boost: ["reddit", "upvote", "downvote", "comment", "post"],
+      word_timestamps: true,
+      format_text: true,
+      punctuate: true,
+      language_code: "en"
+    };
+
+    console.log('Request headers:', headers);
+    console.log('Request body:', requestBody);
+
     const response = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
-      headers: {
-        'Authorization': apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        audio_url: audioUrl,
-        word_boost: ["reddit", "upvote", "downvote", "comment", "post"],
-        word_timestamps: true,
-        format_text: true,
-        punctuate: true,
-        language_code: "en"
-      }),
+      headers,
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
@@ -55,7 +63,7 @@ serve(async (req) => {
     const transcriptId = transcriptData.id;
     let result;
     let attempts = 0;
-    const maxAttempts = 60; // 5 minutes maximum waiting time
+    const maxAttempts = 60; // 3 minutes maximum waiting time
 
     while (attempts < maxAttempts) {
       console.log(`Polling attempt ${attempts + 1} for transcript ${transcriptId}`);
@@ -96,7 +104,7 @@ serve(async (req) => {
       JSON.stringify({
         text: result.text,
         words: result.words,
-        captions: result.words.map((word: any) => ({
+        captions: result.words?.map((word: any) => ({
           text: word.text,
           start: word.start,
           end: word.end
