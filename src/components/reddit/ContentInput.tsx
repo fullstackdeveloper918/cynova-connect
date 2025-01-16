@@ -42,11 +42,14 @@ export const ContentInput = ({
               <SelectValue placeholder="Select duration" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="30">30 seconds</SelectItem>
-              <SelectItem value="60">60 seconds</SelectItem>
-              <SelectItem value="90">90 seconds</SelectItem>
+              <SelectItem value="30">30 seconds (≈75 words)</SelectItem>
+              <SelectItem value="60">60 seconds (≈150 words)</SelectItem>
+              <SelectItem value="90">90 seconds (≈225 words)</SelectItem>
             </SelectContent>
           </Select>
+          <p className="text-sm text-muted-foreground">
+            Select the duration first to ensure the content is properly sized
+          </p>
         </div>
         <div className="flex gap-2">
           <Input

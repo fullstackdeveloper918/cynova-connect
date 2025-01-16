@@ -137,18 +137,52 @@ export const RedditVideoEditor = () => {
       const post = data[0].data.children[0].data;
       
       // Calculate number of comments based on duration
-      const commentsPerMinute = 4;
+      // Average reading speed is about 150 words per minute
+      // We want to fill the entire duration with content
       const durationInMinutes = parseInt(selectedDuration) / 60;
-      const targetCommentCount = Math.max(1, Math.round(commentsPerMinute * durationInMinutes));
+      const targetWordCount = Math.round(150 * durationInMinutes);
       
-      // Filter and format comments
-      const comments = data[1].data.children
-        .filter((comment: any) => !comment.data.stickied && comment.data.body)
-        .slice(0, targetCommentCount)
-        .map((comment: any) => comment.data.body)
-        .join('\n\n');
+      // Title takes about 5-8 seconds to read
+      const titleWordCount = post.title.split(/\s+/).length;
+      const remainingWordCount = targetWordCount - titleWordCount;
+      
+      // Filter and format comments to match target duration
+      let currentWordCount = 0;
+      const selectedComments = [];
+      
+      for (const comment of data[1].data.children) {
+        if (!comment.data.stickied && comment.data.body) {
+          const commentWords = comment.data.body.split(/\s+/).length;
+          if (currentWordCount + commentWords <= remainingWordCount) {
+            selectedComments.push(comment.data.body);
+            currentWordCount += commentWords;
+          }
+          if (currentWordCount >= remainingWordCount) break;
+        }
+      }
 
-      const formattedContent = `${post.title}\n\n${comments}`;
+      // If we don't have enough comments, add more from deeper in the thread
+      if (currentWordCount < remainingWordCount && data[1].data.children.length > 0) {
+        for (const comment of data[1].data.children) {
+          if (comment.data.replies && comment.data.replies.data && comment.data.replies.data.children) {
+            for (const reply of comment.data.replies.data.children) {
+              if (reply.data && reply.data.body) {
+                const replyWords = reply.data.body.split(/\s+/).length;
+                if (currentWordCount + replyWords <= remainingWordCount) {
+                  selectedComments.push(reply.data.body);
+                  currentWordCount += replyWords;
+                }
+                if (currentWordCount >= remainingWordCount) break;
+              }
+            }
+            if (currentWordCount >= remainingWordCount) break;
+          }
+        }
+      }
+
+      const formattedContent = `${post.title}\n\n${selectedComments.join('\n\n')}`;
+      console.log(`Generated content with approximately ${formattedContent.split(/\s+/).length} words for ${selectedDuration} seconds duration`);
+      
       setContent(formattedContent);
       
       // Automatically generate preview after fetching content
@@ -156,7 +190,7 @@ export const RedditVideoEditor = () => {
       
       toast({
         title: "Content Fetched",
-        description: "Reddit content has been retrieved successfully.",
+        description: `Reddit content has been retrieved and optimized for ${selectedDuration} seconds.`,
       });
     } catch (error) {
       console.error('Error fetching Reddit content:', error);
