@@ -12,8 +12,9 @@ export const VideoEditor = () => {
   const [captions, setCaptions] = useState<string>("");
   const [isExporting, setIsExporting] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [gameplayUrl, setGameplayUrl] = useState<string>("");
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
-  const finalPreviewRef = useRef<HTMLVideoElement>(null);
+  const gameplayPreviewRef = useRef<HTMLVideoElement>(null);
   const { data: userData } = useUser();
 
   const handleVideoUpload = async (file: File) => {
@@ -24,10 +25,6 @@ export const VideoEditor = () => {
       
       if (videoPreviewRef.current) {
         videoPreviewRef.current.src = newPreviewUrl;
-      }
-
-      if (finalPreviewRef.current) {
-        finalPreviewRef.current.src = newPreviewUrl;
       }
 
       toast({
@@ -45,10 +42,14 @@ export const VideoEditor = () => {
 
   const handleStockSelection = (videoId: string) => {
     setSelectedStock(videoId);
-    if (finalPreviewRef.current) {
-      const stockVideo = `/stock/${videoId}-gameplay.mp4`;
-      finalPreviewRef.current.src = stockVideo;
+    const stockVideo = `/stock/${videoId}-gameplay.mp4`;
+    setGameplayUrl(stockVideo);
+    
+    if (gameplayPreviewRef.current) {
+      gameplayPreviewRef.current.src = stockVideo;
+      gameplayPreviewRef.current.load();
     }
+    
     toast({
       title: "Background selected",
       description: `${videoId.toUpperCase()} gameplay footage will be added to your video.`,
@@ -136,22 +137,46 @@ export const VideoEditor = () => {
         {/* Preview Section */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Preview</h2>
-          <div className="aspect-[9/16] bg-black rounded-lg overflow-hidden relative max-h-[500px]">
-            {userVideo ? (
-              <video
-                ref={finalPreviewRef}
-                className="w-full h-full object-contain"
-                controls
-                playsInline
-              >
-                Your browser does not support the video tag.
-              </video>
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-white/50">
-                <Video className="h-12 w-12" />
-              </div>
-            )}
-            
+          <div className="space-y-2">
+            {/* Top half - Uploaded video */}
+            <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
+              {userVideo ? (
+                <video
+                  ref={videoPreviewRef}
+                  className="w-full h-full object-contain"
+                  controls
+                  playsInline
+                >
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-white/50">
+                  <Upload className="h-12 w-12" />
+                  <span className="ml-2">Upload your video</span>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom half - Gameplay background */}
+            <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
+              {selectedStock ? (
+                <video
+                  ref={gameplayPreviewRef}
+                  className="w-full h-full object-cover"
+                  controls
+                  playsInline
+                  loop
+                >
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-white/50">
+                  <Video className="h-12 w-12" />
+                  <span className="ml-2">Select background</span>
+                </div>
+              )}
+            </div>
+
             {captions && (
               <div className="absolute bottom-16 left-0 right-0 p-4 text-center">
                 <div className="bg-black/50 text-white p-2 rounded-lg inline-block text-sm">
