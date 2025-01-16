@@ -19,7 +19,7 @@ export const RedditVideoEditor = () => {
   const [content, setContent] = useState("");
   const [selectedResolution, setSelectedResolution] = useState<VideoResolution>("shorts");
   const [selectedDuration, setSelectedDuration] = useState("30");
-  const [selectedCaptionStyle, setSelectedCaptionStyle] = useState<CaptionStyle>("subtitles");
+  const [selectedCaptionStyle, setSelectedCaptionStyle] = useState<CaptionStyle>("minimal");
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
@@ -29,6 +29,7 @@ export const RedditVideoEditor = () => {
   const [commentVoice, setCommentVoice] = useState("onwK4e9ZLuTAKqWW03F9");
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [animateCaptions, setAnimateCaptions] = useState(true);
 
   const extractRedditPostId = (url: string) => {
     const matches = url.match(/comments\/([a-zA-Z0-9]+)/);
@@ -330,6 +331,8 @@ export const RedditVideoEditor = () => {
               onResolutionSelect={setSelectedResolution}
               onDurationSelect={setSelectedDuration}
               onCaptionStyleSelect={setSelectedCaptionStyle}
+              animateCaptions={animateCaptions}
+              onAnimateCaptionsChange={setAnimateCaptions}
             />
             <VoiceSettings
               titleVoice={titleVoice}
@@ -358,6 +361,7 @@ export const RedditVideoEditor = () => {
               titleAudioUrl={titleAudioUrl}
               commentAudioUrl={commentAudioUrl}
               onExport={handleExport}
+              animateCaptions={animateCaptions}
             />
           )}
           <div className="flex justify-start mt-4">

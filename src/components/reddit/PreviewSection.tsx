@@ -17,6 +17,7 @@ interface PreviewSectionProps {
   titleAudioUrl?: string;
   commentAudioUrl?: string;
   onExport: () => void;
+  animateCaptions: boolean;
 }
 
 export const PreviewSection = ({ 
@@ -26,7 +27,8 @@ export const PreviewSection = ({
   previewUrl,
   titleAudioUrl,
   commentAudioUrl,
-  onExport
+  onExport,
+  animateCaptions
 }: PreviewSectionProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [selectedBackground, setSelectedBackground] = useState("/stock/minecraft-gameplay.mp4");
@@ -156,13 +158,17 @@ export const PreviewSection = ({
           >
             {/* Background Video */}
             <div className="absolute inset-0">
-              <VideoContent 
-                previewUrl={selectedBackground} 
-                titleAudioUrl={titleAudioUrl}
-                commentAudioUrl={commentAudioUrl}
-                audioRef={audioRef}
-                onDurationChange={handleDurationChange}
-              />
+
+  <VideoContent 
+    previewUrl={selectedBackground} 
+    titleAudioUrl={titleAudioUrl}
+    commentAudioUrl={commentAudioUrl}
+    audioRef={audioRef}
+    onDurationChange={handleDurationChange}
+    captionStyle={selectedCaptionStyle}
+    animateCaptions={animateCaptions}
+  />
+
             </div>
 
             {/* Content Overlay */}

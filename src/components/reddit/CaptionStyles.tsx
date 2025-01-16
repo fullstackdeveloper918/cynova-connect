@@ -8,7 +8,12 @@ export type CaptionStyle =
   | "modern" 
   | "gradient" 
   | "outline" 
-  | "neon";
+  | "neon"
+  | "subtitles"
+  | "captions"
+  | "assembly-default"
+  | "assembly-clean"
+  | "assembly-overlay";
 
 interface CaptionStylesProps {
   selectedStyle: CaptionStyle;
@@ -31,6 +36,16 @@ export const getCaptionStyle = (style: CaptionStyle): string => {
       return "bg-black/60 text-white px-4 py-3 rounded-lg text-xl font-black [text-shadow:_2px_2px_0_rgb(0_0_0_/_40%)] shadow-lg";
     case "neon":
       return "bg-black/70 text-blue-400 px-4 py-3 rounded-lg text-xl font-bold [text-shadow:_0_0_5px_rgb(59_130_246_/_50%)] shadow-xl";
+    case "subtitles":
+      return "bg-black/80 text-white px-4 py-3 rounded-lg text-xl font-semibold shadow-xl";
+    case "captions":
+      return "bg-black/90 text-white px-5 py-4 rounded-xl text-2xl font-bold shadow-2xl";
+    case "assembly-default":
+      return "bg-black/75 text-white px-4 py-3 rounded-lg text-xl font-medium leading-relaxed tracking-wide shadow-xl border border-white/10";
+    case "assembly-clean":
+      return "bg-gradient-to-b from-black/80 to-black/60 text-white px-5 py-3 rounded-xl text-xl font-medium tracking-wide shadow-lg backdrop-blur-sm";
+    case "assembly-overlay":
+      return "bg-gradient-to-r from-blue-900/80 via-blue-800/70 to-blue-900/80 text-white px-6 py-4 rounded-2xl text-xl font-semibold tracking-wide shadow-2xl border border-blue-500/20";
     default:
       return "bg-black/80 text-white px-4 py-3 rounded-lg text-xl shadow-lg";
   }
@@ -67,6 +82,11 @@ export const CaptionStyles = ({
           <SelectItem value="gradient">Gradient Style</SelectItem>
           <SelectItem value="outline">Outline Style</SelectItem>
           <SelectItem value="neon">Neon Style</SelectItem>
+          <SelectItem value="subtitles">Subtitles</SelectItem>
+          <SelectItem value="captions">Captions</SelectItem>
+          <SelectItem value="assembly-default">Assembly Default</SelectItem>
+          <SelectItem value="assembly-clean">Assembly Clean</SelectItem>
+          <SelectItem value="assembly-overlay">Assembly Overlay</SelectItem>
         </SelectContent>
       </Select>
 

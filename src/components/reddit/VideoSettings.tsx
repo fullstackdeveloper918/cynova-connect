@@ -10,6 +10,8 @@ interface VideoSettingsProps {
   onResolutionSelect: (resolution: VideoResolution) => void;
   onDurationSelect: (duration: string) => void;
   onCaptionStyleSelect: (style: CaptionStyle) => void;
+  animateCaptions: boolean;
+  onAnimateCaptionsChange: (animate: boolean) => void;
 }
 
 export const VideoSettings = ({
@@ -19,6 +21,8 @@ export const VideoSettings = ({
   onResolutionSelect,
   onDurationSelect,
   onCaptionStyleSelect,
+  animateCaptions,
+  onAnimateCaptionsChange,
 }: VideoSettingsProps) => {
   return (
     <Card>
@@ -38,6 +42,8 @@ export const VideoSettings = ({
         <CaptionStyles
           selectedStyle={selectedCaptionStyle}
           onStyleSelect={onCaptionStyleSelect}
+          animate={animateCaptions}
+          onAnimateChange={onAnimateCaptionsChange}
         />
       </CardContent>
     </Card>
