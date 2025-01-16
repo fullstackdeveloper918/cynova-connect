@@ -25,10 +25,9 @@ serve(async (req) => {
     const uploadResponse = await fetch('https://api.assemblyai.com/v2/upload', {
       method: 'POST',
       headers: {
-        'authorization': assemblyKey,
-        'content-type': 'application/json',
+        'authorization': assemblyKey
       },
-      body: JSON.stringify({ url: audioUrl })
+      body: await fetch(audioUrl).then(res => res.blob())
     })
 
     if (!uploadResponse.ok) {
