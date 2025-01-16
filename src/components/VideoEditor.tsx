@@ -26,6 +26,10 @@ export const VideoEditor = () => {
         videoPreviewRef.current.src = newPreviewUrl;
       }
 
+      if (finalPreviewRef.current) {
+        finalPreviewRef.current.src = newPreviewUrl;
+      }
+
       toast({
         title: "Video uploaded successfully",
         description: "You can now add background and captions.",
@@ -63,7 +67,6 @@ export const VideoEditor = () => {
 
     setIsExporting(true);
     try {
-      // Upload the video to Supabase storage
       const fileExt = userVideo.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
       
@@ -73,12 +76,10 @@ export const VideoEditor = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('exports')
         .getPublicUrl(fileName);
 
-      // Create an export record
       const { data: exportData, error: exportError } = await supabase
         .from('exports')
         .insert({
@@ -101,7 +102,6 @@ export const VideoEditor = () => {
         description: "Your video has been processed and saved.",
       });
 
-      // Trigger download
       const downloadLink = document.createElement("a");
       downloadLink.href = publicUrl;
       downloadLink.download = `edited_${userVideo.name}`;
@@ -122,10 +122,10 @@ export const VideoEditor = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="container mx-auto p-4 max-w-6xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Editor Section */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           <EditorTabs
             onVideoUpload={handleVideoUpload}
             onBackgroundSelect={handleStockSelection}
@@ -135,12 +135,12 @@ export const VideoEditor = () => {
 
         {/* Preview Section */}
         <div className="space-y-4">
-          <h2 className="text-2xl font-semibold">Preview</h2>
-          <div className="aspect-[9/16] bg-black rounded-lg overflow-hidden relative">
+          <h2 className="text-xl font-semibold">Preview</h2>
+          <div className="aspect-[9/16] bg-black rounded-lg overflow-hidden relative max-h-[500px]">
             {userVideo ? (
               <video
                 ref={finalPreviewRef}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 controls
                 playsInline
               >
@@ -154,7 +154,7 @@ export const VideoEditor = () => {
             
             {captions && (
               <div className="absolute bottom-16 left-0 right-0 p-4 text-center">
-                <div className="bg-black/50 text-white p-3 rounded-lg inline-block">
+                <div className="bg-black/50 text-white p-2 rounded-lg inline-block text-sm">
                   {captions}
                 </div>
               </div>
