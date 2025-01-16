@@ -22,12 +22,15 @@ serve(async (req) => {
 
     // First, upload the audio file to AssemblyAI
     console.log('Uploading audio to AssemblyAI...')
+    const audioResponse = await fetch(audioUrl)
+    const audioBlob = await audioResponse.blob()
+    
     const uploadResponse = await fetch('https://api.assemblyai.com/v2/upload', {
       method: 'POST',
       headers: {
         'authorization': assemblyKey
       },
-      body: await fetch(audioUrl).then(res => res.blob())
+      body: audioBlob
     })
 
     if (!uploadResponse.ok) {
