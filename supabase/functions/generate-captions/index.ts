@@ -49,13 +49,7 @@ serve(async (req) => {
       body: JSON.stringify({
         audio_url: audioUrl,
         word_boost: ["reddit", "upvote", "downvote", "comment", "post"],
-        word_timestamps: true,
-        format_text: true,
-        punctuate: true,
-        dual_channel: false,
-        webhook_url: null,
-        boost_param: "high",
-        auto_highlights: true
+        word_timestamps: true
       })
     })
 
