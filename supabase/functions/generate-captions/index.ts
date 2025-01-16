@@ -26,7 +26,7 @@ serve(async (req) => {
 
     console.log('Submitting transcription request to AssemblyAI...');
 
-    // First, submit the audio file for transcription
+    // Submit transcription request
     const transcriptionResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
       headers: {
