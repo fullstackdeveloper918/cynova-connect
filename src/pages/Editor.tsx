@@ -10,7 +10,7 @@ const Editor = () => {
           <div className="space-y-6">
             <EditorTabs />
           </div>
-          <div className="bg-muted aspect-[9/16] rounded-lg flex items-center justify-center">
+          <div className="bg-muted aspect-[9/16] rounded-lg flex items-center justify-center sticky top-6">
             <p className="text-muted-foreground">Video Preview</p>
           </div>
         </div>
