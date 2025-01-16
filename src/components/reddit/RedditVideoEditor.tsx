@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Save, Loader2 } from "lucide-react";
+import { Save, Loader2, ArrowLeft, ArrowRight } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { VideoResolution } from "./ResolutionSelector";
 import { ContentInput } from "./ContentInput";
 import { VoiceSettings } from "./VoiceSettings";
@@ -13,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
 export const RedditVideoEditor = () => {
+  const [activeTab, setActiveTab] = useState("content");
   const [redditUrl, setRedditUrl] = useState("");
   const [content, setContent] = useState("");
   const [selectedResolution, setSelectedResolution] = useState<VideoResolution>("shorts");
@@ -23,8 +25,8 @@ export const RedditVideoEditor = () => {
   const [audioUrl, setAudioUrl] = useState("");
   const [titleAudioUrl, setTitleAudioUrl] = useState("");
   const [commentAudioUrl, setCommentAudioUrl] = useState("");
-  const [titleVoice, setTitleVoice] = useState("EXAVITQu4vr4xnSDxMaL"); // Sarah voice for title
-  const [commentVoice, setCommentVoice] = useState("onwK4e9ZLuTAKqWW03F9"); // Daniel voice for comments
+  const [titleVoice, setTitleVoice] = useState("EXAVITQu4vr4xnSDxMaL");
+  const [commentVoice, setCommentVoice] = useState("onwK4e9ZLuTAKqWW03F9");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -231,66 +233,119 @@ export const RedditVideoEditor = () => {
     }
   };
 
+  const handleNext = () => {
+    if (activeTab === "content" && content) {
+      setActiveTab("settings");
+    } else if (activeTab === "settings") {
+      setActiveTab("preview");
+    }
+  };
+
+  const handleBack = () => {
+    if (activeTab === "preview") {
+      setActiveTab("settings");
+    } else if (activeTab === "settings") {
+      setActiveTab("content");
+    }
+  };
+
   return (
     <div className="space-y-8">
-      <ContentInput
-        redditUrl={redditUrl}
-        content={content}
-        isGenerating={isGenerating}
-        onUrlChange={setRedditUrl}
-        onContentChange={setContent}
-        onFetch={handleFetch}
-      />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="content">Content</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="preview">Preview</TabsTrigger>
+        </TabsList>
 
-      <VideoSettings
-        selectedResolution={selectedResolution}
-        selectedDuration={selectedDuration}
-        selectedCaptionStyle={selectedCaptionStyle}
-        onResolutionSelect={setSelectedResolution}
-        onDurationSelect={setSelectedDuration}
-        onCaptionStyleSelect={setSelectedCaptionStyle}
-      />
+        <TabsContent value="content" className="mt-6">
+          <ContentInput
+            redditUrl={redditUrl}
+            content={content}
+            isGenerating={isGenerating}
+            onUrlChange={setRedditUrl}
+            onContentChange={setContent}
+            onFetch={handleFetch}
+          />
+          {content && (
+            <div className="flex justify-end mt-4">
+              <Button onClick={handleNext}>
+                Next <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </TabsContent>
 
-      <VoiceSettings
-        titleVoice={titleVoice}
-        commentVoice={commentVoice}
-        onTitleVoiceSelect={setTitleVoice}
-        onCommentVoiceSelect={setCommentVoice}
-      />
+        <TabsContent value="settings" className="mt-6">
+          <div className="space-y-6">
+            <VideoSettings
+              selectedResolution={selectedResolution}
+              selectedDuration={selectedDuration}
+              selectedCaptionStyle={selectedCaptionStyle}
+              onResolutionSelect={setSelectedResolution}
+              onDurationSelect={setSelectedDuration}
+              onCaptionStyleSelect={setSelectedCaptionStyle}
+            />
+            <VoiceSettings
+              titleVoice={titleVoice}
+              commentVoice={commentVoice}
+              onTitleVoiceSelect={setTitleVoice}
+              onCommentVoiceSelect={setCommentVoice}
+            />
+            <div className="flex justify-between mt-4">
+              <Button variant="outline" onClick={handleBack}>
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back
+              </Button>
+              <Button onClick={handleNext}>
+                Next <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </TabsContent>
 
-      {(content || previewUrl) && (
-        <PreviewSection
-          content={content}
-          selectedResolution={selectedResolution}
-          selectedCaptionStyle={selectedCaptionStyle}
-          previewUrl={previewUrl}
-          titleAudioUrl={titleAudioUrl}
-          commentAudioUrl={commentAudioUrl}
-          onExport={handleExport}
-        />
+        <TabsContent value="preview" className="mt-6">
+          {(content || previewUrl) && (
+            <PreviewSection
+              content={content}
+              selectedResolution={selectedResolution}
+              selectedCaptionStyle={selectedCaptionStyle}
+              previewUrl={previewUrl}
+              titleAudioUrl={titleAudioUrl}
+              commentAudioUrl={commentAudioUrl}
+              onExport={handleExport}
+            />
+          )}
+          <div className="flex justify-start mt-4">
+            <Button variant="outline" onClick={handleBack}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back
+            </Button>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {activeTab === "preview" && (
+        <Card>
+          <CardContent className="pt-6">
+            <Button
+              onClick={previewUrl ? handleExport : () => handleGenerate(content)}
+              disabled={isGenerating}
+              className="w-full gap-2"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {previewUrl ? 'Exporting...' : 'Generating...'}
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  {previewUrl ? 'Export Video' : 'Generate Preview'}
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
       )}
-
-      <Card>
-        <CardContent className="pt-6">
-          <Button
-            onClick={previewUrl ? handleExport : () => handleGenerate(content)}
-            disabled={isGenerating}
-            className="w-full gap-2"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                {previewUrl ? 'Exporting...' : 'Generating...'}
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4" />
-                {previewUrl ? 'Export Video' : 'Generate Preview'}
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   );
 };
