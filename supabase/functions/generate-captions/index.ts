@@ -21,24 +21,36 @@ serve(async (req) => {
       throw new Error('ASSEMBLY_AI_API_KEY is not set');
     }
 
-    // First, upload the audio file to AssemblyAI
+    // First, fetch the audio file content
+    console.log('Fetching audio file...');
+    const audioResponse = await fetch(audioUrl);
+    if (!audioResponse.ok) {
+      throw new Error('Failed to fetch audio file');
+    }
+    const audioBlob = await audioResponse.blob();
+
+    // Upload the audio file to AssemblyAI
     console.log('Uploading audio to AssemblyAI...');
+    const formData = new FormData();
+    formData.append('audio', audioBlob);
+
     const uploadResponse = await fetch('https://api.assemblyai.com/v2/upload', {
       method: 'POST',
       headers: {
         'authorization': assemblyKey,
       },
-      body: await fetch(audioUrl).then(r => r.blob())
+      body: audioBlob
     });
 
     if (!uploadResponse.ok) {
+      console.error('Upload response:', await uploadResponse.text());
       throw new Error('Failed to upload audio to AssemblyAI');
     }
 
     const { upload_url } = await uploadResponse.json();
     console.log('Audio uploaded successfully:', upload_url);
 
-    // Then, submit the transcription request
+    // Submit the transcription request
     console.log('Submitting transcription request...');
     const transcriptResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
@@ -49,11 +61,12 @@ serve(async (req) => {
       body: JSON.stringify({
         audio_url: upload_url,
         word_boost: ["reddit", "upvote", "downvote", "comment", "post"],
-        word_timestamps: true,
+        word_timestamps: true
       }),
     });
 
     if (!transcriptResponse.ok) {
+      console.error('Transcription response:', await transcriptResponse.text());
       throw new Error('Failed to submit transcription request');
     }
 
@@ -78,6 +91,7 @@ serve(async (req) => {
       );
 
       if (!pollResponse.ok) {
+        console.error('Poll response:', await pollResponse.text());
         throw new Error('Failed to poll transcription status');
       }
 
@@ -87,6 +101,7 @@ serve(async (req) => {
         console.log('Transcription completed successfully');
         break;
       } else if (result.status === 'error') {
+        console.error('Transcription result:', result);
         throw new Error(`Transcription failed: ${result.error}`);
       }
 
