@@ -6,7 +6,13 @@ import { CaptionsSection } from "./sections/CaptionsSection";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
-export const EditorTabs = () => {
+interface EditorTabsProps {
+  onVideoUpload: (file: File) => void;
+  onBackgroundSelect: (videoId: string) => void;
+  onCaptionChange: (caption: string) => void;
+}
+
+export const EditorTabs = ({ onVideoUpload, onBackgroundSelect, onCaptionChange }: EditorTabsProps) => {
   const [activeTab, setActiveTab] = useState("upload");
   const [uploadedVideo, setUploadedVideo] = useState<File | string | null>(null);
   const [selectedBackground, setSelectedBackground] = useState("");
@@ -20,6 +26,21 @@ export const EditorTabs = () => {
     }
   };
 
+  const handleVideoUpload = (file: File) => {
+    setUploadedVideo(file);
+    onVideoUpload(file);
+  };
+
+  const handleBackgroundSelect = (videoId: string) => {
+    setSelectedBackground(videoId);
+    onBackgroundSelect(videoId);
+  };
+
+  const handleCaptionSelect = (style: string) => {
+    setSelectedCaptionStyle(style);
+    onCaptionChange(style);
+  };
+
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -29,7 +50,7 @@ export const EditorTabs = () => {
           <TabsTrigger value="captions">Captions</TabsTrigger>
         </TabsList>
         <TabsContent value="upload" className="mt-6">
-          <UploadSection onVideoUpload={setUploadedVideo} />
+          <UploadSection onVideoUpload={handleVideoUpload} />
           {uploadedVideo && (
             <Button onClick={handleNext} className="mt-4">
               Next <ArrowRight className="ml-2 h-4 w-4" />
@@ -38,7 +59,7 @@ export const EditorTabs = () => {
         </TabsContent>
         <TabsContent value="background" className="mt-6">
           <BackgroundSection 
-            onBackgroundSelect={setSelectedBackground}
+            onBackgroundSelect={handleBackgroundSelect}
             selectedBackground={selectedBackground}
           />
           {selectedBackground && (
@@ -49,7 +70,7 @@ export const EditorTabs = () => {
         </TabsContent>
         <TabsContent value="captions" className="mt-6">
           <CaptionsSection 
-            onCaptionSelect={setSelectedCaptionStyle}
+            onCaptionSelect={handleCaptionSelect}
             selectedStyle={selectedCaptionStyle}
           />
         </TabsContent>
