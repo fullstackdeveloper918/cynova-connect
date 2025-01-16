@@ -18,10 +18,7 @@ export const VideoEditor = () => {
     if (file.type.startsWith("video/")) {
       setUserVideo(file);
       
-      // Create object URL for the uploaded video
       const videoUrl = URL.createObjectURL(file);
-      
-      // Find the preview video element and update its source
       const previewVideo = previewContainerRef.current?.querySelector('.user-video') as HTMLVideoElement;
       if (previewVideo) {
         previewVideo.src = videoUrl;
@@ -44,7 +41,6 @@ export const VideoEditor = () => {
   const handleStockSelection = (videoId: string) => {
     setSelectedStock(videoId);
     
-    // Find the background video element and update its source
     const bgVideo = previewContainerRef.current?.querySelector('.background-video') as HTMLVideoElement;
     if (bgVideo) {
       bgVideo.src = `/stock/${videoId}-gameplay.mp4`;
@@ -70,29 +66,33 @@ export const VideoEditor = () => {
 
     setIsExporting(true);
     try {
-      const fileExt = userVideo.name.split('.').pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('exports')
-        .upload(fileName, userVideo);
+      // Create FormData to send both videos
+      const formData = new FormData();
+      formData.append('userVideo', userVideo);
+      formData.append('backgroundId', selectedStock);
+      formData.append('captions', captions);
 
-      if (uploadError) throw uploadError;
+      // Call the combine-videos edge function
+      const { data: combinedVideoData, error: functionError } = await supabase.functions
+        .invoke('combine-videos', {
+          body: formData,
+        });
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('exports')
-        .getPublicUrl(fileName);
+      if (functionError) throw functionError;
 
+      const { videoUrl, thumbnailUrl } = combinedVideoData;
+
+      // Create export record
       const { data: exportData, error: exportError } = await supabase
         .from('exports')
         .insert({
           user_id: userData.id,
           title: userVideo.name,
-          description: `Video with ${selectedStock} background`,
-          file_url: publicUrl,
-          thumbnail_url: publicUrl,
-          file_size: userVideo.size,
-          file_type: userVideo.type,
+          description: `Combined video with ${selectedStock} background`,
+          file_url: videoUrl,
+          thumbnail_url: thumbnailUrl || videoUrl,
+          file_size: userVideo.size, // This will be updated by the edge function
+          file_type: 'video/mp4',
           status: 'completed'
         })
         .select()
@@ -105,9 +105,10 @@ export const VideoEditor = () => {
         description: "Your video has been processed and saved.",
       });
 
+      // Trigger download
       const downloadLink = document.createElement("a");
-      downloadLink.href = publicUrl;
-      downloadLink.download = `edited_${userVideo.name}`;
+      downloadLink.href = videoUrl;
+      downloadLink.download = `combined_${userVideo.name}`;
       document.body.appendChild(downloadLink);
       downloadLink.click();
       document.body.removeChild(downloadLink);
