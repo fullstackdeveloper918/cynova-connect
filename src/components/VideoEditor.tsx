@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { toast } from "./ui/use-toast";
 import { EditorTabs } from "./editor/EditorTabs";
 import { supabase } from "@/integrations/supabase/client";
+import { useUser } from "@/hooks/useUser";
 
 export const VideoEditor = () => {
   const [userVideo, setUserVideo] = useState<File | null>(null);
@@ -13,6 +14,7 @@ export const VideoEditor = () => {
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const finalPreviewRef = useRef<HTMLVideoElement>(null);
+  const { data: session } = useUser();
 
   const handleVideoUpload = async (file: File) => {
     if (file.type.startsWith("video/")) {
@@ -50,7 +52,7 @@ export const VideoEditor = () => {
   };
 
   const handleExport = async () => {
-    if (!userVideo || !selectedStock) {
+    if (!userVideo || !selectedStock || !session?.user?.id) {
       toast({
         title: "Missing requirements",
         description: "Please upload a video and select background footage before exporting.",
@@ -80,6 +82,7 @@ export const VideoEditor = () => {
       const { data: exportData, error: exportError } = await supabase
         .from('exports')
         .insert({
+          user_id: session.user.id,
           title: userVideo.name,
           description: `Video with ${selectedStock} background`,
           file_url: publicUrl,
