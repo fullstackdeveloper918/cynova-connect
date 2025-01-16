@@ -15,31 +15,10 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
   const [title, ...comments] = captions.split('\n\n');
   const commentsText = comments.join('\n\n');
 
-  // Split title into smaller chunks (2-3 words for better timing)
-  const titleChunks = title
-    .trim()
-    .split(/\s+/)
-    .reduce((acc: string[], word, i) => {
-      const chunkIndex = Math.floor(i / 3);
-      if (!acc[chunkIndex]) acc[chunkIndex] = word;
-      else acc[chunkIndex] += ` ${word}`;
-      return acc;
-    }, []);
-
-  // Split comments into chunks
-  const commentChunks = commentsText
+  // Split comments into sentences for better timing
+  const commentSentences = commentsText
     .split(/[.!?]+/)
-    .flatMap(sentence => 
-      sentence
-        .trim()
-        .split(/\s+/)
-        .reduce((acc: string[], word, i) => {
-          const chunkIndex = Math.floor(i / 4);
-          if (!acc[chunkIndex]) acc[chunkIndex] = word;
-          else acc[chunkIndex] += ` ${word}`;
-          return acc;
-        }, [])
-    )
+    .map(sentence => sentence.trim())
     .filter(Boolean);
 
   useEffect(() => {
@@ -48,46 +27,38 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
     const audio = audioRef.current;
     let lastUpdateTime = 0;
 
-    const updateCaption = (progress: number, isTitleSection: boolean) => {
-      const chunks = isTitleSection ? titleChunks : commentChunks;
-      const index = Math.floor(progress * chunks.length);
-      
-      if (index >= 0 && index < chunks.length) {
-        const chunk = chunks[index];
-        setCurrentCaption(chunk);
-        setIsVisible(true);
-        setIsShowingTitle(isTitleSection);
+    const updateCaption = () => {
+      const now = Date.now();
+      if (now - lastUpdateTime < 50) return; // Throttle updates
+      lastUpdateTime = now;
+
+      const progress = audio.currentTime / audio.duration;
+      const isTitleAudio = audio.src.includes('title');
+
+      if (isTitleAudio) {
+        // For title audio, show the title text
+        setCurrentCaption(title);
+        setIsShowingTitle(true);
+      } else {
+        // For comments audio, calculate which sentence to show based on progress
+        const sentenceIndex = Math.floor(progress * commentSentences.length);
+        if (sentenceIndex >= 0 && sentenceIndex < commentSentences.length) {
+          setCurrentCaption(commentSentences[sentenceIndex]);
+        }
+        setIsShowingTitle(false);
       }
+      setIsVisible(true);
     };
 
     const handleTimeUpdate = () => {
       if (!audio.duration) return;
-
-      const now = Date.now();
-      if (now - lastUpdateTime < 100) return; // Throttle updates
-      lastUpdateTime = now;
-
-      const isTitleAudio = audio.src.includes('title');
-      if (!isTitleAudio && isShowingTitle) {
-        // If we're showing title but playing comment audio, hide title
-        setIsVisible(false);
-        setIsShowingTitle(false);
-        return;
-      }
-
-      const progress = audio.currentTime / audio.duration;
-      updateCaption(progress, isTitleAudio);
+      updateCaption();
     };
 
     const handlePlay = () => {
       const isTitleAudio = audio.src.includes('title');
-      if (isTitleAudio) {
-        setIsShowingTitle(true);
-        updateCaption(0, true);
-      } else {
-        setIsShowingTitle(false);
-        updateCaption(0, false);
-      }
+      setIsShowingTitle(isTitleAudio);
+      updateCaption();
       setIsVisible(true);
     };
 
@@ -102,33 +73,29 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
       }
     };
 
+    // Add event listeners
     audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("play", handlePlay);
     audio.addEventListener("pause", handlePause);
     audio.addEventListener("ended", handleEnded);
 
+    // Cleanup
     return () => {
       audio.removeEventListener("timeupdate", handleTimeUpdate);
       audio.removeEventListener("play", handlePlay);
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("ended", handleEnded);
     };
-  }, [audioRef, titleChunks, commentChunks, isShowingTitle]);
+  }, [audioRef, title, commentSentences, isShowingTitle]);
 
   return (
     <div className="absolute inset-0 flex items-center justify-center">
       <div 
         className={`transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'} ${className}`}
       >
-        {isShowingTitle ? (
-          <h1 className="text-center max-w-3xl mx-auto px-4 text-2xl font-bold">
-            {currentCaption}
-          </h1>
-        ) : (
-          <p className="text-center max-w-3xl mx-auto px-4">
-            {currentCaption}
-          </p>
-        )}
+        <p className="text-center max-w-3xl mx-auto px-4">
+          {currentCaption}
+        </p>
       </div>
     </div>
   );
