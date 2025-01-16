@@ -116,12 +116,12 @@ export const PreviewSection = ({
         return "bg-black/80 text-white px-4 py-3 rounded-lg text-xl font-semibold shadow-xl";
       case "captions":
         return "bg-black/90 text-white px-5 py-4 rounded-xl text-2xl font-bold shadow-2xl";
-      case "elevenlabs-default":
+      case "assembly-default":
         return "bg-black/75 text-white px-4 py-3 rounded-lg text-xl font-medium leading-relaxed tracking-wide shadow-xl border border-white/10";
-      case "elevenlabs-clean":
+      case "assembly-clean":
         return "bg-gradient-to-b from-black/80 to-black/60 text-white px-5 py-3 rounded-xl text-xl font-medium tracking-wide shadow-lg backdrop-blur-sm";
-      case "elevenlabs-overlay":
-        return "bg-gradient-to-r from-purple-900/80 via-purple-800/70 to-purple-900/80 text-white px-6 py-4 rounded-2xl text-xl font-semibold tracking-wide shadow-2xl border border-purple-500/20";
+      case "assembly-overlay":
+        return "bg-gradient-to-r from-blue-900/80 via-blue-800/70 to-blue-900/80 text-white px-6 py-4 rounded-2xl text-xl font-semibold tracking-wide shadow-2xl border border-blue-500/20";
       default:
         return "bg-black/80 text-white px-4 py-3 rounded-lg text-xl shadow-lg";
     }

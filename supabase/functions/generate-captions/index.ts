@@ -21,36 +21,27 @@ serve(async (req) => {
       throw new Error('ASSEMBLY_AI_API_KEY is not set');
     }
 
-    // First, fetch the audio file content
-    console.log('Fetching audio file...');
-    const audioResponse = await fetch(audioUrl);
-    if (!audioResponse.ok) {
-      throw new Error('Failed to fetch audio file');
-    }
-    const audioBlob = await audioResponse.blob();
-
     // Upload the audio file to AssemblyAI
     console.log('Uploading audio to AssemblyAI...');
-    const formData = new FormData();
-    formData.append('audio', audioBlob);
-
     const uploadResponse = await fetch('https://api.assemblyai.com/v2/upload', {
       method: 'POST',
       headers: {
         'authorization': assemblyKey,
+        'transfer-encoding': 'chunked',
       },
-      body: audioBlob
+      body: await (await fetch(audioUrl)).arrayBuffer()
     });
 
     if (!uploadResponse.ok) {
-      console.error('Upload response:', await uploadResponse.text());
-      throw new Error('Failed to upload audio to AssemblyAI');
+      const errorText = await uploadResponse.text();
+      console.error('Upload failed:', errorText);
+      throw new Error(`Failed to upload audio: ${errorText}`);
     }
 
     const { upload_url } = await uploadResponse.json();
     console.log('Audio uploaded successfully:', upload_url);
 
-    // Submit the transcription request
+    // Submit transcription request
     console.log('Submitting transcription request...');
     const transcriptResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
@@ -66,16 +57,17 @@ serve(async (req) => {
     });
 
     if (!transcriptResponse.ok) {
-      console.error('Transcription response:', await transcriptResponse.text());
-      throw new Error('Failed to submit transcription request');
+      const errorText = await transcriptResponse.text();
+      console.error('Transcription request failed:', errorText);
+      throw new Error(`Failed to submit transcription: ${errorText}`);
     }
 
     const { id: transcriptId } = await transcriptResponse.json();
     console.log('Transcription submitted, ID:', transcriptId);
 
-    // Poll for the result
+    // Poll for results
     let result;
-    const maxAttempts = 60; // 5 minutes maximum
+    const maxAttempts = 60;
     let attempts = 0;
 
     while (attempts < maxAttempts) {
@@ -91,21 +83,22 @@ serve(async (req) => {
       );
 
       if (!pollResponse.ok) {
-        console.error('Poll response:', await pollResponse.text());
-        throw new Error('Failed to poll transcription status');
+        const errorText = await pollResponse.text();
+        console.error('Polling failed:', errorText);
+        throw new Error(`Failed to poll transcription: ${errorText}`);
       }
 
       result = await pollResponse.json();
+      console.log('Poll result status:', result.status);
       
       if (result.status === 'completed') {
         console.log('Transcription completed successfully');
         break;
       } else if (result.status === 'error') {
-        console.error('Transcription result:', result);
+        console.error('Transcription failed:', result);
         throw new Error(`Transcription failed: ${result.error}`);
       }
 
-      // Wait 5 seconds before polling again
       await new Promise(resolve => setTimeout(resolve, 5000));
       attempts++;
     }
@@ -114,7 +107,7 @@ serve(async (req) => {
       throw new Error('Transcription timed out');
     }
 
-    // Format the response with word-level timestamps
+    // Format response with word-level timestamps
     const captions = result.words.map((word: any) => ({
       text: word.text,
       start: word.start,
