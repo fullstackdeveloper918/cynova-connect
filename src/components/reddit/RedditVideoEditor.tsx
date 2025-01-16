@@ -107,6 +107,15 @@ export const RedditVideoEditor = () => {
       return;
     }
 
+    if (!selectedDuration) {
+      toast({
+        title: "Duration Required",
+        description: "Please select a video duration",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const postId = extractRedditPostId(redditUrl);
     if (!postId) {
       toast({
@@ -263,13 +272,15 @@ export const RedditVideoEditor = () => {
             redditUrl={redditUrl}
             content={content}
             isGenerating={isGenerating}
+            selectedDuration={selectedDuration}
             onUrlChange={setRedditUrl}
             onContentChange={setContent}
+            onDurationChange={setSelectedDuration}
             onFetch={handleFetch}
           />
           {content && (
             <div className="flex justify-end mt-4">
-              <Button onClick={handleNext}>
+              <Button onClick={() => setActiveTab("settings")}>
                 Next <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>

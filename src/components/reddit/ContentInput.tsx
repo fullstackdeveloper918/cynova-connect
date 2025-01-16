@@ -2,14 +2,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 
 interface ContentInputProps {
   redditUrl: string;
   content: string;
   isGenerating: boolean;
+  selectedDuration: string;
   onUrlChange: (url: string) => void;
   onContentChange: (content: string) => void;
+  onDurationChange: (duration: string) => void;
   onFetch: () => void;
 }
 
@@ -17,8 +20,10 @@ export const ContentInput = ({
   redditUrl,
   content,
   isGenerating,
+  selectedDuration,
   onUrlChange,
   onContentChange,
+  onDurationChange,
   onFetch,
 }: ContentInputProps) => {
   return (
@@ -26,10 +31,23 @@ export const ContentInput = ({
       <CardHeader>
         <CardTitle>Content</CardTitle>
         <CardDescription>
-          Enter a Reddit post URL or paste the content directly
+          Select video duration and enter a Reddit post URL or paste the content directly
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Video Duration</label>
+          <Select value={selectedDuration} onValueChange={onDurationChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select duration" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="30">30 seconds</SelectItem>
+              <SelectItem value="60">60 seconds</SelectItem>
+              <SelectItem value="90">90 seconds</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div className="flex gap-2">
           <Input
             placeholder="Reddit post URL"
@@ -38,7 +56,7 @@ export const ContentInput = ({
           />
           <Button
             onClick={onFetch}
-            disabled={isGenerating}
+            disabled={isGenerating || !selectedDuration}
             variant="secondary"
           >
             {isGenerating ? (

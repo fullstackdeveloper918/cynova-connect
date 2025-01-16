@@ -16,8 +16,8 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
   const commentsText = comments.join('\n\n');
 
   // Split comments into sentences for better timing
-  const commentSentences = commentsText
-    .split(/[.!?]+/)
+  const sentences = commentsText
+    .split(/[.!?]+\s*/)
     .map(sentence => sentence.trim())
     .filter(Boolean);
 
@@ -26,74 +26,74 @@ export const TimedCaptions = ({ captions, audioRef, className = "" }: TimedCapti
 
     const audio = audioRef.current;
     let lastUpdateTime = 0;
+    let animationFrameId: number;
 
     const updateCaption = () => {
       const now = Date.now();
-      if (now - lastUpdateTime < 50) return; // Throttle updates
+      if (now - lastUpdateTime < 50) {
+        animationFrameId = requestAnimationFrame(updateCaption);
+        return;
+      }
       lastUpdateTime = now;
 
-      const progress = audio.currentTime / audio.duration;
       const isTitleAudio = audio.src.includes('title');
+      const progress = audio.currentTime / audio.duration;
 
       if (isTitleAudio) {
-        // For title audio, show the title text
         setCurrentCaption(title);
         setIsShowingTitle(true);
       } else {
-        // For comments audio, calculate which sentence to show based on progress
-        const sentenceIndex = Math.floor(progress * commentSentences.length);
-        if (sentenceIndex >= 0 && sentenceIndex < commentSentences.length) {
-          setCurrentCaption(commentSentences[sentenceIndex]);
+        const sentenceIndex = Math.floor(progress * sentences.length);
+        if (sentenceIndex >= 0 && sentenceIndex < sentences.length) {
+          setCurrentCaption(sentences[sentenceIndex]);
         }
         setIsShowingTitle(false);
       }
       setIsVisible(true);
-    };
-
-    const handleTimeUpdate = () => {
-      if (!audio.duration) return;
-      updateCaption();
+      
+      if (audio.paused) {
+        cancelAnimationFrame(animationFrameId);
+      } else {
+        animationFrameId = requestAnimationFrame(updateCaption);
+      }
     };
 
     const handlePlay = () => {
-      const isTitleAudio = audio.src.includes('title');
-      setIsShowingTitle(isTitleAudio);
+      setIsShowingTitle(audio.src.includes('title'));
       updateCaption();
-      setIsVisible(true);
     };
 
     const handlePause = () => {
+      cancelAnimationFrame(animationFrameId);
       setIsVisible(true);
     };
 
     const handleEnded = () => {
+      cancelAnimationFrame(animationFrameId);
       setIsVisible(false);
       if (isShowingTitle) {
         setIsShowingTitle(false);
       }
     };
 
-    // Add event listeners
-    audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("play", handlePlay);
     audio.addEventListener("pause", handlePause);
     audio.addEventListener("ended", handleEnded);
 
-    // Cleanup
     return () => {
-      audio.removeEventListener("timeupdate", handleTimeUpdate);
+      cancelAnimationFrame(animationFrameId);
       audio.removeEventListener("play", handlePlay);
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("ended", handleEnded);
     };
-  }, [audioRef, title, commentSentences, isShowingTitle]);
+  }, [audioRef, title, sentences, isShowingTitle]);
 
   return (
     <div className="absolute inset-0 flex items-center justify-center">
       <div 
         className={`transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'} ${className}`}
       >
-        <p className="text-center max-w-3xl mx-auto px-4">
+        <p className="text-center max-w-3xl mx-auto px-4 text-xl font-medium">
           {currentCaption}
         </p>
       </div>
