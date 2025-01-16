@@ -1,6 +1,7 @@
-import { RefObject, useEffect, useRef } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+import { CaptionStyle, getCaptionStyle } from "./CaptionStyles";
 
 interface VideoContentProps {
   previewUrl: string;
@@ -9,6 +10,8 @@ interface VideoContentProps {
   audioRef: RefObject<HTMLAudioElement>;
   onDurationChange?: (duration: number) => void;
   onCaptionsGenerated?: (captions: string) => void;
+  captionStyle: CaptionStyle;
+  animateCaptions: boolean;
 }
 
 export const VideoContent = ({ 
@@ -17,9 +20,12 @@ export const VideoContent = ({
   commentAudioUrl, 
   audioRef,
   onDurationChange,
-  onCaptionsGenerated 
+  onCaptionsGenerated,
+  captionStyle,
+  animateCaptions
 }: VideoContentProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [currentCaption, setCurrentCaption] = useState("");
 
   useEffect(() => {
     if (audioRef.current && (titleAudioUrl || commentAudioUrl)) {
@@ -38,7 +44,8 @@ export const VideoContent = ({
           if (error) throw error;
 
           if (data.captions && onCaptionsGenerated) {
-            console.log('Captions generated:', data.captions);
+            console.log('Captions generated:', data);
+            setCurrentCaption(data.text);
             onCaptionsGenerated(JSON.stringify(data.captions));
           }
         } catch (error) {
@@ -143,6 +150,20 @@ export const VideoContent = ({
         playsInline
         autoPlay
       />
+      
+      {/* Captions overlay */}
+      {currentCaption && (
+        <div className="absolute bottom-16 left-0 right-0 p-4 flex justify-center">
+          <div className={`
+            ${getCaptionStyle(captionStyle)}
+            ${animateCaptions ? 'animate-fade-up' : ''}
+            max-w-[80%] text-center
+          `}>
+            {currentCaption}
+          </div>
+        </div>
+      )}
+
       {(titleAudioUrl || commentAudioUrl) && (
         <audio
           ref={audioRef}

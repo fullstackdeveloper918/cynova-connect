@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,15 +12,16 @@ serve(async (req) => {
   }
 
   try {
-    const { audioUrl } = await req.json()
-    console.log('Received request to transcribe:', audioUrl)
-
     const assemblyKey = Deno.env.get('ASSEMBLY_AI_API_KEY')
     if (!assemblyKey) {
       throw new Error('ASSEMBLY_AI_API_KEY is not set')
     }
 
-    // Create a transcription request
+    const { audioUrl } = await req.json()
+    if (!audioUrl) {
+      throw new Error('No audio URL provided')
+    }
+
     console.log('Creating transcription request...')
     const transcriptResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
@@ -47,19 +48,17 @@ serve(async (req) => {
       throw new Error(`Failed to submit transcription: ${errorText}`)
     }
 
-    const { id: transcriptId } = await transcriptResponse.json()
-    console.log('Transcription submitted, ID:', transcriptId)
+    const transcript = await transcriptResponse.json()
+    console.log('Transcription submitted:', transcript.id)
 
-    // Poll for results
-    let result
+    // Poll for completion
     const maxAttempts = 60
     let attempts = 0
+    let result = null
 
     while (attempts < maxAttempts) {
-      console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`)
-      
-      const pollResponse = await fetch(
-        `https://api.assemblyai.com/v2/transcript/${transcriptId}`,
+      const pollingResponse = await fetch(
+        `https://api.assemblyai.com/v2/transcript/${transcript.id}`,
         {
           headers: {
             'authorization': assemblyKey,
@@ -67,25 +66,27 @@ serve(async (req) => {
         }
       )
 
-      if (!pollResponse.ok) {
-        const errorText = await pollResponse.text()
+      if (!pollingResponse.ok) {
+        const errorText = await pollingResponse.text()
         console.error('Polling failed:', errorText)
-        throw new Error(`Failed to poll transcription: ${errorText}`)
+        throw new Error(`Failed to poll for results: ${errorText}`)
       }
 
-      result = await pollResponse.json()
-      console.log('Poll result status:', result.status)
+      result = await pollingResponse.json()
       
       if (result.status === 'completed') {
-        console.log('Transcription completed successfully')
+        console.log('Transcription completed')
         break
-      } else if (result.status === 'error') {
-        console.error('Transcription failed:', result)
+      }
+      
+      if (result.status === 'error') {
+        console.error('Transcription failed:', result.error)
         throw new Error(`Transcription failed: ${result.error}`)
       }
 
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      console.log(`Attempt ${attempts + 1}: Status is ${result.status}`)
       attempts++
+      await new Promise(resolve => setTimeout(resolve, 1000))
     }
 
     if (!result || result.status !== 'completed') {
@@ -113,14 +114,12 @@ serve(async (req) => {
       { 
         headers: { 
           ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       }
     )
-
   } catch (error) {
-    console.error('Error in generate-captions function:', error)
-    
+    console.error('Error:', error)
     return new Response(
       JSON.stringify({ 
         error: 'Failed to generate captions',
@@ -128,10 +127,10 @@ serve(async (req) => {
       }),
       { 
         status: 500,
-        headers: { 
+        headers: {
           ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       }
     )
   }
