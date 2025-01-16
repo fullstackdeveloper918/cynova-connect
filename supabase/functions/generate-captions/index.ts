@@ -24,18 +24,9 @@ serve(async (req) => {
       throw new Error('ASSEMBLY_AI_API_KEY is not set');
     }
 
-    // Log request configuration
-    console.log('Making request to AssemblyAI with configuration:', {
-      url: 'https://api.assemblyai.com/v2/transcript',
-      method: 'POST',
-      headers: {
-        'Authorization': '***' // Hide actual key in logs
-      },
-      body: { audio_url: audioUrl }
-    });
-
-    // Step 1: Submit transcription request
-    const response = await fetch('https://api.assemblyai.com/v2/transcript', {
+    // Step 1: Submit transcription request with proper schema
+    console.log('Submitting transcription request to AssemblyAI');
+    const transcriptResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
       headers: {
         'Authorization': apiKey,
@@ -43,21 +34,31 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         audio_url: audioUrl,
+        word_boost: [""],
+        boost_param: "high",
+        language_code: "en",
+        punctuate: true,
+        format_text: true,
+        dual_channel: false,
+        webhook_url: null,
+        auto_chapters: false,
+        entity_detection: false,
+        speakers_expected: 1,
         word_timestamps: true
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
+    if (!transcriptResponse.ok) {
+      const errorText = await transcriptResponse.text();
       console.error('AssemblyAI API error response:', {
-        status: response.status,
-        statusText: response.statusText,
+        status: transcriptResponse.status,
+        statusText: transcriptResponse.statusText,
         body: errorText
       });
-      throw new Error(`AssemblyAI API error: ${response.status} ${errorText}`);
+      throw new Error(`Failed to submit transcription: ${errorText}`);
     }
 
-    const transcriptData = await response.json();
+    const transcriptData = await transcriptResponse.json();
     console.log('Transcription submitted successfully:', transcriptData);
 
     // Step 2: Poll for results
