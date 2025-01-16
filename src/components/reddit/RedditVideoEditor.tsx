@@ -27,9 +27,9 @@ export const RedditVideoEditor = () => {
   const [commentAudioUrl, setCommentAudioUrl] = useState("");
   const [titleVoice, setTitleVoice] = useState("EXAVITQu4vr4xnSDxMaL");
   const [commentVoice, setCommentVoice] = useState("onwK4e9ZLuTAKqWW03F9");
+  const [animateCaptions, setAnimateCaptions] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [animateCaptions, setAnimateCaptions] = useState(true);
 
   const extractRedditPostId = (url: string) => {
     const matches = url.match(/comments\/([a-zA-Z0-9]+)/);

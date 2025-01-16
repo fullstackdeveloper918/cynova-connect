@@ -158,17 +158,15 @@ export const PreviewSection = ({
           >
             {/* Background Video */}
             <div className="absolute inset-0">
-
-  <VideoContent 
-    previewUrl={selectedBackground} 
-    titleAudioUrl={titleAudioUrl}
-    commentAudioUrl={commentAudioUrl}
-    audioRef={audioRef}
-    onDurationChange={handleDurationChange}
-    captionStyle={selectedCaptionStyle}
-    animateCaptions={animateCaptions}
-  />
-
+              <VideoContent 
+                previewUrl={selectedBackground} 
+                titleAudioUrl={titleAudioUrl}
+                commentAudioUrl={commentAudioUrl}
+                audioRef={audioRef}
+                onDurationChange={handleDurationChange}
+                captionStyle={selectedCaptionStyle}
+                animateCaptions={animateCaptions}
+              />
             </div>
 
             {/* Content Overlay */}
@@ -177,7 +175,7 @@ export const PreviewSection = ({
                 title={title}
                 comments={comments}
                 audioRef={audioRef}
-                captionStyle={getCaptionStyle()}
+                captionStyle={getCaptionStyle(selectedCaptionStyle)}
               />
             )}
 
