@@ -95,7 +95,11 @@ serve(async (req) => {
       JSON.stringify({
         text: result.text,
         words: result.words,
-        captions: result
+        captions: result.words.map((word: any) => ({
+          text: word.text,
+          start: word.start,
+          end: word.end
+        }))
       }),
       {
         headers: {
