@@ -14,7 +14,7 @@ export const VideoEditor = () => {
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const finalPreviewRef = useRef<HTMLVideoElement>(null);
-  const { data: session } = useUser();
+  const { data: userData } = useUser();
 
   const handleVideoUpload = async (file: File) => {
     if (file.type.startsWith("video/")) {
@@ -52,7 +52,7 @@ export const VideoEditor = () => {
   };
 
   const handleExport = async () => {
-    if (!userVideo || !selectedStock || !session?.user?.id) {
+    if (!userVideo || !selectedStock || !userData?.id) {
       toast({
         title: "Missing requirements",
         description: "Please upload a video and select background footage before exporting.",
@@ -82,7 +82,7 @@ export const VideoEditor = () => {
       const { data: exportData, error: exportError } = await supabase
         .from('exports')
         .insert({
-          user_id: session.user.id,
+          user_id: userData.id,
           title: userVideo.name,
           description: `Video with ${selectedStock} background`,
           file_url: publicUrl,
@@ -148,7 +148,7 @@ export const VideoEditor = () => {
               </video>
             ) : (
               <div className="absolute inset-0 flex items-center justify-center text-white/50">
-                <Video className="w-12 h-12" />
+                <Video className="h-12 w-12" />
               </div>
             )}
             
