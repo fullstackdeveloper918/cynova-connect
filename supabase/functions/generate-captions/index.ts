@@ -26,7 +26,7 @@ serve(async (req) => {
 
     // Step 1: Submit transcription request
     console.log('Submitting transcription request to AssemblyAI...');
-    const transcriptResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
+    const response = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
       headers: {
         'Authorization': apiKey,
@@ -39,17 +39,17 @@ serve(async (req) => {
         format_text: true,
         punctuate: true,
         language_code: "en"
-      })
+      }),
     });
 
-    if (!transcriptResponse.ok) {
-      const errorText = await transcriptResponse.text();
+    if (!response.ok) {
+      const errorText = await response.text();
       console.error('AssemblyAI API error:', errorText);
       throw new Error(`Failed to submit transcription: ${errorText}`);
     }
 
-    const transcriptData = await transcriptResponse.json();
-    console.log('Transcription submitted successfully:', transcriptData);
+    const transcriptData = await response.json();
+    console.log('Transcription submitted, ID:', transcriptData.id);
 
     // Step 2: Poll for results
     const transcriptId = transcriptData.id;
@@ -82,7 +82,7 @@ serve(async (req) => {
       }
 
       attempts++;
-      await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds between polls
+      await new Promise(resolve => setTimeout(resolve, 3000)); // Poll every 3 seconds
     }
 
     if (!result || result.status !== 'completed') {
@@ -91,7 +91,7 @@ serve(async (req) => {
 
     console.log('Transcription completed successfully');
 
-    // Return the formatted response
+    // Return the formatted response with CORS headers
     return new Response(
       JSON.stringify({
         text: result.text,
