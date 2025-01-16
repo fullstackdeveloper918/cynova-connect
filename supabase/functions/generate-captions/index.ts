@@ -40,7 +40,8 @@ serve(async (req) => {
         format_text: true,
         punctuate: true,
         dual_channel: false,
-        auto_highlights: true
+        auto_highlights: true,
+        language_code: 'en'
       })
     });
 
