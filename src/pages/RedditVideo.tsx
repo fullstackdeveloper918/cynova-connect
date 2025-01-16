@@ -4,12 +4,14 @@ import { MobileSidebar } from "@/components/MobileSidebar";
 const RedditVideo = () => {
   return (
     <MobileSidebar>
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-4">Reddit Videos</h1>
-        <p className="text-muted-foreground mb-8">
-          Transform Reddit content into engaging video stories.
-        </p>
-        <RedditVideoEditor />
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="space-y-4">
+          <h1 className="text-3xl font-bold">Reddit Videos</h1>
+          <p className="text-muted-foreground">
+            Transform Reddit content into engaging video stories. Follow the steps below to create your video.
+          </p>
+          <RedditVideoEditor />
+        </div>
       </div>
     </MobileSidebar>
   );

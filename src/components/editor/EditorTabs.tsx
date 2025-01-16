@@ -4,7 +4,7 @@ import { UploadSection } from "./sections/UploadSection";
 import { BackgroundSection } from "./sections/BackgroundSection";
 import { CaptionsSection } from "./sections/CaptionsSection";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowLeft } from "lucide-react";
 
 interface EditorTabsProps {
   onVideoUpload: (file: File) => void;
@@ -23,6 +23,14 @@ export const EditorTabs = ({ onVideoUpload, onBackgroundSelect, onCaptionChange 
       setActiveTab("background");
     } else if (activeTab === "background") {
       setActiveTab("captions");
+    }
+  };
+
+  const handleBack = () => {
+    if (activeTab === "captions") {
+      setActiveTab("background");
+    } else if (activeTab === "background") {
+      setActiveTab("upload");
     }
   };
 
@@ -52,9 +60,11 @@ export const EditorTabs = ({ onVideoUpload, onBackgroundSelect, onCaptionChange 
         <TabsContent value="upload" className="mt-6">
           <UploadSection onVideoUpload={handleVideoUpload} />
           {uploadedVideo && (
-            <Button onClick={handleNext} className="mt-4">
-              Next <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <div className="flex justify-end mt-4">
+              <Button onClick={handleNext}>
+                Next <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
           )}
         </TabsContent>
         <TabsContent value="background" className="mt-6">
@@ -62,17 +72,27 @@ export const EditorTabs = ({ onVideoUpload, onBackgroundSelect, onCaptionChange 
             onBackgroundSelect={handleBackgroundSelect}
             selectedBackground={selectedBackground}
           />
-          {selectedBackground && (
-            <Button onClick={handleNext} className="mt-4">
-              Next <ArrowRight className="ml-2 h-4 w-4" />
+          <div className="flex justify-between mt-4">
+            <Button variant="outline" onClick={handleBack}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back
             </Button>
-          )}
+            {selectedBackground && (
+              <Button onClick={handleNext}>
+                Next <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </TabsContent>
         <TabsContent value="captions" className="mt-6">
           <CaptionsSection 
             onCaptionSelect={handleCaptionSelect}
             selectedStyle={selectedCaptionStyle}
           />
+          <div className="flex justify-start mt-4">
+            <Button variant="outline" onClick={handleBack}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back
+            </Button>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
