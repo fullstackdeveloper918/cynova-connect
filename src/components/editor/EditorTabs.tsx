@@ -8,7 +8,7 @@ import { ArrowRight } from "lucide-react";
 
 export const EditorTabs = () => {
   const [activeTab, setActiveTab] = useState("upload");
-  const [uploadedVideo, setUploadedVideo] = useState<File | null>(null);
+  const [uploadedVideo, setUploadedVideo] = useState<File | string | null>(null);
   const [selectedBackground, setSelectedBackground] = useState("");
   const [selectedCaptionStyle, setSelectedCaptionStyle] = useState("");
 

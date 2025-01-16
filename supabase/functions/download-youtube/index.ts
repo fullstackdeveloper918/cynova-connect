@@ -1,4 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -49,7 +48,6 @@ serve(async (req) => {
     const videoId = extractVideoId(url);
     console.log('Extracted video ID:', videoId);
 
-    // Using a different RapidAPI endpoint for better reliability
     const detailsResponse = await fetch(`https://youtube-video-download-info.p.rapidapi.com/dl?id=${videoId}`, {
       method: 'GET',
       headers: {
