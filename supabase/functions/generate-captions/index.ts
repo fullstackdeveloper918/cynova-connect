@@ -22,8 +22,10 @@ serve(async (req) => {
       throw new Error('No audio URL provided')
     }
 
-    console.log('Creating transcription request...')
-    const transcriptResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
+    console.log('Creating transcription request for audio:', audioUrl)
+
+    // First, upload the audio file URL to AssemblyAI
+    const uploadResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
       headers: {
         'authorization': assemblyKey,
@@ -32,23 +34,17 @@ serve(async (req) => {
       body: JSON.stringify({
         audio_url: audioUrl,
         word_boost: ["reddit", "upvote", "downvote", "comment", "post"],
-        word_timestamps: true,
-        auto_chapters: true,
-        entity_detection: true,
-        auto_highlights: true,
-        sentiment_analysis: true,
-        iab_categories: true,
-        content_safety: true,
+        word_timestamps: true
       }),
     })
 
-    if (!transcriptResponse.ok) {
-      const errorText = await transcriptResponse.text()
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text()
       console.error('Transcription request failed:', errorText)
       throw new Error(`Failed to submit transcription: ${errorText}`)
     }
 
-    const transcript = await transcriptResponse.json()
+    const transcript = await uploadResponse.json()
     console.log('Transcription submitted:', transcript.id)
 
     // Poll for completion
@@ -93,7 +89,7 @@ serve(async (req) => {
       throw new Error('Transcription timed out')
     }
 
-    // Format response with word-level timestamps and additional data
+    // Format response with word-level timestamps
     const response = {
       captions: result.words.map((word: any) => ({
         text: word.text,
@@ -101,11 +97,6 @@ serve(async (req) => {
         end: word.end,
       })),
       text: result.text,
-      chapters: result.chapters,
-      highlights: result.auto_highlights_result,
-      sentiment: result.sentiment_analysis_results,
-      topics: result.iab_categories_result,
-      safety: result.content_safety_labels,
       message: "Captions generated successfully"
     }
 
