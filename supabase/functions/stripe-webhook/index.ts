@@ -16,7 +16,10 @@ serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     console.log('Handling CORS preflight request');
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 200
+    });
   }
 
   if (req.method !== 'POST') {
@@ -126,14 +129,20 @@ serve(async (req) => {
         console.log(`Unhandled event type: ${event.type}`);
         return new Response(
           JSON.stringify({ received: true, message: `Unhandled event type: ${event.type}` }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { 
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
         );
     }
 
     console.log('Webhook processed successfully:', result);
     return new Response(
       JSON.stringify({ received: true, result }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
     );
   } catch (err) {
     console.error('Error processing webhook:', err);
