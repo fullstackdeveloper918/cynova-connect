@@ -15,6 +15,7 @@ serve(async (req) => {
 
   try {
     const { priceId, mode } = await req.json();
+    console.log('Received request for checkout session:', { priceId, mode });
     
     // Get the authorization header
     const authHeader = req.headers.get('Authorization');
@@ -33,8 +34,11 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
     
     if (userError || !user) {
+      console.error('User authentication error:', userError);
       throw new Error('Invalid user token');
     }
+
+    console.log('Authenticated user:', user.id);
 
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeSecretKey) {
@@ -54,6 +58,7 @@ serve(async (req) => {
     let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
+      console.log('Found existing customer:', customerId);
     } else {
       const customer = await stripe.customers.create({
         email: user.email,
@@ -62,6 +67,7 @@ serve(async (req) => {
         },
       });
       customerId = customer.id;
+      console.log('Created new customer:', customerId);
     }
 
     console.log('Creating checkout session...');
@@ -78,6 +84,12 @@ serve(async (req) => {
       cancel_url: `${req.headers.get('origin')}/payment-failure?session_id={CHECKOUT_SESSION_ID}`,
       metadata: {
         user_id: user.id,
+      },
+      allow_promotion_codes: true,
+      billing_address_collection: 'required',
+      customer_update: {
+        address: 'auto',
+        name: 'auto',
       },
     });
 
