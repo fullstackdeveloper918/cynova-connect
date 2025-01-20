@@ -16,6 +16,7 @@ import ChatGPTVideo from "@/pages/ChatGPTVideo";
 import FakeTextVideo from "@/pages/FakeTextVideo";
 import RedditVideo from "@/pages/RedditVideo";
 import SplitVideo from "@/pages/SplitVideo";
+import VoiceoverVideo from "@/pages/VoiceoverVideo";
 import WouldYouRatherVideo from "@/pages/WouldYouRatherVideo";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import UserManagement from "@/pages/admin/UserManagement";
@@ -93,12 +94,7 @@ export const routes = [
   },
   {
     path: "/dashboard/voiceover",
-    element: <RequireSubscription>
-      <PlaceholderPage
-        title="Voiceover Videos"
-        description="Add professional AI voiceovers to your content."
-      />
-    </RequireSubscription>,
+    element: <RequireSubscription><VoiceoverVideo /></RequireSubscription>,
   },
   {
     path: "/dashboard/would-you-rather",

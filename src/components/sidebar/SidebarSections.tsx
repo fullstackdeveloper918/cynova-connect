@@ -10,6 +10,7 @@ import {
   Youtube,
   Headphones,
   Users,
+  Mic,
 } from "lucide-react";
 
 export const sidebarSections = [
@@ -30,6 +31,7 @@ export const sidebarSections = [
       { id: "faketext", title: "Fake Text Videos", icon: MessageSquare, path: "/dashboard/faketext" },
       { id: "reddit", title: "Reddit Videos", icon: FileVideo, path: "/dashboard/reddit" },
       { id: "split", title: "Split Videos", icon: Scissors, path: "/dashboard/split" },
+      { id: "voiceover", title: "Voiceover Videos", icon: Mic, path: "/dashboard/voiceover" },
       { id: "would-you-rather", title: "Would You Rather Videos", icon: MessageSquare, path: "/dashboard/would-you-rather" },
       { id: "quiz", title: "Quiz Videos", icon: FileVideo, path: "/dashboard/quiz" },
     ],
