@@ -52,11 +52,17 @@ export const PricingCard = ({ plan, isYearly, isLoading, onSubscribe, isCurrentP
 
       const priceId = isYearly ? plan.priceId.yearly : plan.priceId.monthly;
       
+      // Get the access token from the session
+      const accessToken = session.access_token;
+      
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { 
           priceId,
           mode: 'subscription',
           currentPlan: null
+        },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
         }
       });
 
