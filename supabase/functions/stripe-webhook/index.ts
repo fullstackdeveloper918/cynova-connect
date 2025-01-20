@@ -6,6 +6,7 @@ import { handleSubscriptionChange } from './handlers/subscriptionHandler.ts'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 console.log('Stripe webhook function loaded')
