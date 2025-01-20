@@ -24,7 +24,7 @@ serve(async (req) => {
       throw new Error('ASSEMBLY_AI_API_KEY is not set');
     }
 
-    // Step 1: Submit transcription request with proper schema
+    // Step 1: Submit transcription request
     console.log('Submitting transcription request to AssemblyAI');
     const transcriptResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
@@ -34,16 +34,6 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         audio_url: audioUrl,
-        word_boost: [""],
-        boost_param: "high",
-        language_code: "en",
-        punctuate: true,
-        format_text: true,
-        dual_channel: false,
-        webhook_url: null,
-        auto_chapters: false,
-        entity_detection: false,
-        speakers_expected: 1,
         word_timestamps: true
       }),
     });
