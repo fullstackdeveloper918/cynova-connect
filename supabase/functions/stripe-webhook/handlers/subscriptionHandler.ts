@@ -78,14 +78,26 @@ export async function handleSubscriptionUpdated(
 
     console.log('Updating subscription data:', subscriptionData);
 
-    const { error: updateError } = await supabaseAdmin
+    // First try to update existing subscription
+    const { error: updateError, data: updateData } = await supabaseAdmin
       .from('subscriptions')
-      .upsert({
-        ...subscriptionData,
-        updated_at: new Date().toISOString(),
-      });
+      .update(subscriptionData)
+      .eq('user_id', userId)
+      .select()
+      .single();
 
-    if (updateError) {
+    // If no rows were updated, insert a new subscription
+    if (!updateData) {
+      console.log('No existing subscription found, creating new one');
+      const { error: insertError } = await supabaseAdmin
+        .from('subscriptions')
+        .insert([subscriptionData]);
+
+      if (insertError) {
+        console.error('Error inserting subscription:', insertError);
+        throw insertError;
+      }
+    } else if (updateError) {
       console.error('Error updating subscription:', updateError);
       throw updateError;
     }
