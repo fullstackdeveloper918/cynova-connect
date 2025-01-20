@@ -19,19 +19,42 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (req.method !== 'POST') {
+    console.log('Invalid method:', req.method);
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { 
+        status: 405,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
+  }
+
   try {
     const signature = req.headers.get('stripe-signature');
     console.log('Stripe signature received:', signature ? 'Yes' : 'No');
     
     if (!signature) {
       console.error('No Stripe signature found');
-      throw new Error('No Stripe signature found');
+      return new Response(
+        JSON.stringify({ error: 'No Stripe signature found' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
     if (!webhookSecret) {
       console.error('Webhook secret not configured');
-      throw new Error('Webhook secret not configured');
+      return new Response(
+        JSON.stringify({ error: 'Webhook secret not configured' }),
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     console.log('Webhook secret found, initializing Stripe');
@@ -117,7 +140,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: err.message }),
       { 
-        status: 400,
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
