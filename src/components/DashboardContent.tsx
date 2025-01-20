@@ -30,25 +30,21 @@ export const DashboardContent = () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
-        // If no session, redirect to login
         if (!session) {
           console.log("No session found, redirecting to login");
           navigate("/login");
           return;
         }
 
-        // If we have a stored session ID and it's different from current session
         if (currentSession && currentSession !== session.user.id) {
           console.log("Session mismatch detected, clearing session");
           await supabase.auth.signOut();
-          localStorage.clear(); // Clear all local storage
+          localStorage.clear();
           navigate("/login");
           return;
         }
 
-        // Set current session
         setCurrentSession(session.user.id);
-
       } catch (error) {
         console.error("Session check error:", error);
         navigate("/login");
@@ -62,12 +58,11 @@ export const DashboardContent = () => {
         console.log("Auth state change:", event, session?.user.id);
         
         if (event === 'SIGNED_OUT' || !session) {
-          localStorage.clear(); // Clear all local storage
+          localStorage.clear();
           navigate("/login");
           return;
         }
 
-        // Verify session matches stored session
         if (currentSession && currentSession !== session.user.id) {
           console.log("Session mismatch on auth change");
           await supabase.auth.signOut();
@@ -85,34 +80,44 @@ export const DashboardContent = () => {
     };
   }, [navigate, currentSession]);
 
-  // Add subscription check and refresh logic
+  // Enhanced subscription check and refresh logic
   useEffect(() => {
     const checkSubscription = async () => {
       try {
+        setIsCheckingSubscription(true);
         const fromPayment = sessionStorage.getItem('from_payment');
+        
         if (fromPayment) {
+          console.log('Detected return from payment, checking subscription status');
           sessionStorage.removeItem('from_payment');
           let attempts = 0;
-          const maxAttempts = 5;
+          const maxAttempts = 10; // Increased attempts
+          const delayMs = 2000; // 2 seconds between attempts
           
           while (attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            console.log(`Attempt ${attempts + 1} to fetch subscription`);
             const result = await refetchSubscription();
             
             if (result.data?.plan_name && result.data.plan_name !== 'Free') {
-              console.log('Subscription updated:', result.data);
+              console.log('Subscription updated successfully:', result.data);
+              toast.success(`Successfully upgraded to ${result.data.plan_name} plan!`);
               break;
             }
             
             attempts++;
+            if (attempts < maxAttempts) {
+              await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
           }
           
           if (attempts === maxAttempts) {
-            toast.error("Subscription update is taking longer than expected. Please refresh the page in a few moments.");
+            console.error('Max attempts reached without subscription update');
+            toast.error("Your subscription status is taking longer than expected to update. Please refresh the page in a few moments.");
           }
         }
       } catch (error) {
         console.error('Error checking subscription:', error);
+        toast.error("There was an error checking your subscription status.");
       } finally {
         setIsCheckingSubscription(false);
       }
@@ -125,7 +130,12 @@ export const DashboardContent = () => {
   const userEmail = user?.email;
   const isFreePlan = !isLoadingSubscription && subscription?.plan_name === "Free";
 
-  console.log("Dashboard subscription state:", { subscription, isFreePlan, isCheckingSubscription });
+  console.log("Dashboard subscription state:", { 
+    subscription, 
+    isFreePlan, 
+    isCheckingSubscription,
+    isLoadingSubscription 
+  });
 
   if (isLoadingSubscription || isCheckingSubscription) {
     return (
