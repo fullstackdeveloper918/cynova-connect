@@ -1,4 +1,9 @@
 project_id = "fkrvvlfhdjxqadmupldb"
 
-[functions.stripe-webhook]
+[global.config]
 verify_jwt = false
+
+[[global.http.cors.origins]]
+methods = ["GET", "POST", "OPTIONS"]
+url = "*"
+headers = ["Content-Type", "Authorization", "X-Client-Info", "apikey", "stripe-signature"]
