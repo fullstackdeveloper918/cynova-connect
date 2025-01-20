@@ -84,7 +84,7 @@ export async function handleSubscriptionUpdated(
       .update(subscriptionData)
       .eq('user_id', userId)
       .select()
-      .single();
+      .maybeSingle();
 
     // If no rows were updated, insert a new subscription
     if (!updateData) {
