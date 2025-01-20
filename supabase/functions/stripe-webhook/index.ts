@@ -6,9 +6,10 @@ import { handleSubscriptionUpdated, handleSubscriptionDeleted } from "./handlers
 import { corsHeaders } from "../_shared/cors.ts";
 
 serve(async (req) => {
-  // Log the incoming request details
+  // Enhanced request logging
   console.log('Webhook request received:', {
     method: req.method,
+    url: req.url,
     headers: Object.fromEntries(req.headers.entries()),
     timestamp: new Date().toISOString()
   });
