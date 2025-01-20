@@ -6,7 +6,12 @@ import { handleSubscriptionUpdated, handleSubscriptionDeleted } from "./handlers
 import { corsHeaders } from "../_shared/cors.ts";
 
 serve(async (req) => {
-  console.log('Webhook request received:', req.method, new Date().toISOString());
+  // Log the incoming request details
+  console.log('Webhook request received:', {
+    method: req.method,
+    headers: Object.fromEntries(req.headers.entries()),
+    timestamp: new Date().toISOString()
+  });
   
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -33,7 +38,7 @@ serve(async (req) => {
     console.log('Stripe signature received:', signature ? 'Yes' : 'No');
     
     if (!signature) {
-      console.error('No Stripe signature found');
+      console.error('No Stripe signature found in headers:', Object.fromEntries(req.headers.entries()));
       return new Response(
         JSON.stringify({ error: 'No Stripe signature found' }),
         { 
@@ -125,8 +130,8 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ received: true, message: `Unhandled event type: ${event.type}` }),
           { 
-            status: 200,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200
           }
         );
     }
@@ -135,8 +140,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ received: true, result }),
       { 
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       }
     );
   } catch (err) {
@@ -144,8 +149,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: err.message }),
       { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
       }
     );
   }
