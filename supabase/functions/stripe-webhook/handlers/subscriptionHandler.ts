@@ -33,6 +33,7 @@ const getPlanLimits = (planName: string) => {
 };
 
 const getPlanNameFromPrice = (priceId: string): string => {
+  console.log('Getting plan name for price ID:', priceId);
   const priceMap: Record<string, string> = {
     'price_1QdIQ0G8TTdTbu7dSw6PTIQG': 'Starter',
     'price_1QdIQWG8TTdTbu7dpGfYO8qR': 'Pro',
@@ -41,21 +42,28 @@ const getPlanNameFromPrice = (priceId: string): string => {
     'price_1QdIS8G8TTdTbu7dTh5tOLpH': 'Pro',
     'price_1QdIScG8TTdTbu7duXhWR8Px': 'Premium',
   };
-  return priceMap[priceId] || 'Free';
+  const planName = priceMap[priceId] || 'Free';
+  console.log('Mapped to plan name:', planName);
+  return planName;
 };
 
 export async function handleSubscriptionUpdated(
   subscription: Stripe.Subscription,
   supabaseAdmin: ReturnType<typeof createClient>
 ): Promise<WebhookHandlerResult> {
-  console.log('Processing subscription update:', subscription.id);
+  console.log('Processing subscription update:', {
+    id: subscription.id,
+    customer: subscription.customer,
+    status: subscription.status,
+    metadata: subscription.metadata
+  });
   
   try {
     const customerId = subscription.customer as string;
     const userId = subscription.metadata.user_id;
     
     if (!userId) {
-      console.error('No user_id found in subscription metadata');
+      console.error('No user_id found in subscription metadata:', subscription.metadata);
       throw new Error('No user_id found in subscription metadata');
     }
 
@@ -76,7 +84,7 @@ export async function handleSubscriptionUpdated(
       payment_status: subscription.status === 'active' ? 'succeeded' : 'pending',
     };
 
-    console.log('Updating subscription data:', subscriptionData);
+    console.log('Attempting to update subscription data:', subscriptionData);
 
     // First try to update existing subscription
     const { error: updateError, data: updateData } = await supabaseAdmin
@@ -85,6 +93,11 @@ export async function handleSubscriptionUpdated(
       .eq('user_id', userId)
       .select()
       .maybeSingle();
+
+    if (updateError) {
+      console.error('Error updating subscription:', updateError);
+      throw updateError;
+    }
 
     // If no rows were updated, insert a new subscription
     if (!updateData) {
@@ -97,13 +110,11 @@ export async function handleSubscriptionUpdated(
         console.error('Error inserting subscription:', insertError);
         throw insertError;
       }
-    } else if (updateError) {
-      console.error('Error updating subscription:', updateError);
-      throw updateError;
     }
 
     // Reset usage metrics for the new billing period
     if (subscription.status === 'active') {
+      console.log('Resetting usage metrics for user:', userId);
       const { error: usageError } = await supabaseAdmin
         .from('user_usage')
         .upsert({
@@ -121,12 +132,13 @@ export async function handleSubscriptionUpdated(
       }
     }
 
+    console.log('Successfully processed subscription update for user:', userId);
     return {
       status: 'success',
       message: `Subscription ${subscription.id} updated successfully`,
     };
   } catch (error) {
-    console.error('Error updating subscription:', error);
+    console.error('Error in handleSubscriptionUpdated:', error);
     throw error;
   }
 }
@@ -165,6 +177,8 @@ export async function handleSubscriptionDeleted(
       updated_at: new Date().toISOString(),
     };
 
+    console.log('Updating subscription data:', subscriptionData);
+
     const { error: updateError } = await supabaseAdmin
       .from('subscriptions')
       .upsert(subscriptionData);
@@ -174,6 +188,7 @@ export async function handleSubscriptionDeleted(
       throw updateError;
     }
 
+    console.log('Successfully processed subscription deletion for user:', userId);
     return {
       status: 'success',
       message: `Subscription ${subscription.id} marked as cancelled`,

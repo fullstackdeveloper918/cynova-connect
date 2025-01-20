@@ -54,7 +54,7 @@ serve(async (req) => {
     }
 
     const body = await req.text()
-    console.log('Received webhook body:', body.substring(0, 100) + '...')
+    console.log('Received webhook body:', body)
 
     let event
     try {
@@ -91,7 +91,7 @@ serve(async (req) => {
   } catch (err) {
     console.error('Error processing webhook:', err)
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: 'Internal server error', details: err.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
