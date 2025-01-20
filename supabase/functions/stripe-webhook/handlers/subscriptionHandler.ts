@@ -3,6 +3,7 @@ import Stripe from "https://esm.sh/stripe@14.21.0";
 import { WebhookHandlerResult, SubscriptionData } from "../types.ts";
 
 const getPlanLimits = (planName: string) => {
+  console.log('Getting plan limits for:', planName);
   const limits = {
     Starter: {
       features: ["chatgpt_video", "fake_text", "reddit_video", "split_video"],
@@ -90,7 +91,6 @@ export async function handleSubscriptionUpdated(
 
     console.log('Attempting to update subscription data:', subscriptionData);
 
-    // First try to update existing subscription
     const { error: updateError, data: updateData } = await supabaseAdmin
       .from('subscriptions')
       .update(subscriptionData)
@@ -108,7 +108,6 @@ export async function handleSubscriptionUpdated(
       throw updateError;
     }
 
-    // If no rows were updated, insert a new subscription
     if (!updateData) {
       console.log('No existing subscription found, creating new one for user:', userId);
       const { error: insertError } = await supabaseAdmin
@@ -126,7 +125,6 @@ export async function handleSubscriptionUpdated(
       }
     }
 
-    // Reset usage metrics for the new billing period
     if (subscription.status === 'active') {
       console.log('Resetting usage metrics for user:', userId);
       const { error: usageError } = await supabaseAdmin

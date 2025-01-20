@@ -36,6 +36,8 @@ serve(async (req) => {
 
   try {
     const signature = req.headers.get('stripe-signature')
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()))
+    
     if (!signature) {
       console.error('No Stripe signature found in request headers')
       return new Response(
@@ -64,13 +66,22 @@ serve(async (req) => {
         type: event.type,
         id: event.id,
         object: event.object,
-        api_version: event.api_version
+        api_version: event.api_version,
+        created: new Date(event.created * 1000).toISOString(),
+        data: {
+          object: {
+            id: event.data.object.id,
+            object: event.data.object.object,
+            // Add other relevant fields you want to log
+          }
+        }
       })
     } catch (err) {
       console.error('Error verifying webhook signature:', {
         error: err.message,
         signature: signature,
-        body: body.substring(0, 100) + '...'
+        body: body.substring(0, 100) + '...',
+        timestamp: new Date().toISOString()
       })
       return new Response(
         JSON.stringify({ 
