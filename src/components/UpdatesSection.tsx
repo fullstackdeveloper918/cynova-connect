@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const UpdatesSection = () => {
-  const { data: updates, isLoading } = useQuery({
+  const { data: updates, isLoading, error } = useQuery({
     queryKey: ["cynova-updates"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -17,6 +19,17 @@ export const UpdatesSection = () => {
       return data;
     },
   });
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Failed to load updates. Please try again later.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   if (isLoading) {
     return <div>Loading updates...</div>;
