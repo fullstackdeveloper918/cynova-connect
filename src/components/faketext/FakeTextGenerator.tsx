@@ -1,139 +1,130 @@
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { ConversationPreview } from './ConversationPreview';
+import { PreviewControls } from './PreviewControls';
 import { supabase } from "@/integrations/supabase/client";
-import { ConversationForm } from "./ConversationForm";
-import { ConversationPreview } from "./ConversationPreview";
-import { Message } from "./types";
+import { toast } from "@/components/ui/use-toast";
 
 export const FakeTextGenerator = () => {
-  const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [exporting, setExporting] = useState(false);
-  const [selectedDuration, setSelectedDuration] = useState("30");
-  const { toast } = useToast();
+  const [prompt, setPrompt] = useState('');
+  const [topic, setTopic] = useState('');
+  const [duration, setDuration] = useState(30);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [messages, setMessages] = useState([]);
 
-  const generateConversation = async ({
-    prompt,
-    topic,
-    duration,
-    selectedVoice,
-  }: {
-    prompt: string;
-    topic: string;
-    duration: string;
-    selectedVoice: string;
-  }) => {
+  const handleGenerate = async () => {
     if (!prompt || !topic) {
       toast({
         title: "Missing information",
-        description: "Please fill in all fields before generating.",
+        description: "Please provide both a prompt and a topic.",
         variant: "destructive",
       });
       return;
     }
 
-    setLoading(true);
-    setSelectedDuration(duration);
+    setIsGenerating(true);
     try {
+      console.log('Starting generation with:', { prompt, topic, duration });
+      
+      // Log the current environment
+      console.log('Current URL:', window.location.href);
+      console.log('Supabase URL:', supabase.supabaseUrl);
+      
       const { data, error } = await supabase.functions.invoke('generate-fake-text', {
-        body: { 
-          prompt, 
-          topic,
-          duration: parseInt(duration),
-          voiceId: selectedVoice
-        },
+        body: { prompt, topic, duration, voiceId: "EXAVITQu4vr4xnSDxMaL" }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
 
-      const messagesWithAudio = data.messages.map((msg: Message) => ({
-        ...msg,
-        audioUrl: msg.audioUrl || null
-      }));
-
-      setMessages(messagesWithAudio);
-      toast({
-        title: "Conversation generated!",
-        description: "Your iMessage conversation has been created.",
-      });
+      console.log('Generation response:', data);
+      
+      if (data?.messages) {
+        setMessages(data.messages);
+        toast({
+          title: "Success",
+          description: "Conversation generated successfully!",
+        });
+      } else {
+        throw new Error('No messages in response');
+      }
     } catch (error) {
-      console.error('Error generating conversation:', error);
+      console.error('Detailed error:', {
+        error,
+        stack: error.stack,
+        message: error.message,
+        name: error.name
+      });
+      
       toast({
-        title: "Error",
-        description: "Failed to generate conversation. Please try again.",
+        title: "Generation failed",
+        description: "There was an error generating your conversation. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const exportVideo = async () => {
-    if (!messages.length) {
-      toast({
-        title: "No conversation",
-        description: "Please generate a conversation first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setExporting(true);
-    try {
-      // Create a formatted script from the messages
-      const script = messages.map(msg => 
-        `${msg.isUser ? 'User' : 'Friend'}: ${msg.content}`
-      ).join('\n');
-
-      // Collect all audio URLs
-      const audioUrls = messages
-        .map(msg => msg.audioUrl)
-        .filter((url): url is string => url !== null && url !== undefined);
-
-      const { data, error } = await supabase.functions.invoke('export-video', {
-        body: {
-          messages,
-          title: `iMessage Conversation: ${messages[0]?.content.substring(0, 30)}...`,
-          description: script,
-          type: 'fake_text',
-          audioUrls
-        },
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Video exported!",
-        description: "Your conversation video has been created and saved to your exports.",
-      });
-    } catch (error) {
-      console.error('Error exporting video:', error);
-      toast({
-        title: "Export failed",
-        description: "Failed to create video. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setExporting(false);
+      setIsGenerating(false);
     }
   };
 
   return (
-    <div className="grid gap-8 md:grid-cols-2">
-      <div>
-        <ConversationForm
-          onGenerate={generateConversation}
-          loading={loading}
-        />
-      </div>
-      <div>
-        <ConversationPreview
-          messages={messages}
-          onExport={exportVideo}
-          exporting={exporting}
-          duration={selectedDuration}
-        />
-      </div>
+    <div className="space-y-8">
+      <Card className="p-6">
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="topic">Topic</Label>
+            <Input
+              id="topic"
+              placeholder="Enter a topic for the conversation"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="prompt">Prompt</Label>
+            <Textarea
+              id="prompt"
+              placeholder="Describe the conversation you want to create..."
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              className="min-h-[100px]"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="duration">Duration (seconds)</Label>
+            <Input
+              id="duration"
+              type="number"
+              min={10}
+              max={300}
+              value={duration}
+              onChange={(e) => setDuration(Number(e.target.value))}
+            />
+          </div>
+
+          <Button 
+            onClick={handleGenerate} 
+            disabled={isGenerating}
+            className="w-full"
+          >
+            {isGenerating ? "Generating..." : "Generate Conversation"}
+          </Button>
+        </div>
+      </Card>
+
+      {messages.length > 0 && (
+        <>
+          <ConversationPreview messages={messages} />
+          <PreviewControls messages={messages} />
+        </>
+      )}
     </div>
   );
 };
