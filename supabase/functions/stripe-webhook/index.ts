@@ -11,7 +11,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log('Webhook request received:', req.method);
+  console.log('Webhook request received:', req.method, new Date().toISOString());
   
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -34,18 +34,26 @@ serve(async (req) => {
       throw new Error('Webhook secret not configured');
     }
 
+    console.log('Webhook secret found, initializing Stripe');
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
       httpClient: Stripe.createFetchHttpClient(),
     });
 
+    console.log('Creating Supabase admin client');
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        }
+      }
     );
 
     const body = await req.text();
-    console.log('Webhook body received:', body);
+    console.log('Webhook body received, length:', body.length);
 
     let event: Stripe.Event;
     try {
@@ -63,6 +71,8 @@ serve(async (req) => {
     }
 
     let result;
+    console.log('Processing event type:', event.type);
+    
     switch (event.type) {
       case 'checkout.session.completed':
         console.log('Processing checkout.session.completed event');
