@@ -90,8 +90,8 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: `Webhook Error: ${err.message}` }),
         { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
@@ -131,7 +131,7 @@ serve(async (req) => {
           JSON.stringify({ received: true, message: `Unhandled event type: ${event.type}` }),
           { 
             status: 200,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           }
         );
     }
@@ -141,7 +141,7 @@ serve(async (req) => {
       JSON.stringify({ received: true, result }),
       { 
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   } catch (err) {
