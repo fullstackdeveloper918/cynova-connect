@@ -15,6 +15,7 @@ export const FakeTextGenerator = () => {
   const [duration, setDuration] = useState(30);
   const [isGenerating, setIsGenerating] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleGenerate = async () => {
     if (!prompt || !topic) {
@@ -32,7 +33,6 @@ export const FakeTextGenerator = () => {
       
       // Log the current environment
       console.log('Current URL:', window.location.href);
-      console.log('Supabase URL:', supabase.supabaseUrl);
       
       const { data, error } = await supabase.functions.invoke('generate-fake-text', {
         body: { prompt, topic, duration, voiceId: "EXAVITQu4vr4xnSDxMaL" }
@@ -69,6 +69,26 @@ export const FakeTextGenerator = () => {
       });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      // Add your export logic here
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated export
+      toast({
+        title: "Export successful",
+        description: "Your conversation has been exported.",
+      });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: "There was an error exporting your conversation.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -120,10 +140,12 @@ export const FakeTextGenerator = () => {
       </Card>
 
       {messages.length > 0 && (
-        <>
-          <ConversationPreview messages={messages} />
-          <PreviewControls messages={messages} />
-        </>
+        <ConversationPreview 
+          messages={messages}
+          onExport={handleExport}
+          exporting={isExporting}
+          duration={duration.toString()}
+        />
       )}
     </div>
   );
