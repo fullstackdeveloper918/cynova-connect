@@ -37,6 +37,7 @@ serve(async (req) => {
   try {
     const signature = req.headers.get('stripe-signature')
     console.log('Request headers:', Object.fromEntries(req.headers.entries()))
+    console.log('Stripe signature:', signature)
     
     if (!signature) {
       console.error('No Stripe signature found in request headers')
@@ -57,7 +58,6 @@ serve(async (req) => {
 
     const body = await req.text()
     console.log('Received webhook body:', body)
-    console.log('Webhook signature:', signature)
 
     let event
     try {
@@ -72,7 +72,10 @@ serve(async (req) => {
           object: {
             id: event.data.object.id,
             object: event.data.object.object,
-            // Add other relevant fields you want to log
+            metadata: event.data.object.metadata,
+            status: event.data.object.status,
+            customer: event.data.object.customer,
+            subscription: event.data.object.subscription
           }
         }
       })
@@ -99,16 +102,19 @@ serve(async (req) => {
       created: new Date(event.created * 1000).toISOString()
     })
 
+    let result;
     switch (event.type) {
       case 'checkout.session.completed':
         console.log('Processing checkout.session.completed event')
-        await handleCheckoutSession(event.data.object)
+        result = await handleCheckoutSession(event.data.object)
+        console.log('Checkout session processing result:', result)
         break
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
         console.log(`Processing ${event.type} event`)
-        await handleSubscriptionChange(event.data.object)
+        result = await handleSubscriptionChange(event.data.object)
+        console.log('Subscription change processing result:', result)
         break
       default:
         console.log('Unhandled event type:', event.type)
@@ -119,7 +125,8 @@ serve(async (req) => {
       JSON.stringify({ 
         received: true,
         event_type: event.type,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        processing_result: result
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
