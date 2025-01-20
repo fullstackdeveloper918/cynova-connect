@@ -24,7 +24,7 @@ serve(async (req) => {
   if (!stripeKey) {
     console.error('STRIPE_SECRET_KEY is not set')
     return new Response(
-      JSON.stringify({ error: 'Internal Server Error' }),
+      JSON.stringify({ error: 'Internal Server Error - Missing Stripe Key' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
@@ -55,43 +55,76 @@ serve(async (req) => {
 
     const body = await req.text()
     console.log('Received webhook body:', body)
+    console.log('Webhook signature:', signature)
 
     let event
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
-      console.log('Webhook event constructed successfully:', event.type)
+      console.log('Webhook event constructed successfully:', {
+        type: event.type,
+        id: event.id,
+        object: event.object,
+        api_version: event.api_version
+      })
     } catch (err) {
-      console.error('Error verifying webhook signature:', err)
+      console.error('Error verifying webhook signature:', {
+        error: err.message,
+        signature: signature,
+        body: body.substring(0, 100) + '...'
+      })
       return new Response(
-        JSON.stringify({ error: `Webhook signature verification failed: ${err.message}` }),
+        JSON.stringify({ 
+          error: `Webhook signature verification failed`,
+          details: err.message,
+          timestamp: new Date().toISOString()
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    console.log('Processing webhook event type:', event.type)
+    console.log('Processing webhook event:', {
+      type: event.type,
+      id: event.id,
+      created: new Date(event.created * 1000).toISOString()
+    })
 
     switch (event.type) {
       case 'checkout.session.completed':
+        console.log('Processing checkout.session.completed event')
         await handleCheckoutSession(event.data.object)
         break
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
+        console.log(`Processing ${event.type} event`)
         await handleSubscriptionChange(event.data.object)
         break
       default:
         console.log('Unhandled event type:', event.type)
     }
 
+    console.log('Successfully processed webhook event:', event.type)
     return new Response(
-      JSON.stringify({ received: true }),
+      JSON.stringify({ 
+        received: true,
+        event_type: event.type,
+        timestamp: new Date().toISOString()
+      }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (err) {
-    console.error('Error processing webhook:', err)
+    console.error('Error processing webhook:', {
+      error: err.message,
+      stack: err.stack,
+      timestamp: new Date().toISOString()
+    })
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: err.message }),
+      JSON.stringify({ 
+        error: 'Internal server error', 
+        details: err.message,
+        timestamp: new Date().toISOString()
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }

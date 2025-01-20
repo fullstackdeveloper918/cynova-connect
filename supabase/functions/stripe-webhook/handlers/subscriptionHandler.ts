@@ -55,7 +55,11 @@ export async function handleSubscriptionUpdated(
     id: subscription.id,
     customer: subscription.customer,
     status: subscription.status,
-    metadata: subscription.metadata
+    metadata: subscription.metadata,
+    items: subscription.items.data.map(item => ({
+      price_id: item.price.id,
+      quantity: item.quantity
+    }))
   });
   
   try {
@@ -67,7 +71,7 @@ export async function handleSubscriptionUpdated(
       throw new Error('No user_id found in subscription metadata');
     }
 
-    console.log('Updating subscription for user:', userId);
+    console.log('Found user ID:', userId);
 
     const planName = getPlanNameFromPrice(subscription.items.data[0].price.id);
     const planLimits = getPlanLimits(planName);
@@ -95,19 +99,29 @@ export async function handleSubscriptionUpdated(
       .maybeSingle();
 
     if (updateError) {
-      console.error('Error updating subscription:', updateError);
+      console.error('Error updating subscription:', {
+        error: updateError,
+        context: 'Update operation',
+        user_id: userId,
+        subscription_id: subscription.id
+      });
       throw updateError;
     }
 
     // If no rows were updated, insert a new subscription
     if (!updateData) {
-      console.log('No existing subscription found, creating new one');
+      console.log('No existing subscription found, creating new one for user:', userId);
       const { error: insertError } = await supabaseAdmin
         .from('subscriptions')
         .insert([subscriptionData]);
 
       if (insertError) {
-        console.error('Error inserting subscription:', insertError);
+        console.error('Error inserting subscription:', {
+          error: insertError,
+          context: 'Insert operation',
+          user_id: userId,
+          subscription_id: subscription.id
+        });
         throw insertError;
       }
     }
@@ -128,17 +142,30 @@ export async function handleSubscriptionUpdated(
         });
 
       if (usageError) {
-        console.error('Error resetting usage metrics:', usageError);
+        console.error('Error resetting usage metrics:', {
+          error: usageError,
+          user_id: userId
+        });
       }
     }
 
-    console.log('Successfully processed subscription update for user:', userId);
+    console.log('Successfully processed subscription update:', {
+      user_id: userId,
+      subscription_id: subscription.id,
+      plan_name: planName,
+      status: subscription.status
+    });
+    
     return {
       status: 'success',
       message: `Subscription ${subscription.id} updated successfully`,
     };
   } catch (error) {
-    console.error('Error in handleSubscriptionUpdated:', error);
+    console.error('Error in handleSubscriptionUpdated:', {
+      error: error.message,
+      stack: error.stack,
+      subscription_id: subscription.id
+    });
     throw error;
   }
 }
@@ -147,17 +174,21 @@ export async function handleSubscriptionDeleted(
   subscription: Stripe.Subscription,
   supabaseAdmin: ReturnType<typeof createClient>
 ): Promise<WebhookHandlerResult> {
-  console.log('Processing subscription deletion:', subscription.id);
+  console.log('Processing subscription deletion:', {
+    id: subscription.id,
+    customer: subscription.customer,
+    metadata: subscription.metadata
+  });
 
   try {
     const userId = subscription.metadata.user_id;
     
     if (!userId) {
-      console.error('No user_id found in subscription metadata');
+      console.error('No user_id found in subscription metadata for deletion');
       throw new Error('No user_id found in subscription metadata');
     }
 
-    console.log('Setting subscription to Free plan for user:', userId);
+    console.log('Processing subscription deletion for user:', userId);
 
     const subscriptionData = {
       user_id: userId,
@@ -177,24 +208,39 @@ export async function handleSubscriptionDeleted(
       updated_at: new Date().toISOString(),
     };
 
-    console.log('Updating subscription data:', subscriptionData);
+    console.log('Updating subscription data for deletion:', {
+      user_id: userId,
+      subscription_id: subscription.id
+    });
 
     const { error: updateError } = await supabaseAdmin
       .from('subscriptions')
       .upsert(subscriptionData);
 
     if (updateError) {
-      console.error('Error updating subscription:', updateError);
+      console.error('Error updating subscription for deletion:', {
+        error: updateError,
+        user_id: userId,
+        subscription_id: subscription.id
+      });
       throw updateError;
     }
 
-    console.log('Successfully processed subscription deletion for user:', userId);
+    console.log('Successfully processed subscription deletion:', {
+      user_id: userId,
+      subscription_id: subscription.id
+    });
+    
     return {
       status: 'success',
       message: `Subscription ${subscription.id} marked as cancelled`,
     };
   } catch (error) {
-    console.error('Error handling subscription deletion:', error);
+    console.error('Error handling subscription deletion:', {
+      error: error.message,
+      stack: error.stack,
+      subscription_id: subscription.id
+    });
     throw error;
   }
 }
