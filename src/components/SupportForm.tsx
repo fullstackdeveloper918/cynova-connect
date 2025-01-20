@@ -80,7 +80,7 @@ export const SupportForm = () => {
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a category" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white border shadow-lg">
               <SelectItem value="bug">
                 <div className="flex items-center gap-2">
                   <Bug className="h-4 w-4" />
