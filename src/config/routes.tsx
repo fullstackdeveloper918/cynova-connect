@@ -113,6 +113,15 @@ export const routes = [
     element: <RequireSubscription><YouTubeDownloader /></RequireSubscription>,
   },
   {
+    path: "/dashboard/support",
+    element: (
+      <PlaceholderPage
+        title="Support"
+        description="Need help? We're here to assist you. Please fill out the form below and we'll get back to you as soon as possible."
+      />
+    ),
+  },
+  {
     path: "/admin",
     element: <AdminDashboard />,
   },
