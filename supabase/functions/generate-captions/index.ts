@@ -1,136 +1,147 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const { audioUrl } = await req.json();
-    console.log('Request received with audio URL:', audioUrl);
+    const { audioUrl } = await req.json()
+    console.log('Received request to transcribe:', audioUrl)
 
-    if (!audioUrl) {
-      throw new Error('No audio URL provided');
+    const assemblyKey = Deno.env.get('ASSEMBLY_AI_API_KEY')
+    if (!assemblyKey) {
+      throw new Error('ASSEMBLY_AI_API_KEY is not set')
     }
 
-    const apiKey = Deno.env.get('ASSEMBLY_AI_API_KEY');
-    if (!apiKey) {
-      throw new Error('ASSEMBLY_AI_API_KEY is not set');
+    // First, upload the audio file to AssemblyAI
+    console.log('Uploading audio to AssemblyAI...')
+    const uploadResponse = await fetch('https://api.assemblyai.com/v2/upload', {
+      method: 'POST',
+      headers: {
+        'authorization': assemblyKey,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ url: audioUrl })
+    })
+
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text()
+      console.error('Upload failed:', errorText)
+      throw new Error(`Failed to upload audio: ${errorText}`)
     }
 
-    // Step 1: Submit transcription request
-    console.log('Submitting transcription request to AssemblyAI');
+    const { upload_url } = await uploadResponse.json()
+    console.log('Audio uploaded successfully:', upload_url)
+
+    // Submit transcription request
+    console.log('Submitting transcription request...')
     const transcriptResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
       headers: {
-        'Authorization': apiKey,
-        'Content-Type': 'application/json',
+        'authorization': assemblyKey,
+        'content-type': 'application/json',
       },
       body: JSON.stringify({
-        audio_url: audioUrl,
+        audio_url: upload_url,
+        word_boost: ["reddit", "upvote", "downvote", "comment", "post"],
         word_timestamps: true
       }),
-    });
+    })
 
     if (!transcriptResponse.ok) {
-      const errorText = await transcriptResponse.text();
-      console.error('AssemblyAI API error response:', {
-        status: transcriptResponse.status,
-        statusText: transcriptResponse.statusText,
-        body: errorText
-      });
-      throw new Error(`Failed to submit transcription: ${errorText}`);
+      const errorText = await transcriptResponse.text()
+      console.error('Transcription request failed:', errorText)
+      throw new Error(`Failed to submit transcription: ${errorText}`)
     }
 
-    const transcriptData = await transcriptResponse.json();
-    console.log('Transcription submitted successfully:', transcriptData);
+    const { id: transcriptId } = await transcriptResponse.json()
+    console.log('Transcription submitted, ID:', transcriptId)
 
-    // Step 2: Poll for results
-    const transcriptId = transcriptData.id;
-    let result;
-    let attempts = 0;
-    const maxAttempts = 30; // 3 minutes maximum with 6-second intervals
-    
+    // Poll for results
+    let result
+    const maxAttempts = 60
+    let attempts = 0
+
     while (attempts < maxAttempts) {
-      console.log(`Polling attempt ${attempts + 1} for transcript ${transcriptId}`);
+      console.log(`Polling attempt ${attempts + 1}/${maxAttempts}`)
       
-      const pollResponse = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptId}`, {
-        headers: {
-          'Authorization': apiKey,
-        },
-      });
+      const pollResponse = await fetch(
+        `https://api.assemblyai.com/v2/transcript/${transcriptId}`,
+        {
+          headers: {
+            'authorization': assemblyKey,
+          },
+        }
+      )
 
       if (!pollResponse.ok) {
-        const errorText = await pollResponse.text();
-        console.error('Polling error:', {
-          status: pollResponse.status,
-          statusText: pollResponse.statusText,
-          body: errorText
-        });
-        throw new Error(`Failed to poll transcription: ${errorText}`);
+        const errorText = await pollResponse.text()
+        console.error('Polling failed:', errorText)
+        throw new Error(`Failed to poll transcription: ${errorText}`)
       }
 
-      result = await pollResponse.json();
-      console.log('Poll result status:', result.status);
-
+      result = await pollResponse.json()
+      console.log('Poll result status:', result.status)
+      
       if (result.status === 'completed') {
-        console.log('Transcription completed successfully');
-        break;
+        console.log('Transcription completed successfully')
+        break
       } else if (result.status === 'error') {
-        console.error('Transcription failed:', result.error);
-        throw new Error(`Transcription failed: ${result.error}`);
+        console.error('Transcription failed:', result)
+        throw new Error(`Transcription failed: ${result.error}`)
       }
 
-      attempts++;
-      // Wait 6 seconds between polling attempts
-      await new Promise(resolve => setTimeout(resolve, 6000));
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      attempts++
     }
 
     if (!result || result.status !== 'completed') {
-      throw new Error('Transcription timed out or failed');
+      throw new Error('Transcription timed out')
     }
 
-    // Return the formatted response
+    // Format response with word-level timestamps
+    const captions = result.words.map((word: any) => ({
+      text: word.text,
+      start: word.start,
+      end: word.end,
+    }))
+
     return new Response(
-      JSON.stringify({
+      JSON.stringify({ 
+        captions,
         text: result.text,
-        words: result.words,
-        captions: result.words?.map((word: any) => ({
-          text: word.text,
-          start: word.start,
-          end: word.end
-        }))
+        message: "Captions generated successfully" 
       }),
-      {
-        headers: {
+      { 
+        headers: { 
           ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
+          'Content-Type': 'application/json'
+        }
       }
-    );
+    )
 
   } catch (error) {
-    console.error('Error in generate-captions function:', error);
+    console.error('Error in generate-captions function:', error)
     
     return new Response(
-      JSON.stringify({
+      JSON.stringify({ 
         error: 'Failed to generate captions',
-        details: error.message,
-        timestamp: new Date().toISOString()
+        details: error.message
       }),
-      {
+      { 
         status: 500,
-        headers: {
+        headers: { 
           ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
+          'Content-Type': 'application/json'
+        }
       }
-    );
+    )
   }
-});
+})

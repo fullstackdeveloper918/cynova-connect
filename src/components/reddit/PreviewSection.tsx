@@ -17,7 +17,6 @@ interface PreviewSectionProps {
   titleAudioUrl?: string;
   commentAudioUrl?: string;
   onExport: () => void;
-  animateCaptions: boolean;
 }
 
 export const PreviewSection = ({ 
@@ -27,8 +26,7 @@ export const PreviewSection = ({
   previewUrl,
   titleAudioUrl,
   commentAudioUrl,
-  onExport,
-  animateCaptions
+  onExport
 }: PreviewSectionProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [selectedBackground, setSelectedBackground] = useState("/stock/minecraft-gameplay.mp4");
@@ -164,8 +162,6 @@ export const PreviewSection = ({
                 commentAudioUrl={commentAudioUrl}
                 audioRef={audioRef}
                 onDurationChange={handleDurationChange}
-                captionStyle={selectedCaptionStyle}
-                animateCaptions={animateCaptions}
               />
             </div>
 
