@@ -23,26 +23,30 @@ export const SupportForm = () => {
     e.preventDefault();
     if (isSubmitting) return;
 
+    if (!subject.trim() || !message.trim()) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
+      console.log("Submitting support request:", { subject, category, message });
       
       const { data: { user } } = await supabase.auth.getUser();
       
-      const response = await fetch("/api/send-support-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const response = await supabase.functions.invoke('send-support-email', {
+        body: {
           subject,
           message,
           category,
           userEmail: user?.email,
-        }),
+        },
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to send support request");
+      console.log("Support email response:", response);
+
+      if (response.error) {
+        throw new Error(response.error.message || "Failed to send support request");
       }
 
       toast.success("Support request sent successfully!");
