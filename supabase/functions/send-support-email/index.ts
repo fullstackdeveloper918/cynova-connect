@@ -46,7 +46,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Cynova Support <support@cynova.io>",
+        from: "onboarding@resend.dev", // Using Resend's default test email
         to: ["sharif123098@gmail.com"],
         subject: `[${category.toUpperCase()}] ${subject}`,
         html: emailContent,
@@ -64,7 +64,7 @@ const handler = async (req: Request): Promise<Response> => {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in send-support-email function:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
