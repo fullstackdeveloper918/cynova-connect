@@ -99,3 +99,70 @@
     @apply bg-background text-foreground;
   }
 }
+
+
+/* custom_css */
+.siderBarpanel {
+  width: 20rem !important;
+}
+.submenuTab {
+  padding: 10px 0px 0px 20px !important;
+}
+.buttonsTab {
+  font-size: 17px;
+  color: #707070 !important;
+  transition: .5s all;
+}
+.buttonsTab:hover, .headerFonts:hover{
+  color: #9b87f5 !important;
+}
+.conatinerBox {
+  max-width: calc(100% - 4rem);
+  margin-right: 0px;
+}
+.mainContainer, .mainContainer main {
+  background: #f9f9f9;
+}
+.maintopbar, .canyabox {
+  background: #fff;
+  padding: 15px 20px;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px #0000000d;
+  border: 1px solid #00000017;
+}
+.headingcolor{
+  color: rgb(122 96 243);
+}
+.cynovaHeading{
+  color: #000 !important; 
+}
+.canyabox h2 {
+  color: #111;
+  margin: 10px 0px 20px;
+}
+.textContent {
+  font-size: 16px;
+  /* font-weight: 600;
+  color: #111; */
+}
+.cynovatab {
+  margin: 10px 0px 0px !important;
+}
+.headerFonts {
+  color: #707070 !important;
+}
+.featuredGrid {
+  border-radius: 10px;
+  padding: 25px 20px;
+  background-color: #fff;
+  border: 1px solid #e1ebff;
+  gap: 15px;
+}
+
+.featuredGrid>div {
+  background-color: #fff;
+  border: 1px solid #e1ebff;
+  box-shadow: none;
+  cursor: pointer;
+}
+/* custom_css */

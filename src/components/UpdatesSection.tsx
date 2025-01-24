@@ -39,7 +39,7 @@ export const UpdatesSection = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card border border-accent rounded-lg p-6 mb-8"
+      className="bg-card border border-accent rounded-lg p-6 mb-8 canyabox"
     >
       <h2 className="text-2xl font-bold text-primary mb-4">Cynova Updates</h2>
       <div className="space-y-4">

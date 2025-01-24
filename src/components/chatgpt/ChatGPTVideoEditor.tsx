@@ -28,7 +28,7 @@ export const ChatGPTVideoEditor = () => {
   } = useChatGPTVideo();
 
   return (
-    <Card className="p-6">
+    <Card className="p-6 canyabox">
       <div className="space-y-8">
         {/* Prompt Input Section */}
         <div className="space-y-4">

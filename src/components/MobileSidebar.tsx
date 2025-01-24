@@ -75,7 +75,7 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
   };
 
   return (
-    <SidebarProvider>
+    <SidebarProvider className="mainContainer">
       <div className="min-h-screen flex w-full bg-background">
         <Sidebar className="hidden md:block">
           <SidebarHeader className="p-6 bg-white border-b border-gray-200">
@@ -170,8 +170,8 @@ export const MobileSidebar = ({ children }: MobileSidebarProps) => {
               </Dialog>
             </div>
           )}
-          <div className="p-6">
-            <div className="max-w-7xl mx-auto">
+          <div className="p-6 ">
+            <div className="conatinerBox mx-auto">
               {children}
             </div>
           </div>

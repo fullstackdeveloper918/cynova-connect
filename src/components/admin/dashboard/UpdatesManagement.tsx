@@ -115,7 +115,7 @@ export const UpdatesManagement = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Cynova Updates</h2>
+        <h2 className="text-lg font-semibold cynovaHeading">Cynova Updates</h2>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button>

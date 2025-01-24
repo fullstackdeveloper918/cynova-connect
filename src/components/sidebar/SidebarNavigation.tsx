@@ -47,19 +47,19 @@ export const SidebarNavigation = () => {
             } text-gray-800 dark:text-gray-800 md:text-inherit md:dark:text-inherit`}
             onClick={() => section.label === "Cynova Dashboard" && handleNavigation("/dashboard")}
           >
-            <section.icon className="mr-2 h-4 w-4" />
+            <section.icon className="mr-2 h-6 w-6" />
             {section.label}
-            <ChevronDown className="ml-auto h-4 w-4" />
+            {/* <ChevronDown className="ml-auto h-4 w-4" /> */}
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="submenuTab">
               {section.items.map((item) => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
                     onClick={() => handleNavigation(item.path, section.label === "Cynova Create")}
                     tooltip={isFreePlan && section.label === "Cynova Create" ? "Premium Feature" : item.title}
                     isActive={selectedTool === item.id}
-                    className={`text-gray-800 dark:text-gray-800 md:text-inherit md:dark:text-inherit ${
+                    className={`text-gray-500 dark:text-gray-00 md:text-inherit md:dark:text-inherit buttonsTab ${
                       isFreePlan && section.label === "Cynova Create" 
                         ? "opacity-50 cursor-not-allowed pointer-events-none" 
                         : ""

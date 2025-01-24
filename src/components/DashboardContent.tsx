@@ -150,7 +150,7 @@ export const DashboardContent = () => {
 
   return (
     <div className="w-full space-y-8">
-      <div className="w-full">
+      <div className="w-full maintopbar">
         <WelcomeHeader
           userName={userName}
           userEmail={userEmail}
@@ -181,11 +181,11 @@ export const DashboardContent = () => {
         </div>
       )}
 
-      <p className="text-muted-foreground">
+      <p className="text-muted-foreground textContent">
         Create and manage your video content with ease.
       </p>
 
-      <div className="w-full">
+      <div className="w-full cynovatab">
         <UpdatesSection />
       </div>
 

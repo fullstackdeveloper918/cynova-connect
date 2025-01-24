@@ -136,10 +136,10 @@ export const WelcomeHeader = ({
   return (
     <div className="flex items-center justify-between">
       <div className="space-y-1">
-        <h1 className="text-3xl font-bold text-primary">
+        <h1 className="text-3xl font-bold headingcolor">
           Welcome back, {userName}! 👋
         </h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ">
           <Crown className="h-4 w-4 text-primary" />
           <span className="text-muted-foreground">
             {isLoadingSubscription ? (
