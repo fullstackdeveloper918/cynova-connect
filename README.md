@@ -117,4 +117,4 @@ For custom domain setup, refer to our [Custom Domains Guide](https://docs.lovabl
 For questions or issues:
 1. Create a GitHub issue
 2. Contact the maintainers
-3. Check the [Lovable documentation](https://docs.lovable.dev)
+3. Check the [Lovable documentation](https://docs.lovable.dev)# cynova-connect
