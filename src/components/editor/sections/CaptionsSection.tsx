@@ -13,37 +13,37 @@ const captionStyles = [
     id: "minimal",
     name: "Clean Minimal",
     preview: "THE QUICK",
-    style: "text-white font-bold text-4xl"
+    style: "text-white font-bold text-base"
   },
   {
     id: "gaming",
     name: "Gaming Style",
     preview: "THE QUICK BROWN FOX",
-    style: "text-green-400 font-black text-4xl"
+    style: "text-green-400 font-black text-base"
   },
   {
     id: "modern",
     name: "Modern Style",
     preview: "FOX",
-    style: "text-yellow-400 font-extrabold text-4xl"
+    style: "text-yellow-400 font-extrabold text-base"
   },
   {
     id: "gradient",
     name: "Gradient Style",
     preview: "THE QUICK BROWN FOX",
-    style: "bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-violet-500 font-bold text-4xl"
+    style: "bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-violet-500 font-bold text-base"
   },
   {
     id: "outline",
     name: "Outline Style",
     preview: "THE QUICK",
-    style: "text-white font-black text-4xl [text-shadow:_2px_2px_0_rgb(0_0_0_/_40%)]"
+    style: "text-white font-black text-base [text-shadow:_2px_2px_0_rgb(0_0_0_/_40%)]"
   },
   {
     id: "neon",
     name: "Neon Style",
     preview: "BROWN FOX",
-    style: "text-blue-400 font-bold text-4xl [text-shadow:_0_0_5px_rgb(59_130_246_/_50%)]"
+    style: "text-blue-400 font-bold text-base [text-shadow:_0_0_5px_rgb(59_130_246_/_50%)]"
   }
 ];
 
@@ -68,7 +68,7 @@ export const CaptionsSection = ({ onCaptionSelect, selectedStyle }: CaptionSecti
             )}
             onClick={() => onCaptionSelect(style.id)}
           >
-            <div className="aspect-video bg-zinc-900 rounded-lg flex items-center justify-center mb-3">
+            <div className="aspect-video bg-zinc-900 rounded-lg flex items-center justify-center mb-3 px-2 text-center">
               <span className={cn(style.style)}>{style.preview}</span>
             </div>
             <p className="text-sm font-medium text-center">{style.name}</p>

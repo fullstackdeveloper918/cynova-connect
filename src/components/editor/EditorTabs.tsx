@@ -52,10 +52,10 @@ export const EditorTabs = ({ onVideoUpload, onBackgroundSelect, onCaptionChange 
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="upload">Upload</TabsTrigger>
-          <TabsTrigger value="background">Background</TabsTrigger>
-          <TabsTrigger value="captions">Captions</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 tabs-title">
+          <TabsTrigger value="upload" className="justify-center text-base">Upload</TabsTrigger>
+          <TabsTrigger value="background" className="justify-center text-base">Background</TabsTrigger>
+          <TabsTrigger value="captions" className="justify-center text-base">Captions</TabsTrigger>
         </TabsList>
         <TabsContent value="upload" className="mt-6">
           <UploadSection onVideoUpload={handleVideoUpload} />

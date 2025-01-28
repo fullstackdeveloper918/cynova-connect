@@ -40,7 +40,7 @@ export const VoiceoverVideoEditor = () => {
   };
 
   return (
-    <Card className="p-6">
+    <Card className="p-6 bg-white hover:shadow-lg">
       <div className="space-y-4">
         <Button 
           onClick={handleGenerate} 

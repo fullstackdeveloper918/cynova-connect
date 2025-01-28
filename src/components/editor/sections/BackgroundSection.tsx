@@ -34,7 +34,7 @@ export const BackgroundSection = ({ onBackgroundSelect, selectedBackground }: Ba
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-medium">Choose Background</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
         {backgrounds.map((bg) => (
           <Card
             key={bg.id}
@@ -44,7 +44,7 @@ export const BackgroundSection = ({ onBackgroundSelect, selectedBackground }: Ba
             )}
             onClick={() => onBackgroundSelect(bg.id)}
           >
-            <div className="aspect-video relative overflow-hidden">
+            <div className="aspect-square relative overflow-hidden">
               <img
                 src={bg.previewImage}
                 alt={bg.name}

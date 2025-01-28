@@ -87,7 +87,7 @@ export const UploadSection = ({ onVideoUpload }: UploadSectionProps) => {
     <div className="space-y-8">
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Upload Video</h3>
-        <Card className="p-6">
+        <Card className="card-wrap p-6 hover:shadow-lg">
           <div className="flex flex-col items-center justify-center space-y-4">
             <Upload className="w-12 h-12 text-muted-foreground" />
             <Button variant="outline" className="relative">
@@ -99,7 +99,7 @@ export const UploadSection = ({ onVideoUpload }: UploadSectionProps) => {
               />
               Choose Video
             </Button>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Or drag and drop a video file
             </p>
           </div>
@@ -108,10 +108,11 @@ export const UploadSection = ({ onVideoUpload }: UploadSectionProps) => {
 
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Import from URL</h3>
-        <Card className="p-6">
+        <Card className="p-6 card-wrap hover:shadow-lg">
           <div className="flex flex-col space-y-4">
             <Input
               placeholder="Paste YouTube or TikTok URL"
+              className="card-input"
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
             />

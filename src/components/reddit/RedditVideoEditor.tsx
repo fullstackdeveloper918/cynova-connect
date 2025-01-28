@@ -295,7 +295,7 @@ export const RedditVideoEditor = () => {
   return (
     <div className="space-y-8">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-3 tabs-title">
           <TabsTrigger value="content">Content</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
           <TabsTrigger value="preview">Preview</TabsTrigger>
@@ -369,7 +369,7 @@ export const RedditVideoEditor = () => {
       </Tabs>
 
       {activeTab === "preview" && (
-        <Card>
+        <Card className="bg-white hover:shadow-lg">
           <CardContent className="pt-6">
             <Button
               onClick={previewUrl ? handleExport : () => handleGenerate(content)}

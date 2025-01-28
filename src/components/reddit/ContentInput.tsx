@@ -27,7 +27,7 @@ export const ContentInput = ({
   onFetch,
 }: ContentInputProps) => {
   return (
-    <Card>
+    <Card className="bg-white hover:shadow-lg">
       <CardHeader>
         <CardTitle>Content</CardTitle>
         <CardDescription>

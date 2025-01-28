@@ -15,7 +15,7 @@ export const VoiceSettings = ({
   onCommentVoiceSelect,
 }: VoiceSettingsProps) => {
   return (
-    <Card>
+    <Card className="bg-white hover:shadow-lg">
       <CardHeader>
         <CardTitle>Voice Settings</CardTitle>
         <CardDescription>

@@ -126,8 +126,8 @@ export const VideoEditor = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-5xl">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="container mx-auto p-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         {/* Editor Section */}
         <div className="space-y-4">
           <EditorTabs
@@ -142,11 +142,11 @@ export const VideoEditor = () => {
           <h2 className="text-lg font-semibold">Preview</h2>
           <div 
             ref={previewContainerRef}
-            className="relative bg-black rounded-lg overflow-hidden"
+            className="relative bg-white rounded-lg overflow-hidden w-full card-upload"
             style={{ aspectRatio: '9/16', maxHeight: '480px' }}
           >
             {!userVideo ? (
-              <div className="absolute inset-0 flex items-center justify-center text-white/50">
+              <div className="absolute inset-0 flex items-center justify-center text-black/50">
                 <Upload className="h-8 w-8 mr-2" />
                 <span>Upload your video</span>
               </div>
@@ -199,7 +199,7 @@ export const VideoEditor = () => {
 
           <Button
             onClick={handleExport}
-            className="w-full mt-2"
+            className="w-full mt-2 export-btn"
             disabled={!userVideo || !selectedStock || isExporting}
           >
             {isExporting ? (

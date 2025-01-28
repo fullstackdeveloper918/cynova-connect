@@ -165,4 +165,39 @@
   box-shadow: none;
   cursor: pointer;
 }
+
+.card-wrap{
+  background-color: white;
+  padding-block: 40px;
+  border: 1px solid #00000017;
+  border-radius: 10px;
+}
+
+.card-video button,
+.export-btn{
+  margin-top: 20px !important;
+}
+
+.tabs-title{
+  border-bottom: 1px solid #ddd;
+}
+
+.tabs-title button{
+  margin-inline: 4px;
+  border-radius: 5px;
+}
+
+.tabs-title button:hover{
+  background-color: #ddd;
+}
+
+.tabs-title  .data-\[state\=active\]\:text-foreground[data-state="active"]{
+  background-color: rgb(129 107 177);
+  color: #fff;
+}
+
+.card-upload{
+  border: 1px solid #ddd;
+}
+
 /* custom_css */

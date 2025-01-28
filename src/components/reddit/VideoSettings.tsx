@@ -21,7 +21,7 @@ export const VideoSettings = ({
   onCaptionStyleSelect,
 }: VideoSettingsProps) => {
   return (
-    <Card>
+    <Card className="bg-white hover:shadow-lg">
       <CardHeader>
         <CardTitle>Video Settings</CardTitle>
         <CardDescription>Configure your video resolution, duration, and captions</CardDescription>

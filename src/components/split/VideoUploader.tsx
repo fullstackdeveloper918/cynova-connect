@@ -7,7 +7,7 @@ interface VideoUploaderProps {
 
 export const VideoUploader = ({ onUpload }: VideoUploaderProps) => {
   return (
-    <div className="border-2 border-dashed border-border rounded-lg p-12 text-center">
+    <div className="border-2 border-dashed border-border rounded-lg p-12 text-center bg-white hover:shadow-lg">
       <div className="space-y-4">
         <div className="flex justify-center">
           <Upload className="h-12 w-12 text-muted-foreground" />
